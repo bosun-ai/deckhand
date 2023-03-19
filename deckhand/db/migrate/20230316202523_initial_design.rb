@@ -7,8 +7,12 @@ class InitialDesign < ActiveRecord::Migration[7.0]
 
     create_table :tasks do |t|
       t.string :description
-      t.string :outputs
-      t.string :inputs
+      t.string :script
+
+      t.timestamp :started_at
+      t.timestamp :finished_at
+
+      t.integer :exit_code
     
       t.timestamps
     end

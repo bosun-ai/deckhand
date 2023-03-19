@@ -1,6 +1,19 @@
 require "test_helper"
 
 class TaskTest < ActiveSupport::TestCase
+  teardown do
+    FileUtils.rm_rf(Task::TASKS_DIR)
+  end
+
+  test "running a task" do
+    Sync do
+      task = Task.run!(description: 'hello-test', script: "echo Hello")
+      task.await
+      assert_equal "Hello\n", task.standard_output
+      assert_equal 0, task.exit_code
+    end
+  end
+
   test "running a process" do
     Sync do
       output_read, output_write = Async::IO.pipe

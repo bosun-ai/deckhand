@@ -39,3 +39,7 @@ To improve test coverage on a project the system should go through the following
   6. Run the test again
   7. Repeat from step 2
 
+## Architecture
+
+Deckhand spawns tasks, which are running in Ruby threads or processes. Each
+task manages input and output of a command, listens to the pubsub for new inputs to write to the proces, and writes notifications of output to the pubsub.
