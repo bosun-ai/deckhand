@@ -68,6 +68,15 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.1)
       public_suffix (>= 2.0.2, < 6.0)
+    async (2.4.2)
+      console (~> 1.10)
+      io-event (~> 1.1)
+      timers (~> 4.1)
+    async-io (1.34.3)
+      async
+    async-process (1.3.1)
+      async
+      async-io
     bindex (0.8.1)
     bootsnap (1.16.0)
       msgpack (~> 1.2)
@@ -82,10 +91,13 @@ GEM
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
     concurrent-ruby (1.2.2)
+    console (1.16.2)
+      fiber-local
     crass (1.0.6)
     date (3.3.3)
     debug (1.7.1)
     erubi (1.12.0)
+    fiber-local (1.0.0)
     globalid (1.1.0)
       activesupport (>= 5.0)
     i18n (1.12.0)
@@ -93,6 +105,7 @@ GEM
     importmap-rails (1.1.5)
       actionpack (>= 6.0.0)
       railties (>= 6.0.0)
+    io-event (1.1.7)
     jbuilder (2.11.5)
       actionview (>= 5.0.0)
       activesupport (>= 5.0.0)
@@ -176,6 +189,7 @@ GEM
       railties (>= 6.0.0)
     thor (1.2.1)
     timeout (0.3.2)
+    timers (4.3.5)
     turbo-rails (1.4.0)
       actionpack (>= 6.0.0)
       activejob (>= 6.0.0)
@@ -203,6 +217,7 @@ PLATFORMS
   x86_64-darwin-21
 
 DEPENDENCIES
+  async-process
   bootsnap
   capybara
   debug
