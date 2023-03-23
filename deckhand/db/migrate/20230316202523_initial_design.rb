@@ -3,6 +3,7 @@ class InitialDesign < ActiveRecord::Migration[7.0]
     create_table :codebases do |t|
       t.string :name
       t.string :url
+      t.timestamps
     end
 
     create_table :tasks do |t|

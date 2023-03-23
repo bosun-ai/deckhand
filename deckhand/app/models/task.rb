@@ -6,4 +6,6 @@ class Task < ApplicationRecord
     task.run
     task
   end
+
+  broadcasts_to ->(task) { :tasks }, inserts_by: :prepend
 end

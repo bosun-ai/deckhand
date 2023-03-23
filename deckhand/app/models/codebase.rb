@@ -1,0 +1,2 @@
+class Codebase < ApplicationRecord
+end

@@ -14,6 +14,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_16_202523) do
   create_table "codebases", force: :cascade do |t|
     t.string "name"
     t.string "url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "tasks", force: :cascade do |t|
