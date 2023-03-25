@@ -18,6 +18,8 @@ console.log('Visit the guide for more information: ', 'https://vite-ruby.netlify
 import * as Turbo from '@hotwired/turbo'
 Turbo.start()
 
+
+import '../controllers/application'
 // import ActiveStorage from '@rails/activestorage'
 // ActiveStorage.start()
 //
@@ -26,3 +28,4 @@ const channels = import.meta.globEager('./**/*_channel.js')
 
 // Example: Import a stylesheet in app/frontend/index.css
 // import '~/index.css'
+

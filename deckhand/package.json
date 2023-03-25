@@ -4,8 +4,10 @@
     "vite-plugin-ruby": "^3.2.1"
   },
   "dependencies": {
+    "@hotwired/stimulus": "^3.2.1",
     "@hotwired/turbo-rails": "^7.3.0",
     "@rails/activestorage": "^7.0.4-3",
+    "stimulus-vite-helpers": "^3.0.1",
     "vite-plugin-rails": "^0.1.0"
   }
 }
