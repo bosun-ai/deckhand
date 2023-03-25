@@ -6,11 +6,15 @@
 
   <p class="my-5">
     <strong class="block font-medium mb-1">Script:</strong>
-    <%= task.script %>
+    <div class="terminal-output w-full">
+      <%= ansi_to_html task.script %>
+    </div>
   </p>
 
   <p class="my-5">
     <strong class="block font-medium mb-1">Output:</strong>
-    <%= task.standard_output %>
+    <div class="terminal-output w-full">
+      <%= ansi_to_html task.standard_output %>
+    </div>
   </p>
 </div>
