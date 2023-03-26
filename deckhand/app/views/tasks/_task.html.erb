@@ -9,16 +9,23 @@
   </p>
 
   <p class="my-5">
-    <strong class="block font-medium mb-1">Script:</strong>
-    <div class="terminal-output w-full">
-      <%= task.script %>
+    <!-- 
+      render the task.script like it would be rendered in a code editor like vscode 
+      making use of the tailwind css classes
+    -->
+    <div class="text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full">
+      <pre><code><%= script_to_html(task.script) %></code></pre>
     </div>
+
   </p>
 
   <p class="my-5">
     <strong class="block font-medium mb-1">Output:</strong>
-    <div class="terminal-output w-full">
-      <%= ansi_to_html task.standard_output %>
+    <div class="text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full">
+      <pre><%= ansi_to_html task.standard_output %></pre>
+      <% if true # task.exit_code.nil? %>
+        <pre><%= turbo_frame_tag "#{dom_id task}_output" %></pre>
+      <% end %>
     </div>
   </p>
 </div>

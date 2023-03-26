@@ -228,6 +228,7 @@ PLATFORMS
 
 DEPENDENCIES
   ansi-to-html
+  async-io
   async-process
   bootsnap
   capybara

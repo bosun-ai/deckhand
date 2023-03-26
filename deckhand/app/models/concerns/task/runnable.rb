@@ -1,3 +1,5 @@
+require 'async/io/stream'
+
 module Task::Runnable
   extend ActiveSupport::Concern
 
@@ -12,6 +14,9 @@ module Task::Runnable
     @runner = Async do
       input_read, input_write = Async::IO.pipe
       update! started_at: Time.now
+      # TODO instead of writing out and err to separate files only, also
+      # write them to a combined file. This will allow us to tail the
+      # combined file and show the output in the UI.
       status = Async::Process::Child.new(%Q{bash -c "set -e; #{script_path}"},
         out: standard_output_path,
         in: input_read.io,
@@ -46,10 +51,14 @@ module Task::Runnable
     File.read(error_output_path)
   end
 
-  def tail
+  def tail(&callback)
     Async do
       output_read, output_write = Async::IO.pipe
       tail = Async::Process::Child.new("tail", "-f", standard_output_path, out: output_write.io)
+      stream = Async::IO::Stream.new(output_read)
+      while line = stream.gets
+        callback.call(line)
+      end
     end
   end
 

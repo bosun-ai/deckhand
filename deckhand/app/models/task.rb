@@ -3,7 +3,18 @@ class Task < ApplicationRecord
 
   def self.run!(description:, script:)
     task = create!(description: description, script: script)
-    Thread.new { task.run }.value
+    Thread.new do
+      output_stream_id = "task_#{task.id}_output"
+      Async do
+        task.run 
+      end
+      Async do
+        task.tail do |line|
+          Rails.logger.info "Broadcasting line: #{line}" 
+          task.broadcast_append_to "tasks", target: output_stream_id, text: line
+        end
+      end
+    end.join
     task
   end
 

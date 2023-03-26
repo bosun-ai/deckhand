@@ -49,6 +49,7 @@ gem "bootsnap", require: false
 # gem "image_processing", "~> 1.2"
 
 gem 'async-process'
+gem 'async-io'
 
 gem 'ansi-to-html'
 
