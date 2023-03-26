@@ -3,7 +3,7 @@ class Task < ApplicationRecord
 
   def self.run!(description:, script:)
     task = create!(description: description, script: script)
-    task.run
+    Thread.new { task.run }.value
     task
   end
 

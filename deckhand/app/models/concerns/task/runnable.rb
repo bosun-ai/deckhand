@@ -27,6 +27,7 @@ module Task::Runnable
         on_done if respond_to? :on_done
       end
     end
+    @runner
   end
   
   def await
