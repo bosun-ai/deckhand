@@ -1,13 +1,17 @@
 <div id="<%= dom_id task %>" data-controller="tasks">
   <p class="my-5">
-    <strong class="block font-medium mb-1">Description:</strong>
-    <%= task.description %>
+    <strong class="block font-medium mb-1">
+      <%= task.description %>
+    </strong>
+    <% if task.exit_code %>
+    Finished at <%= task.finished_at %> with exit code <%= task.exit_code %>
+    <% end %>
   </p>
 
   <p class="my-5">
     <strong class="block font-medium mb-1">Script:</strong>
     <div class="terminal-output w-full">
-      <%= ansi_to_html task.script %>
+      <%= task.script %>
     </div>
   </p>
 
