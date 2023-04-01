@@ -10,36 +10,19 @@ module Task::Runnable
     FileUtils.mkdir_p(task_dir)
     File.write(script_path, script)
     FileUtils.chmod("+x", script_path)
+    FileUtils.touch standard_output_path
 
-    @runner = Async do
-      input_read, input_write = Async::IO.pipe
-      update! started_at: Time.now
-      # TODO instead of writing out and err to separate files only, also
-      # write them to a combined file. This will allow us to tail the
-      # combined file and show the output in the UI.
-      status = Async::Process::Child.new(%Q{bash -c "set -e; #{script_path}"},
-        out: standard_output_path,
-        in: input_read.io,
-        err: error_output_path
-      ).wait
-    ensure
-      begin
-        [
-          input_read, input_write
-        ].each(&:close)
-      ensure
+    update! started_at: Time.now
+    # TODO instead of writing out and err to separate files only, also
+    # write them to a combined file. This will allow us to tail the
+    # combined file and show the output in the UI.
+    @process = Deckhand::Process.spawn(
+      %Q{bash -c "set -e; cd #{task_dir}; #{script_path}"},
+      out: standard_output_path,
+    ) do |status|
         update! finished_at: Time.now, exit_code: status
         on_done if respond_to? :on_done
       end
-    end
-    @runner
-  end
-  
-  def await
-    if @runner
-      @runner.wait
-    else
-      raise "Task was not run from this object"
     end
   end
 
@@ -52,14 +35,7 @@ module Task::Runnable
   end
 
   def tail(&callback)
-    Async do
-      output_read, output_write = Async::IO.pipe
-      tail = Async::Process::Child.new("tail", "-f", standard_output_path, out: output_write.io)
-      stream = Async::IO::Stream.new(output_read)
-      while line = stream.gets
-        callback.call(line)
-      end
-    end
+    @process.tail(&callback)
   end
 
   def task_dir
