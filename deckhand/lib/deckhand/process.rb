@@ -13,12 +13,14 @@ class Deckhand::Process
     p
   end
 
-  def spawn(*args, out: nil, &done)
+  def spawn(*args, out: nil, &callback)
     input_read, @input_write = IO.pipe
+    output_read, output_write = IO.pipe
     @done_read, @done_write = IO.pipe
     @out = out
+    @tail_thread = tail(output_read, out, &callback)
     @run_thread = Thread.new do
-      @pid = ::Process.spawn(*args, in: input_read, out: out, err: out)
+      @pid = ::Process.spawn(*args, in: input_read, out: output_write)
       @status = ::Process.waitpid(@pid)
     rescue Errno::ECHILD
       puts "Warning: ECHILD"
@@ -29,52 +31,22 @@ class Deckhand::Process
           input_read, @input_write
         ].compact.each(&:close)
       ensure
+        puts "writing to done"
         @done_write.write("done")
         @done_write.close
-        done.call(@status) if done
+        callback.call(
+          {
+            status: @status
+          }
+        )
       end
     end
-  end
 
-  # tail the output of the process, calling the callback with each line
-  # the callback will be called on a separate thread
-  def tail(&callback)
-    @tail_read, output_write = IO.pipe
-
-    @tail_thread = Thread.new do
-      puts "waiting for file to exist"
-      while !File.exist?(@out)
-        sleep 0.1
-      end
-      puts "started tail"
-      @tail_pid = ::Process.spawn("tail", "-n +0", "-f", @out, out: output_write)
-      tail_lines do |line|
-        callback[line]
-      end
-      puts "finished tail"
-    ensure
-      puts "Tail thread on #{@out} finished"
-      Rails.logger.debug "Tail thread on #{@out} finished"
-      begin
-        [
-          @tail_read, output_write
-        ].each(&:close)
-      ensure
-        ::Process.kill("SIGKILL", @tail_pid) if tail_alive?
-      end
-    end
   end
 
   def alive?
-    @pid && @done_read.read_nonblock(1)
+    !@status
   rescue => e
-    puts "done_read failed with: #{e.inspect}"
-    false
-  end
-
-  def tail_alive?
-    @tail_pid && !!::Process.waitpid(@tail_pid, ::Process::WNOHANG)
-  rescue Errno::ECHILD
     false
   end
 
@@ -84,54 +56,27 @@ class Deckhand::Process
     @status
   end
 
-
-  def tail_lines
-    puts "starting tail_lines"
-    buffer = ""
-    stopping = false
-    # TODO: maybe only check tail_read closed?
-    while !@tail_read.closed? && !stopping
-      begin
-        next_result = @tail_read.read_nonblock(1024*16)
-        puts "got #{next_result.inspect} from read_nonblock"
-        buffer += next_result
-        lines = buffer.lines
-        if !buffer.include?("\n") || buffer[-1] != "\n"
-          buffer = lines.pop || ""
-        else
-          buffer.clear
-        end
-        lines.each do |line|
-          line.chomp!
-          yield line
-          puts "yielded #{line.inspect}"
-        end
-      rescue IO::WaitReadable
+  private
+  def tail(out_read, out_path, &callback)
+    Thread.new do
+      file = File.open(out_path, "w")
+      stopping = false
+      loop do
         begin
-          ready, _, _ = IO.select([@tail_read, @done_read])
-          if ready.include? @done_read
-            puts "process has stopped"
-            stopping = true
-            # wait for last buffer to be written into tail_read
-            more_ready, _, _ = IO.select([@tail_read], [], [], 5) if !ready.include? @tail_read
-            ready += more_ready if more_ready
-          end
-          if ready.include? @tail_read
-            retry
-          end
+          buffer = out_read.read_nonblock(1024*16)
+          file.write(buffer)
+          callback.call({ buffer: buffer })
+        rescue IO::WaitReadable
+          break if stopping
+          IO.select([out_read], [], [], 0.2)
+          stopping = !alive? # we read one more time after the process is done
         rescue => e
-          puts "In select got error: #{e}, buffer is: #{buffer.inspect}}"
-          yield buffer unless buffer.empty?
-          @tail_read.close
-          return
+          Rails.logger.error "Stopping tail due to error: #{e.message}"
+          break
         end
-      rescue EOFError, Errno::EBADF, IOError => e
-        puts "Got error: #{e}, buffer is: #{buffer.inspect}}"
-        yield buffer unless buffer.empty?
-        @tail_read.close
-        return
       end
+    ensure
+      file.close
     end
-    yield buffer unless buffer.empty?
   end
 end
