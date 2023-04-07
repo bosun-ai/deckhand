@@ -5,10 +5,15 @@ class Task < ApplicationRecord
     task = create!(description: description, script: script)
     tail = nil
     output_stream_id = "task_#{task.id}_output"
-    task.run 
-    task.tail do |line|
-      Rails.logger.info "Broadcasting line: #{line}" 
-      task.broadcast_append_to "tasks", target: output_stream_id, text: line
+    task.run do |message|
+      if line = message[:line]
+        task.broadcast_append_to "tasks",
+          partial: 'tasks/output',
+          target: output_stream_id,
+          locals: {
+            output: line
+          }
+      end
     end
     task
   end

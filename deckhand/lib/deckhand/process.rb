@@ -10,13 +10,12 @@ class Deckhand::Process
   def self.spawn(*args, out: nil, &done)
     p = Deckhand::Process.new()
     p.spawn(*args, out: out, &done)
-    p
   end
 
   def spawn(*args, out: nil, &callback)
+    Rails.logger.info "Spawning process: #{args.inspect} to #{out}"
     input_read, @input_write = IO.pipe
     output_read, output_write = IO.pipe
-    @done_read, @done_write = IO.pipe
     @out = out
     @tail_thread = tail(output_read, out, &callback)
     @run_thread = Thread.new do
@@ -30,18 +29,9 @@ class Deckhand::Process
         [
           input_read, @input_write
         ].compact.each(&:close)
-      ensure
-        puts "writing to done"
-        @done_write.write("done")
-        @done_write.close
-        callback.call(
-          {
-            status: @status
-          }
-        )
       end
     end
-
+    self
   end
 
   def alive?
@@ -57,6 +47,7 @@ class Deckhand::Process
   end
 
   private
+
   def tail(out_read, out_path, &callback)
     Thread.new do
       file = File.open(out_path, "w")
@@ -77,6 +68,11 @@ class Deckhand::Process
       end
     ensure
       file.close
+      callback.call(
+        {
+          status: @status
+        }
+      )
     end
   end
 end

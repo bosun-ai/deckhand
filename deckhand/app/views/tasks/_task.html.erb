@@ -22,9 +22,9 @@
   <p class="my-5">
     <strong class="block font-medium mb-1">Output:</strong>
     <div class="text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full">
-      <pre><%= ansi_to_html task.standard_output %></pre>
-      <% if true # task.exit_code.nil? %>
-        <pre><%= turbo_frame_tag "#{dom_id task}_output" %></pre>
+      <%= render "tasks/output", output: task.standard_output %>
+      <% if task.exit_code.nil? %>
+        <%= turbo_frame_tag "#{dom_id task}_output" %>
       <% end %>
     </div>
   </p>
