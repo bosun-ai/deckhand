@@ -12,8 +12,10 @@ module Task::Runnable
     File.write(script_path, script)
     FileUtils.chmod("+x", script_path)
     FileUtils.touch standard_output_path
+    FileUtils.touch error_output_path
 
-    @buffer = ""
+    @err = ""
+    @out = ""
     @lines_mode = lines_mode
     @callback = callback
 
@@ -24,12 +26,17 @@ module Task::Runnable
     @process = Deckhand::Process.spawn(
       %Q{bash -c "set -e; cd #{task_dir}; #{script_path}"},
       out: standard_output_path,
+      err: error_output_path
     ) do |message|
-      if buffer = message[:buffer]
-        on_buffer(buffer)
-      elsif status = message[:status]
+      if out = message[:out]
+        on_out(out)
+      elsif err = message[:err]
+        on_err(err)
+      elsif (status = message[:status]) && message[:channel] == :out
         update! finished_at: Time.now, exit_code: status
         on_done(status)
+      else
+        raise "Unknown message: #{message.inspect}"
       end
     end
   end
@@ -42,21 +49,42 @@ module Task::Runnable
     File.read(error_output_path)
   end
 
-  def on_buffer(buffer)
+  def on_err(err)
     if @lines_mode
-      on_buffer_lines_mode(buffer)
+      on_err_lines_mode(err)
     else
-      @callback.call({ buffer: buffer })
+      @callback.call({ err: err })
     end
   end
 
-  def on_buffer_lines_mode(buffer)
-    @buffer += buffer
-    lines = buffer.split("\n")
-    if buffer[-1] == "\n"
-      @buffer = ""
+  def on_err_lines_mode(err)
+    @err += err
+    lines = err.split("\n")
+    if err[-1] == "\n"
+      @err = ""
     else
-      @buffer = lines.pop
+      @err = lines.pop
+    end
+    lines.each do |line|
+      @callback.call({ line: line })
+    end
+  end
+
+  def on_out(out)
+    if @lines_mode
+      on_out_lines_mode(out)
+    else
+      @callback.call({ out: out })
+    end
+  end
+
+  def on_out_lines_mode(out)
+    @out += out
+    lines = out.split("\n")
+    if out[-1] == "\n"
+      @out = ""
+    else
+      @out = lines.pop
     end
     lines.each do |line|
       @callback.call({ line: line })
@@ -64,8 +92,9 @@ module Task::Runnable
   end
 
   def on_done(status)
-    if !@buffer.empty?
-      @callback.call({ line: @buffer })
+    lines = [@out, @err].reject(&:blank?)
+    lines.each do |line|
+      @callback.call({ line: line })
     end
     @callback.call({ status: status })
   end
@@ -85,5 +114,4 @@ module Task::Runnable
   def error_output_path
     File.join(task_dir, "err")
   end
-  private
 end
