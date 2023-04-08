@@ -33,7 +33,7 @@ module Task::Runnable
       elsif err = message[:err]
         on_err(err)
       elsif (status = message[:status]) && message[:channel] == :out
-        update! finished_at: Time.now, exit_code: status
+        update! finished_at: Time.now, exit_code: status.exitstatus
         on_done(status)
       else
         raise "Unknown message: #{message.inspect}"
@@ -42,11 +42,11 @@ module Task::Runnable
   end
 
   def standard_output
-    File.read(standard_output_path)
+    File.read(standard_output_path) if File.exist? standard_output_path
   end
 
   def error_output
-    File.read(error_output_path)
+    File.read(error_output_path) if File.exist? error_output_path
   end
 
   def on_err(err)

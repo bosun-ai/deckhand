@@ -1,7 +1,7 @@
 class Task < ApplicationRecord
   include Task::Runnable
 
-  def self.run!(description:, script:)
+  def self.run!(description:, script:, &callback)
     task = create!(description: description, script: script)
     tail = nil
     output_stream_id = "task_#{task.id}_output"
@@ -14,6 +14,7 @@ class Task < ApplicationRecord
             output: line
           }
       end
+      callback[message] if callback
     end
     task
   end

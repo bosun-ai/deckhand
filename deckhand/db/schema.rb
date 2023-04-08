@@ -10,12 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_16_202523) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_08_112843) do
   create_table "codebases", force: :cascade do |t|
     t.string "name"
     t.string "url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "checked_out", default: false
+    t.string "name_slug"
+    t.index ["name_slug"], name: "index_codebases_on_name_slug", unique: true
   end
 
   create_table "tasks", force: :cascade do |t|
