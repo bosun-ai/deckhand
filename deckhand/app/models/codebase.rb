@@ -22,4 +22,8 @@ class Codebase < ApplicationRecord
       end
     end
   end
+
+  def discover_basic_facts
+    
+  end
 end
