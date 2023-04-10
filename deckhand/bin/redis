@@ -1,0 +1,4 @@
+export HERE=$(pwd)
+export REDIS_DATA_DIR=$HERE/db/redis
+
+redis-stack-server $HERE/db/redis-stack.conf

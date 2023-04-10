@@ -1,3 +1,12 @@
+GIT
+  remote: https://github.com/tinco/rejson-rb.git
+  revision: fc40e05e28d5df0b5a54605e99337a54aafbb9ed
+  branch: main
+  specs:
+    rejson-rb (2.0.0)
+      json (~> 2.0)
+      redis (~> 5.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -92,6 +101,7 @@ GEM
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
     concurrent-ruby (1.2.2)
+    connection_pool (2.4.0)
     console (1.16.2)
       fiber-local
     crass (1.0.6)
@@ -115,6 +125,7 @@ GEM
     jbuilder (2.11.5)
       actionview (>= 5.0.0)
       activesupport (>= 5.0.0)
+    json (2.6.3)
     loofah (2.19.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -178,7 +189,10 @@ GEM
       thor (~> 1.0)
       zeitwerk (~> 2.5)
     rake (13.0.6)
-    redis (4.8.1)
+    redis (5.0.6)
+      redis-client (>= 0.9.0)
+    redis-client (0.14.1)
+      connection_pool
     regexp_parser (2.7.0)
     rexml (3.2.5)
     ruby-openai (3.7.0)
@@ -247,7 +261,8 @@ DEPENDENCIES
   jbuilder
   puma (~> 5.0)
   rails (~> 7.0.4, >= 7.0.4.3)
-  redis (~> 4.0)
+  redis (~> 5.0)
+  rejson-rb!
   ruby-openai
   selenium-webdriver
   sprockets-rails
