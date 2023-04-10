@@ -19,6 +19,10 @@ class Fact < ApplicationModel
     end
   end
 
+  def self.delete_all
+    RClient.del(*RClient.keys("fact:*"))
+  end
+
   def save!
     raise "Invalid Fact" unless valid?
 
@@ -34,6 +38,13 @@ class Fact < ApplicationModel
   end
 
   def set_embeddings
-    # self.embeddings = Embeddings.new(content).embeddings
+    topic_hash = Digest::SHA256.hexdigest(topic)
+    if embeddings = RClient.json_get("topic_embeddings_cache:#{topic_hash}", ".")
+      self.embeddings = embeddings
+    else
+      embeddings = [Deckhand::Lm.embedding(topic)]
+      RClient.json_set("topic_embeddings_cache:#{topic_hash}", ".", embeddings)
+      self.embeddings = embeddings
+    end
   end
 end

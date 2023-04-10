@@ -8,6 +8,15 @@ class Deckhand::Lm
     very_large: 'gpt-4-32k' # $0.06 / 1K tokens
   }
 
+  def self.embedding(text)
+    response = OpenAIClient.embeddings(
+      parameters: {
+        model: 'text-embedding-ada-002', input: text 
+      }
+    )
+    response["data"].first["embedding"]
+  end
+
   def self.prompt(prompt_text, max_tokens: 2049, mode: :default)
     model = MODELS[mode]
     parameters = {
