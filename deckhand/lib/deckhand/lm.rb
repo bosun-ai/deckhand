@@ -17,6 +17,17 @@ class Deckhand::Lm
     response["data"].first["embedding"]
   end
 
+  def self.cached_embedding(text)
+    text_hash = Digest::SHA256.hexdigest(text)
+    if embedding = RClient.json_get("embeddings_cache:#{text_hash}", "$.v")
+      embedding.first
+    else
+      embedding = self.embedding(text)
+      RClient.json_set("embeddings_cache:#{text_hash}", "$", { v: embedding })
+      embedding
+    end
+  end
+
   def self.prompt(prompt_text, max_tokens: 2049, mode: :default)
     model = MODELS[mode]
     parameters = {
