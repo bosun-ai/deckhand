@@ -66,3 +66,44 @@ With a vector similarity index, we would create embeddings of the topics of the 
 I think we should start with a vector index, and then decide if it's reliable enough, if it's not then we'll have to put more thought into involving a graph database.
 
 Redis-stack is easy to deploy and offers both a graph and a vector index, and can be used to store the data itself, so that seems a nice solution for the short term.
+
+
+#### Examples of facts
+
+There is a `rails` file in the `bin` directory.
+
+The class `ApplicationController` is defined in  `app/controllers/application_controller.rb`.
+
+The method `authorize` is defined on line 30 in the `ApplicationController` class defined in `app/controllers/application_controller.rb`.
+
+The method `authorize` defined on line 30 in the `ApplicationController` class defined in `app/controllers/application_controller.rb` calls a method called `super` on line 31.
+
+#### Knowledge graph
+
+```cypher
+(File {location: 'app/controllers/application_controller.rb'}) - [on_line(10)] - (Class { id: '<uuid>', name: 'ApplicationController'})
+```
+
+```cypher
+(Method {name: 'authorize'}) - [on_line(30)] - (Class { id: '<uuid>'})
+```
+
+#### Example query
+
+To write a test for an endpoint on a rails application, we need to build a prompt that includes information about all relevant code. So following the command "implement an integration test for this endpoint" it will query:
+
+- the code under test
+- any code it references
+- any side effects that affect the code or its result
+- any code it could reference that might be relevant
+
+Some of these queries will be recursive if necessary.
+
+#### Building the database
+
+For each file, we'll have to parse through the file, finding all definitions of relevance. For each definition entries in the knowledge database will be made that summarise the associated body or values, record external references and other properties, and placing them within the graph.
+
+Because files often don't fit into the prompt context, we have feed in the files piecemeal, keeping context outside of the prompt, or cutting out irrelevant information from the prompt.
+
+(sidenote: at some point a system will probably be able to write a parser that removes irrelevant information from files in arbitrary programming languages)
+
