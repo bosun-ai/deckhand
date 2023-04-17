@@ -44,7 +44,7 @@ To improve test coverage on a project the system should go through the following
 Deckhand spawns tasks, which are running in Ruby threads or processes. Each
 task manages input and output of a command, listens to the pubsub for new inputs to write to the proces, and writes notifications of output to the pubsub.
 
-### Knowledge
+### Knowledge database
 
 Deckhand builds up knowledge about the codebases it is working on. For example to build the initial knowledge about the app Deckhand might go through the following process:
 
@@ -107,3 +107,34 @@ Because files often don't fit into the prompt context, we have feed in the files
 
 (sidenote: at some point a system will probably be able to write a parser that removes irrelevant information from files in arbitrary programming languages)
 
+### Counterpoint
+
+Instead of building a knowledge base a priori, we could also gather knowledge on demand. This is more how Github Copilot seems to do it, where they only have context about recent files that you've opened.
+
+For the system to autonomously implement a unit test, it would:
+
+  - generate search terms
+  - browse through the codebase
+  - browse through the internet
+  - determine if things are relevant
+
+It would loop through this a couple time to build a lingo and a set of relevant knowledge. When the knowledge is complete enough, it could make attempts at implementing the test. Run it, figure out what's wrong and then attempt to fix the code.
+
+Both the database solution and this solution have the same problem. How to determine what's relevant? And how would the structuring of the database improve the prompt generation over just asking the model if code is relevant?
+
+The database should assist the model in keeping more context on hand than is available in the current prompt. Instead of generating a structured graph database that just has everything in it, we could just have the language model only build the facts and the graph based on what it deems to be relevant to the problem at hand.
+
+Example prompt:
+
+  - To generate a test I need to fully understand the method I am testing. To understand it I need to know the answers to the following questions:
+    - What code triggers the execution of this method, and what is its intention?
+    - What code is triggered by the execution of this method?
+    - What values are within the scope of this method and how is the scope affected?
+    - What effects are the final results of the method / what do we want it to do?
+  - To generate the test I need to know understand the context I am testing in. To understand that I need to know:
+    - What facilities are there for setting up the test environment?
+    - What helpers are available to assert the method has succesfully performed its intended behaviour?
+
+For each step of gathering knowledge, the system will perform search queries, both in the codebase and online.
+
+I think it will be more effective to perform codebase search queries in a graph database than it would be in the raw codebase, just because we can more easily isolate relevant facts.
