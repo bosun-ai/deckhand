@@ -6,48 +6,17 @@ class Fact < ApplicationModel
   validates :content, :topic, :codebase_id, presence: true
 
   def self.create_index
-    # An index is created by executing a command with the following syntax:
-    # FT.CREATE ... SCHEMA ... {field_name} VECTOR {algorithm} {count} [{attribute_name} {attribute_value} ...]
-    RClient.call(
-      "FT.CREATE", "fact_topic_index",
-      "ON", "JSON",
-      "SCHEMA", "$.topic_embedding", "as", "topic_embedding",
-      "VECTOR",
-      "HNSW", "6",
-      "TYPE", "FLOAT32",
-      "DIM", "1536",
-      "DISTANCE_METRIC", "L2"
+    RedisStack.create_json_vector_similarity_index(
+      "fact_topic_index",
+      field_selector: "$.topic_embedding",
+      dimensions: 1536,
     )
   end
 
-  TopicSearchResult = Struct.new(:id, :score, :object, keyword_init: true)
-
   def self.search_by_topic(search_term)
     embedding = Deckhand::Lm.cached_embedding(search_term)
-    embedding_blob = embedding.pack("f*")
-    results = RClient.call(
-      "FT.SEARCH", "fact_topic_index",
-      "*=>[KNN 10 @topic_embedding $BLOB]",
-      "PARAMS", "2",
-      "BLOB", embedding_blob,
-      "SORTBY", "__topic_embedding_score",
-      "DIALECT", "2",
-    )
-
-    results_count = results.first
-    index = 1
-    
-    results_count.times.map do |_|
-      id = results[index]
-      index += 1
-      result = results[index]
-      index += 1
-
-      TopicSearchResult.new(
-        id: id,
-        score: result[1].to_f,
-        object: from_json(JSON.parse(result[3]))
-      )
+    RedisStack.vector_similarity_search("fact_topic_index", embedding).each do |result|
+      result[:object] = from_json(result[:object])
     end
   end
 
