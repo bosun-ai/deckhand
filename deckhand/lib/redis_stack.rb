@@ -1,9 +1,12 @@
 require 'redis'
 require 'rejson'
+require 'active_graph/core/query'
 
 RClient = Redis.new(host: "localhost", port: 36379, db: 0)
 
 class RedisStack
+  GraphQuery = ActiveGraph::Core::Query
+
   class << self
     REDIS_GRAPH_VALUE_UNKNOWN = 0,
     REDIS_GRAPH_VALUE_NULL = 1,
@@ -40,6 +43,57 @@ class RedisStack
         labels: [],
         relationship_types: []
       }
+    end
+
+    def serialize_graph_node(node)
+      return nil if node.nil?
+
+      serialized = "("
+      serialized << node[:id] if node[:id]
+      if (labels = node[:labels]) && labels.any?
+        serialized << ":"
+        serialized << labels.map { |label| label }.join(':')
+      end
+
+      if (properties = node[:properties]) && properties.any?
+        serialized << " {"
+        serialized << properties.map { |key, value| "#{key}: #{value}" }.join(", ")
+        serialized << "}"
+      end
+
+      serialized << ")"
+      serialized
+    end
+
+    def serialize_graph_edge(edge)
+      return nil if edge.nil?
+
+      serialized = "-["
+      serialized << edge[:id] if edge[:id]
+      serialized << ":#{edge[:label]}" if edge[:label]
+      if (properties = edge[:properties]) && properties.any?
+        serialized << " {"
+        serialized << properties.map { |key, value| "#{key}: #{value}" }.join(", ")
+        serialized << "}"
+      end
+      serialized << "]->"
+    end
+
+    def graph_insert(graph_id, relationship)
+      source = serialize_graph_node(relationship[:source])
+      target = serialize_graph_node(relationship[:target])
+      edge = serialize_graph_edge(relationship[:edge])
+
+      serialized_relationship = "#{source}#{edge}#{target}"
+
+      graph_query(graph_id, "CREATE #{serialized_relationship}")
+    end
+
+    def graph_simple_insert(graph_id, source, edge, target)
+      graph_insert(graph_id,
+        source: { labels: [source] },
+        edge: {label: edge}, 
+        target: { labels: [target]})
     end
 
     def get_property_cache(graph_id, property_id)
@@ -109,6 +163,8 @@ class RedisStack
         }
       when REDIS_GRAPH_VALUE_STRING
         value
+      when REDIS_GRAPH_VALUE_INTEGER
+        value.to_i
       else
         if REDIS_GRAPH_VALUE_TYPES[type]
           raise "Unsupported type #{REDIS_GRAPH_VALUE_TYPES[type]}"

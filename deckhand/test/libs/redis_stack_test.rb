@@ -29,4 +29,31 @@ class RedisStackTest < ActiveSupport::TestCase
     results = RedisStack.graph_match "MotoGP", "(r:Rider)-[:rides]->(t:Team) WHERE t.name = 'Yamaha' RETURN r.name, t.name"
     assert_equal(results[0], ["Valentino Rossi", "Yamaha"])
   end
+
+  test "it can return integers" do
+    results = RedisStack.graph_match "MotoGP", "(r:Rider)-[:rides]->(t:Team {name:'Ducati'}) RETURN count(r)"
+    assert_equal(1, results[0][0])
+  end
+  
+  test "it can insert relationships" do
+    a = "ID#{SecureRandom.hex(10)}"
+    b = "ID#{SecureRandom.hex(10)}"
+
+    RedisStack.graph_simple_insert("test123", a, "relates_to", b)
+
+    results = RedisStack.graph_match "test123", "(a:#{a})-[e]->(b) RETURN a, e, b"
+
+    assert_equal 1, results.length
+    result = results[0]
+    assert_equal 3, result.length
+    subject = result[0]
+    assert_equal("NODE", subject[:type])
+    assert_equal(a, subject[:labels][0])
+    edge = result[1]
+    assert_equal("EDGE", edge[:type])
+    assert_equal("relates_to", edge[:label])
+    object = result[2]
+    assert_equal("NODE", object[:type])
+    assert_equal(b, object[:labels][0])
+  end
 end
