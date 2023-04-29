@@ -15,6 +15,10 @@ class Codebase < ApplicationRecord
     File.join(CODEBASE_DIR, name_slug)
   end
 
+  def files_graph_name
+    "codebase:#{id}:files"
+  end
+
   def create_repository
     Task.run!(description: "Creating repository for #{name}", script: "git clone #{url} #{path}") do |message|
       if status = message[:status]
@@ -43,5 +47,36 @@ class Codebase < ApplicationRecord
     # - Based on the files in that directory and the context of the parent directories construct a shallow context for
     #   that directory.
     # - Then for each file go through the file and establish what elements are exposed from those files.
+
+    analyze_directory(path, root: true)
+  end
+
+  def save_directory_node(node_info, root: false)
+    one_up = File.dirname(node_info[:properties][:path])
+
+    if root
+      RedisStack.graph_insert_node(files_graph_name, node_info)
+    else
+      target = { label: "directory", properties: { path: one_up } }
+      edge = { label: "contains" }
+      RedisStack.graph_attach_new(files_graph_name, target, edge, node_info)
+    end
+  end
+
+  def analyze_directory(path, root: false)
+    Dir.entries(path).each do |entry|
+      next if entry == "." || entry == ".."
+
+      entry_path = File.join(path, entry)
+      if File.directory?(entry_path)
+        analyze_directory(entry_path)
+      else
+        analyze_file(entry_path)
+      end
+    end
+  end
+
+  def analyze_file(path)
+
   end
 end

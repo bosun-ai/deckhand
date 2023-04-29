@@ -89,6 +89,27 @@ class RedisStack
       graph_query(graph_id, "CREATE #{serialized_relationship}")
     end
 
+    def graph_insert_node(graph_id, node)
+      graph_query(graph_id, "CREATE #{serialize_graph_node(node)}")
+    end
+
+    def graph_attach_new(graph_id, target, edge, node)
+      match = {
+        id: "target",
+        labels: target[:labels]
+      }
+
+      query = "MATCH #{serialize_graph_node(match)}"
+      if (properties = target[:properties]) && properties.any?
+        query << " WHERE "
+        query << properties.map { |key, value| "target.#{key} = #{value}" }.join(" AND ")
+      end
+
+      query << "CREATE (target)#{serialize_graph_edge(edge)}#{serialize_graph_node(node)}"
+
+      graph_query(graph_id, query)
+    end
+
     def graph_simple_insert(graph_id, source, edge, target)
       graph_insert(graph_id,
         source: { labels: [source] },

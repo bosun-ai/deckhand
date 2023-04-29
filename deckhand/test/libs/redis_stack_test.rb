@@ -39,9 +39,52 @@ class RedisStackTest < ActiveSupport::TestCase
     a = "ID#{SecureRandom.hex(10)}"
     b = "ID#{SecureRandom.hex(10)}"
 
-    RedisStack.graph_simple_insert("test123", a, "relates_to", b)
+    RedisStack.graph_simple_insert("test", a, "relates_to", b)
 
-    results = RedisStack.graph_match "test123", "(a:#{a})-[e]->(b) RETURN a, e, b"
+    results = RedisStack.graph_match "test", "(a:#{a})-[e]->(b) RETURN a, e, b"
+
+    assert_equal 1, results.length
+    result = results[0]
+    assert_equal 3, result.length
+    subject = result[0]
+    assert_equal("NODE", subject[:type])
+    assert_equal(a, subject[:labels][0])
+    edge = result[1]
+    assert_equal("EDGE", edge[:type])
+    assert_equal("relates_to", edge[:label])
+    object = result[2]
+    assert_equal("NODE", object[:type])
+    assert_equal(b, object[:labels][0])
+  end
+
+  test "it can create new nodes without relationships" do
+    a = "ID#{SecureRandom.hex(10)}"
+
+    node_a = { labels: [a], properties: { name: '"A"' } }
+
+    RedisStack.graph_insert_node("test", node_a)
+
+    results = RedisStack.graph_match "test", "(a:#{a}) RETURN a"
+
+    assert_equal 1, results.length
+    result = results[0]
+    assert_equal 1, result.length
+    subject = result[0]
+    assert_equal("NODE", subject[:type])
+    assert_equal(a, subject[:labels][0])
+  end
+
+  test "can create relationships to existing nodes" do
+    a = "ID#{SecureRandom.hex(10)}"
+    b = "ID#{SecureRandom.hex(10)}"
+
+    node_a = { labels: [a], properties: { name: '"A"' } }
+    node_b = { labels: [b], properties: { name: '"B"' } }
+
+    RedisStack.graph_insert_node("test", node_a)
+    RedisStack.graph_attach_new("test", node_a, { label: "relates_to", properties: { really: '"REALLY"'} }, node_b)
+
+    results = RedisStack.graph_match "test", "(a:#{a})-[e]->(b) RETURN a, e, b"
 
     assert_equal 1, results.length
     result = results[0]
