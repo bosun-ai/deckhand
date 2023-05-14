@@ -65,11 +65,16 @@ class RedisStack
       serialized
     end
 
+    # escapes a string for use in a redis command
+    def escape_string_for_redis(value)
+      value.gsub(/"/, "\\\"")
+    end
+
     # serializes a ruby value into a redis literal
     def serialize_value(value)
       case value
       when String
-        "\"#{value}\""
+        "\"#{escape_string_for_redis(value)}\""
       when Integer
         value.to_s
       when Float
