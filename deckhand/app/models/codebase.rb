@@ -22,9 +22,14 @@ class Codebase < ApplicationRecord
   def create_repository
     Task.run!(description: "Creating repository for #{name}", script: "git clone #{url} #{path}") do |message|
       if status = message[:status]
-        update!(checked_out: status.success?)
+        check_out_finished! if status.success?
       end
     end
+  end
+
+  def check_out_finished!
+    update!(checked_out: status.success?)
+    discover_basic_facts
   end
 
   # discover basic facts is going to establish a list of basic facts about the codebase
@@ -51,8 +56,9 @@ class Codebase < ApplicationRecord
     analyze_directory(path, root: true)
   end
 
-  def save_directory_node(node_info, root: false)
+  def save_file_entry_node(node_info, root: false)
     one_up = File.dirname(node_info[:properties][:path])
+    Rails.logger.debug "Saving file entry node for #{node_info[:properties][:path]}"
 
     if root
       RedisStack.graph_insert_node(files_graph_name, node_info)
@@ -64,19 +70,61 @@ class Codebase < ApplicationRecord
   end
 
   def analyze_directory(path, root: false)
+    base_name = File.basename(path)
+    node = {
+      labels: ['directory'],
+      properties: {
+        path: path,
+        name: base_name
+      }
+    }
+
+    # TODO we should be prompting the LLM to determine if we should recurse into this directory
+    if base_name == ".git"
+      node[:properties][:git_dir] = true
+      return
+    end
+    if base_name == "node_modules"
+      node[:properties][:node_modules] = true
+      return
+    end
+
+    ignored = `cd #{self.path}; git check-ignore #{path}`
+    if ignored.present?
+      node[:properties][:git_ignored] = true
+      return
+    end
+
+    save_file_entry_node(node, root: root)
+
+    bubbled_properties = {}
     Dir.entries(path).each do |entry|
       next if entry == "." || entry == ".."
 
       entry_path = File.join(path, entry)
-      if File.directory?(entry_path)
+      bubbled_properties[entry] = if File.directory?(entry_path)
         analyze_directory(entry_path)
       else
         analyze_file(entry_path)
       end
     end
+
+    node[:properties][:contents] = bubbled_properties
   end
 
   def analyze_file(path)
+    puts "Analyzing file #{path}"
+    base_name = File.basename(path)
+    node = {
+      labels: ['file'],
+      properties: {
+        path: path,
+        name: base_name,
+        ext: File.extname(path)
+      }
+    }
 
+    puts "Going to save file entry node #{node.inspect}"
+    save_file_entry_node(node)
   end
 end

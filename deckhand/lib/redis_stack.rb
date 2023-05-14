@@ -57,12 +57,34 @@ class RedisStack
 
       if (properties = node[:properties]) && properties.any?
         serialized << " {"
-        serialized << properties.map { |key, value| "#{key}: #{value}" }.join(", ")
+        serialized << properties.map { |key, value| "#{key}: #{serialize_value(value)}" }.join(", ")
         serialized << "}"
       end
 
       serialized << ")"
       serialized
+    end
+
+    # serializes a ruby value into a redis literal
+    def serialize_value(value)
+      case value
+      when String
+        "\"#{value}\""
+      when Integer
+        value.to_s
+      when Float
+        value.to_s
+      when TrueClass
+        "true"
+      when FalseClass
+        "false"
+      when Array
+        "[#{value.map { |v| serialize_value(v) }.join(", ")}]"
+      when Hash
+        "{#{value.map { |k, v| "#{k}: #{serialize_value(v)}" }.join(", ")}}"
+      else
+        raise "Unsupported value type #{value.class}"
+      end
     end
 
     def serialize_graph_edge(edge)
@@ -73,7 +95,7 @@ class RedisStack
       serialized << ":#{edge[:label]}" if edge[:label]
       if (properties = edge[:properties]) && properties.any?
         serialized << " {"
-        serialized << properties.map { |key, value| "#{key}: #{value}" }.join(", ")
+        serialized << properties.map { |key, value| "#{key}: #{serialize_value(value)}" }.join(", ")
         serialized << "}"
       end
       serialized << "]->"
@@ -102,7 +124,7 @@ class RedisStack
       query = "MATCH #{serialize_graph_node(match)}"
       if (properties = target[:properties]) && properties.any?
         query << " WHERE "
-        query << properties.map { |key, value| "target.#{key} = #{value}" }.join(" AND ")
+        query << properties.map { |key, value| "target.#{key} = #{serialize_value(value)}" }.join(" AND ")
       end
 
       query << "CREATE (target)#{serialize_graph_edge(edge)}#{serialize_graph_node(node)}"
