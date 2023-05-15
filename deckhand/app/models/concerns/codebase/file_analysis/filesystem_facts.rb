@@ -34,34 +34,50 @@ class Codebase::FileAnalysis::FilesystemFacts < Struct.new(:codebase, :root_path
     # TODO we should be prompting the LLM to determine if we should recurse into this directory
     if base_name == ".git"
       node[:properties][:git_dir] = true
-      return
+      return node
     end
     if base_name == "node_modules"
       node[:properties][:node_modules] = true
-      return
+      return node
     end
 
     ignored = `cd #{root_path}; git check-ignore #{relative_path}`
     if ignored.present?
       node[:properties][:git_ignored] = true
-      return
+      return node
     end
 
     save_file_entry_node(node, root: root)
 
-    bubbled_properties = {}
+    child_properties = {}
     Dir.entries(path).each do |entry|
       next if entry == "." || entry == ".."
 
       entry_path = File.join(path, entry)
-      bubbled_properties[entry] = if File.directory?(entry_path)
+      child_properties[entry] = if File.directory?(entry_path)
         analyze_directory(entry_path)
       else
         analyze_file(entry_path)
       end
     end
+    
+    # we count the file extensions of the files that we just analyzed
+    extensions = child_properties.values.reduce({}) do |acc, child|
+      if child[:labels].include?("file")
+        ext = child[:properties][:ext]
+        acc[ext] ||= 0
+        acc[ext] += 1
+      elsif child[:labels].include?("directory")
+        next acc unless child[:properties][:file_extensions]
+        child[:properties][:file_extensions].each do |ext, count|
+          acc[ext] ||= 0
+          acc[ext] += count
+        end
+      end
+      acc
+    end
 
-    node[:properties][:contents] = bubbled_properties
+    node[:properties][:file_extensions] = extensions 
 
     node
   end
