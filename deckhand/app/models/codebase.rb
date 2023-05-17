@@ -48,7 +48,9 @@ class Codebase < ApplicationRecord
   # - What operating system dependencies are required?
   def discover_basic_facts
     Codebase::FileAnalysis::FilesystemFacts.run(self)
+  end
 
-
+  def discover_testing_infrastructure
+    Codebase::FileAnalysis::TestingInfrastructure.run(self)
   end
 end
