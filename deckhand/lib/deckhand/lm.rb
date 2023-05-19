@@ -28,7 +28,7 @@ class Deckhand::Lm
     end
   end
 
-  DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities."
+  DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities"
 
   def self.formatted_prompt_system(format, example: nil)
     DEFAULT_SYSTEM.gsub(".", ", formatting your answers as #{format} documents. For example an answer could be:\n#{example}\n")
@@ -45,13 +45,19 @@ class Deckhand::Lm
       max_tokens: max_tokens
     }
 
+    puts "Prompting.."
     response = OpenAIClient.chat(parameters: parameters)
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
     puts response["choices"].inspect
     response["choices"].first
   end
 
-  def self.tool_using_and_chaining_prompt(tools)
+  def self.all_tools
+    Deckhand::Tools.constants.map { |c| Deckhand::Tools.const_get(c) }
+  end
+
+  def self.tool_using_and_chaining_prompt(question, tools: all_tools)
+    # TODO maybe also postulate theories before running tools?
     %Q{
 To make sure the final answer is correct start out by listing observations based on the information you have about
 the problem so far. Start each observation with the string "O: ". Start your final answer with the string "A: ". If
@@ -76,7 +82,7 @@ Given a codebase with the following files in the root directory:
 - Gemfile
 - README.md
 - app.rb
-- test.rb
+- app_spec.rb
 
 What command should I run to run the tests?
 
