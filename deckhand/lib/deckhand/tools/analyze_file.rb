@@ -14,8 +14,13 @@ class Deckhand::Tools::AnalyzeFile
     "#{name} <file_path> <question>"
   end
 
-  def self.run(*args)
-    new(*args).run()
+  def self.example
+    "#{name} config/database.yml What database is configured?"
+  end
+
+  def self.run(args)
+    file_path, question = args.split(" ", 2)
+    new(file_path, question).run()
   end
 
   def initialize(file_path, question)
@@ -28,11 +33,11 @@ class Deckhand::Tools::AnalyzeFile
     lines = text.lines
     total = lines.size
     chunk_increment = window_size - window_overlap
-    total_chunks = (total - window_size) / chunk_increment
+    total_chunks = (total / chunk_increment.to_f).ceil
     iteration = 0
     loop do
       iteration += 1
-      remaining_chunks = total_chunks - iteration - 1
+      remaining_chunks = (total_chunks - iteration - 1).clamp(0, total_chunks)
       window = lines[position..window_size].join("\n")
       if window.nil? || window.empty?
         break yield "", remaining_chunks
@@ -73,13 +78,14 @@ Respond with one of the following:
  - OBSERVE <observation> to make an observation 
  - ANSWER Your answer
 
-You must come up with an answer if there are no chunks remaining.
+You must come up with an answer if there are no chunks remaining. If there is information that could be relevant to
+the final answer you should make an observation.
 
 ## Chunk
 
 ```
 #{window}
-````
+```
 
 ## Question
 #{@question}
@@ -103,6 +109,5 @@ You must come up with an answer if there are no chunks remaining.
         next response 
       end
     end
-
   end
 end

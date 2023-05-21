@@ -46,9 +46,10 @@ class Deckhand::Lm
     }
 
     puts "Prompting.."
+    # puts "\n----\n#{prompt_text}\n----\n"
     response = OpenAIClient.chat(parameters: parameters)
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
-    puts response["choices"].inspect
+    # puts response["choices"].inspect
     response["choices"].first
   end
 
@@ -57,15 +58,20 @@ class Deckhand::Lm
   end
 
   def self.tool_using_and_chaining_prompt(question, tools: all_tools)
+    history = []
     # TODO maybe also postulate theories before running tools?
-    %Q{
-To make sure the final answer is correct start out by listing observations based on the information you have about
-the problem so far. Start each observation with the string "O: ". Start your final answer with the string "A: ". If
-you don't have enough information to answer the question you can instead request information from a tool.
+
+    loop do
+      prompt_text = %Q{
+# Solving a problem with tools
+
+To make sure the final answer is correct work it out step by step by formulating thoughts and observations based on the information you have about
+the problem. Start each observation with the string "O: ". Start each thought with the string "T: ". Start your final answer with the string "A: ". When
+you need more information to answer the question definitively request information from a tool.
 
 The following tools are available:
 
-#{tools.map { |t| "* #{t.name}: #{t.description}" }.join("\n")}
+#{tools.map { |t| "* #{t.usage} # #{t.description}" }.join("\n")}
 
 You can use these tools by prefixing your answer with a question mark (?) and then the name of the tool and then your question. For example:
 
@@ -73,31 +79,83 @@ You can use these tools by prefixing your answer with a question mark (?) and th
 
 The result of the of the tool will be appended to your answer prefixed with a greater than sign (>).      
 
+## Example
+
 A full example of an interaction could be:
 
 ```
 Question:
-Given a codebase with the following files in the root directory:
-
-- Gemfile
-- README.md
-- app.rb
-- app_spec.rb
 
 What command should I run to run the tests?
 
 Answer:
-O: The codebase has a Gemfile
-?analyze_file Gemfile What test framework is referenced in this file?
+T: To know what command to run to run the tests I need to know what test framework is used
+?list_files .
+> Files in .:
+./Gemfile
+./README.md
+./app.rb
+./spec
+T: If a codebase has a Gemfile it might contain a reference to a test framework
+T: If a codebase has a spec directory it might use RSpec
+?analyze_file Gemfile what test frameworks are required by the Gemfile?
 > RSpec
-O: The codebase uses RSpec
+T: If a codebase has a Gemfile it uses bundler to run commands
 A: bundle exec rspec
 ```
 
-This concludes the instructions. Now answer the following question:
+This concludes the instructions.
 
+## Assignment
+
+This is the question you are trying to answer:
+
+```
 #{question}
-}
+```
 
+## Interaction history
+
+These are the steps already taken to answer the question:
+
+#{history.join("\n")}
+
+## Next step or answer
+
+This is the next step you should take or the final answer:
+}
+      responses = prompt(prompt_text)["message"]["content"].lines.reject(&:blank?).map(&:strip)
+      responses.each do |response|
+        # puts "Response from LLM:\n----\n#{response}\n----\n"
+        history << response
+        if response =~ /O:/
+          history << response
+          puts "Made observation: #{history.last}"
+        elsif response =~ /T:/
+          history << response
+          puts "Formulated theory: #{history.last}"
+        elsif response =~ /A:/
+          puts "Gave answer: #{response}"
+          return response
+        elsif response =~ /\?(.*)/
+          tool_name, arguments = $1.split(" ", 2)
+
+          tool = tools.find { |t| t.name == tool_name }
+
+          if tool
+            puts "Using tool #{tool_name} with arguments #{arguments}"
+            tool_response = tool.run(*arguments)
+            history << "> #{tool_response}"
+            # puts "Got response from tool: #{tool_response}"
+          else
+            puts "Unknown tool: #{tool_name}"
+            return response
+          end
+        else
+          puts "Unknown response: #{response}"
+          history << "E: You said: #{response}, but did not give a prefix to indicate if this was a thought, observation, tool request or answer. Please try again."
+        end
+      end
+    end
   end
 end
