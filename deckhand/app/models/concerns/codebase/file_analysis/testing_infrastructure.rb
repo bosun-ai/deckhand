@@ -18,6 +18,8 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, keyw
   # For each of those scripts we want to receive a coverage report at the end of the run.
   def analyze_codebase
     # First we need to find out if the codebase has any test framework at all.
-    Deckhand::Lm.prompt("Does the codebase have any tests?", system: Deckhand::Lm.formatted_prompt_system("json", example: '{ "has_tests": true }'))
+    question = "Does the codebase have any tests?"
+    analysis = Deckhand::Lm.tool_using_and_chaining_prompt(question)
+    JSON.parse(Deckhand::Lm.reformat_answer(question, analysis, "json", example: { "has_tests": true }.to_json))
   end
 end

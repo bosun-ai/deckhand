@@ -28,10 +28,25 @@ class Deckhand::Lm
     end
   end
 
-  DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities"
+  DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities."
 
-  def self.formatted_prompt_system(format, example: nil)
-    DEFAULT_SYSTEM.gsub(".", ", formatting your answers as #{format} documents. For example an answer could be:\n#{example}\n")
+  def self.reformat_answer(question, answer, format, example: nil)
+    format_prompt = %Q{When asked the question:
+
+#{question}
+
+You responded with:
+
+#{answer}
+
+Please reformat your answer as a #{format} document. For example:
+
+#{example}
+
+Reformatted answer:
+}
+    system = "You are an application that reformats answers into #{format} documents. Your answers are always syntactically correct and have no extra information."
+    prompt(format_prompt, system: system)["message"]["content"]
   end
 
   def self.prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
@@ -49,8 +64,12 @@ class Deckhand::Lm
     # puts "\n----\n#{prompt_text}\n----\n"
     response = OpenAIClient.chat(parameters: parameters)
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
-    # puts response["choices"].inspect
-    response["choices"].first
+    choices = response["choices"]
+    if choices.count > 1
+      puts "Got response with multiple choices: #{choices.inspect}"
+    end
+    puts "\n\nChoices: #{choices.inspect}\n\n"
+    choices.first
   end
 
   def self.all_tools
@@ -59,7 +78,6 @@ class Deckhand::Lm
 
   def self.tool_using_and_chaining_prompt(question, tools: all_tools)
     history = []
-    # TODO maybe also postulate theories before running tools?
 
     loop do
       prompt_text = %Q{
@@ -127,7 +145,6 @@ This is the next step you should take or the final answer:
       responses = prompt(prompt_text)["message"]["content"].lines.reject(&:blank?).map(&:strip)
       responses.each do |response|
         # puts "Response from LLM:\n----\n#{response}\n----\n"
-        history << response
         if response =~ /O:/
           history << response
           puts "Made observation: #{history.last}"
@@ -153,6 +170,13 @@ This is the next step you should take or the final answer:
           end
         else
           puts "Unknown response: #{response}"
+
+          puts "\n\nHistory: #{history.inspect}\n\n"
+          puts "\n\nPrompt: #{prompt_text}\n\n"
+          puts "\n\nResponses: #{responses.inspect}\n\n"
+          
+          raise "Unknown response: #{response}"
+
           history << "E: You said: #{response}, but did not give a prefix to indicate if this was a thought, observation, tool request or answer. Please try again."
         end
       end
