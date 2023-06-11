@@ -68,7 +68,6 @@ Reformatted answer:
     if choices.count > 1
       puts "Got response with multiple choices: #{choices.inspect}"
     end
-    puts "\n\nChoices: #{choices.inspect}\n\n"
     choices.first
   end
 
@@ -76,12 +75,21 @@ Reformatted answer:
     Deckhand::Tools.constants.map { |c| Deckhand::Tools.const_get(c) }
   end
 
+  def self.summarize_tools(tools)
+    tools.map { |t| "* #{t.usage} # #{t.description}" }.join("\n")
+  end
+
   def self.tool_using_and_chaining_prompt(question, tools: all_tools)
+
+    # TODO: it hallucinates sequences sometimes. To fix this I think we have to split up the prompts into generating
+    # theories and observations, and then asking if based on the information it can make a conclusive answer or if it
+    # needs more information. This can be combined with the fancy step of solving each theory as a separate problem
+    # seperately and then combining the results.
+
     history = []
 
     loop do
-      prompt_text = %Q{
-# Solving a problem with tools
+      prompt_text = %Q{# Solving a problem with tools
 
 To make sure the final answer is correct work it out step by step by formulating thoughts and observations based on the information you have about
 the problem. Start each observation with the string "O: ". Start each thought with the string "T: ". Start your final answer with the string "A: ". When
@@ -89,7 +97,7 @@ you need more information to answer the question definitively request informatio
 
 The following tools are available:
 
-#{tools.map { |t| "* #{t.usage} # #{t.description}" }.join("\n")}
+#{summarize_tools(tools)}
 
 You can use these tools by prefixing your answer with a question mark (?) and then the name of the tool and then your question. For example:
 

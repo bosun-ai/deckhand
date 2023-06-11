@@ -27,7 +27,7 @@ class Deckhand::Tools::ListFiles
   def run
     files = Dir.glob(@file_path + "/*")
     %Q{Files in #{@file_path}:
-#{files.map{|l| l.indent(2)}.join("\n")}
+#{files.join("\n").indent(2)}
 End of files
     }
   end
