@@ -1,15 +1,17 @@
-class Deckhand::Tasks::InvestigateWithTools
-  def run(question, tools: all_tools)
+module Deckhand::Tasks
+class InvestigateWithTools
+  include Deckhand::Lm
 
-    # TODO: it hallucinates sequences sometimes. To fix this I think we have to split up the prompts into generating
-    # theories and observations, and then asking if based on the information it can make a conclusive answer or if it
-    # needs more information. This can be combined with the fancy step of solving each theory as a separate problem
-    # seperately and then combining the results.
+  attr_accessor :history, :tools, :question
 
-    history = []
+  def initialize(question: nil, tools: all_tools)
+    @question = question
+    @tools = tools
+    @history = []
+  end
 
-    loop do
-      prompt_text = %Q{# Solving a problem with tools
+  def prompt_text
+%Q{# Solving a problem with tools
 
 To make sure the final answer is correct work it out step by step by formulating thoughts and observations based on the information you have about
 the problem. Start each observation with the string "O: ". Start each thought with the string "T: ". Start your final answer with the string "A: ". When
@@ -70,6 +72,17 @@ These are the steps already taken to answer the question:
 
 This is the next step you should take or the final answer:
 }
+  end
+
+  def run
+    # TODO: it hallucinates sequences sometimes. To fix this I think we have to split up the prompts into generating
+    # theories and observations, and then asking if based on the information it can make a conclusive answer or if it
+    # needs more information. This can be combined with the fancy step of solving each theory as a separate problem
+    # seperately and then combining the results.
+
+    history = []
+
+    loop do
       responses = prompt(prompt_text)["message"]["content"].lines.reject(&:blank?).map(&:strip)
       responses.each do |response|
         # puts "Response from LLM:\n----\n#{response}\n----\n"
@@ -110,4 +123,5 @@ This is the next step you should take or the final answer:
       end
     end
   end
+end
 end

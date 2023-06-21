@@ -1,4 +1,7 @@
-class Deckhand::Tasks::ReformatAnswer
+module Deckhand::Tasks
+class ReformatAnswer
+  include Deckhand::Lm
+
   def run(question, answer, format, example: nil)
     format_prompt = %Q{When asked the question:
 
@@ -17,4 +20,5 @@ Reformatted answer:
     system = "You are an application that reformats answers into #{format} documents. Your answers are always syntactically correct and have no extra information."
     prompt(format_prompt, system: system)["message"]["content"]
   end
+end
 end

@@ -19,7 +19,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, keyw
   def analyze_codebase
     # First we need to find out if the codebase has any test framework at all.
     question = "Does the codebase have any tests?"
-    analysis = Deckhand::Lm.tool_using_and_chaining_prompt(question)
-    JSON.parse(Deckhand::Lm.reformat_answer(question, analysis, "json", example: { "has_tests": true }.to_json))
+    analysis = Deckhand::Tasks::InvestigateWithTools.new.run(question)
+    JSON.parse(Deckhand::Tasks::ReformatAnswer.new.run(question, analysis, "json", example: { "has_tests": true }.to_json))
   end
 end

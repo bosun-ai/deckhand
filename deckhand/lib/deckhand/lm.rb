@@ -1,4 +1,4 @@
-class Deckhand::Lm
+module Deckhand::Lm
   MODELS = {
     code: 'code-davinci-002',
     very_cheap: 'text-babbage-001', # $0.0005 / 1K tokens
@@ -8,7 +8,7 @@ class Deckhand::Lm
     very_large: 'gpt-4-32k' # $0.06 / 1K tokens
   }
 
-  def self.embedding(text)
+  def embedding(text)
     response = OpenAIClient.embeddings(
       parameters: {
         model: 'text-embedding-ada-002', input: text 
@@ -17,7 +17,7 @@ class Deckhand::Lm
     response["data"].first["embedding"]
   end
 
-  def self.cached_embedding(text)
+  def cached_embedding(text)
     text_hash = Digest::SHA256.hexdigest(text)
     if embedding = RClient.json_get("embeddings_cache:#{text_hash}", "$.v")
       embedding.first
@@ -30,7 +30,7 @@ class Deckhand::Lm
 
   DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities."
 
-  def self.prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
+  def prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
     model = MODELS[mode]
     parameters = {
       model: model,
@@ -52,11 +52,11 @@ class Deckhand::Lm
     choices.first
   end
 
-  def self.all_tools
+  def all_tools
     Deckhand::Tools.constants.map { |c| Deckhand::Tools.const_get(c) }
   end
 
-  def self.summarize_tools(tools)
+  def summarize_tools(tools)
     tools.map { |t| "* #{t.usage} # #{t.description}" }.join("\n")
   end
 

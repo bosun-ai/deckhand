@@ -1,5 +1,8 @@
-module Deckhand::Tasks::FormulateTheories
-  def self.run(question, theory, observations, tools: all_tools)
+module Deckhand::Tasks
+class FormulateTheories
+  include Deckhand::Lm
+
+  def run(question, theory, observations, tools: all_tools)
     prompt_text = %Q{# Solving a problem with tools
   While formulating an answer to the following question:
 
@@ -21,4 +24,5 @@ module Deckhand::Tasks::FormulateTheories
   -}
     prompt(prompt_text)
   end
+end
 end
