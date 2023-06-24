@@ -2,12 +2,12 @@ module Deckhand::Tasks
 class InvestigateWithTools
   include Deckhand::Lm
 
-  attr_accessor :history, :tools, :question
+  attr_accessor :context, :tools, :question
 
   def initialize(question: nil, tools: all_tools)
     @question = question
     @tools = tools
-    @history = []
+    @context = []
   end
 
   def prompt_text
@@ -62,11 +62,11 @@ This is the question you are trying to answer:
 #{question}
 ```
 
-## Interaction history
+## Interaction context
 
 These are the steps already taken to answer the question:
 
-#{history.join("\n")}
+#{context.join("\n")}
 
 ## Next step or answer
 
@@ -80,18 +80,18 @@ This is the next step you should take or the final answer:
     # needs more information. This can be combined with the fancy step of solving each theory as a separate problem
     # seperately and then combining the results.
 
-    history = []
+    context = []
 
     loop do
       responses = prompt(prompt_text)["message"]["content"].lines.reject(&:blank?).map(&:strip)
       responses.each do |response|
         # puts "Response from LLM:\n----\n#{response}\n----\n"
         if response =~ /O:/
-          history << response
-          puts "Made observation: #{history.last}"
+          context << response
+          puts "Made observation: #{context.last}"
         elsif response =~ /T:/
-          history << response
-          puts "Formulated theory: #{history.last}"
+          context << response
+          puts "Formulated theory: #{context.last}"
         elsif response =~ /A:/
           puts "Gave answer: #{response}"
           return response
@@ -103,7 +103,7 @@ This is the next step you should take or the final answer:
           if tool
             puts "Using tool #{tool_name} with arguments #{arguments}"
             tool_response = tool.run(*arguments)
-            history << "> #{tool_response}"
+            context << "> #{tool_response}"
             # puts "Got response from tool: #{tool_response}"
           else
             puts "Unknown tool: #{tool_name}"
@@ -112,13 +112,13 @@ This is the next step you should take or the final answer:
         else
           puts "Unknown response: #{response}"
 
-          puts "\n\nHistory: #{history.inspect}\n\n"
+          puts "\n\ncontext: #{context.inspect}\n\n"
           puts "\n\nPrompt: #{prompt_text}\n\n"
           puts "\n\nResponses: #{responses.inspect}\n\n"
           
           raise "Unknown response: #{response}"
 
-          history << "E: You said: #{response}, but did not give a prefix to indicate if this was a thought, observation, tool request or answer. Please try again."
+          context << "E: You said: #{response}, but did not give a prefix to indicate if this was a thought, observation, tool request or answer. Please try again."
         end
       end
     end

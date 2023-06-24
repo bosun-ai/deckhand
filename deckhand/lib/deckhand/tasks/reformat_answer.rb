@@ -2,7 +2,16 @@ module Deckhand::Tasks
 class ReformatAnswer
   include Deckhand::Lm
 
-  def run(question, answer, format, example: nil)
+  attr_accessor :question, :answer, :format, :example
+
+  def initialize(question, answer, format, example: nil)
+    @question = question
+    @answer = answer
+    @format = format
+    @example = example
+  end
+
+  def run
     format_prompt = %Q{When asked the question:
 
 #{question}

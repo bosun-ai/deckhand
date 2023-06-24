@@ -2,12 +2,12 @@ module Deckhand::Tasks
 class SplitStepInvestigate
   include Deckhand::Lm
 
-  attr_accessor :history, :tools, :question
+  attr_accessor :context, :tools, :question
 
-  def initialize(question, history: [], tools: all_tools)
+  def initialize(question, context: [], tools: all_tools)
     @question = question
     @tools = tools
-    @history = history
+    @context = context
   end
 
   def run
@@ -15,7 +15,7 @@ class SplitStepInvestigate
 
     # 1. We have a question and some information about the context of the question.
     # 2. We gather more information about the context of the question by using tools and making observations.
-    MakeObservations.new(question: question, history: history, tools: tools).run
+    MakeObservations.new(question: question, context: context, tools: tools).run
     # 3. We formulate theories based on the question and the observations.
     # 4. We choose a theory to investigate.
     # 5. We try to immediately prove the theory based on the current information.

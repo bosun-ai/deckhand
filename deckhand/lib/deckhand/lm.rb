@@ -53,7 +53,9 @@ module Deckhand::Lm
   end
 
   def all_tools
+    # HACK next line is needed to load all tools in development mode
     Deckhand::Tools.constants.map { |c| Deckhand::Tools.const_get(c) }
+    Deckhand::Tools::Tool.descendants
   end
 
   def summarize_tools(tools)

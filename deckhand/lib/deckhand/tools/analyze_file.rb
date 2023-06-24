@@ -1,31 +1,28 @@
-class Deckhand::Tools::AnalyzeFile
+module Deckhand::Tools
+class AnalyzeFile < Tool
   WINDOW_SIZE = 200
   WINDOW_OVERLAP = 5
+
+  attr_accessor :file_path, :question
 
   def self.name
     "analyze_file"
   end
 
   def self.description
-    "Ask a question about a file"
+    "Ask a question about a single file"
   end
 
   def self.usage
     "#{name} <file_path> <question>"
   end
 
+  def self.arguments_shape
+    {"file_path" => "some_path", "question" => "some_question"}
+  end
+
   def self.example
     "#{name} config/database.yml What database is configured?"
-  end
-
-  def self.run(args)
-    file_path, question = args.split(" ", 2)
-    new(file_path, question).run()
-  end
-
-  def initialize(file_path, question)
-    @file_path = file_path
-    @question = question
   end
   
   def scan_text(text, window_size: 20, window_overlap: 5, &block)
@@ -49,10 +46,13 @@ class Deckhand::Tools::AnalyzeFile
   end
 
   def run
-    # read the file and then pass it into a LLM together with the question
-    return "That file does not exist" if !File.exist?(@file_path)
+    self.file_path = arguments["file_path"]
+    self.question = arguments["question"]
 
-    file = File.read(@file_path)
+    # read the file and then pass it into a LLM together with the question
+    return "That file does not exist" if !File.exist?(file_path)
+
+    file = File.read(file_path)
 
     i = 0
     
@@ -96,7 +96,7 @@ the final answer you should make an observation.
       # observations made and it concludes that there is no test framework. When given a window of 200 lines it works.
 
       # puts "Prompting LLM:\n----\n#{prompt}\n----\n"
-      response = Deckhand::Lm.prompt(prompt)["message"]["content"].strip
+      response = self.prompt(prompt)["message"]["content"].strip
       # puts "Response from LLM:\n----\n#{response}\n----\n"
 
       if response =~ /CONTINUE/
@@ -110,4 +110,5 @@ the final answer you should make an observation.
       end
     end
   end
+end
 end
