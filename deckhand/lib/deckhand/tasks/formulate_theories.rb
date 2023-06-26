@@ -1,28 +1,19 @@
 module Deckhand::Tasks
-class FormulateTheories
+class FormulateTheories < Task
   include Deckhand::Lm
 
-  def run(question, theory, observations, tools: all_tools)
-    prompt_text = %Q{# Solving a problem with tools
-  While formulating an answer to the following question:
+  def run
+    prompt_text = %Q{# Formulating theories
+While formulating an answer to the following question:
 
-    #{question}
+#{question.indent(2)}
 
-  We postulate the following theory:
+#{context_prompt}
 
-    #{theory}
-
-  We have the following tools to our disposal:
-
-  #{summarize_tools(tools)}
-
-  We have established the following observations:
-
-  #{observations.map {|o| "  - #{o}"}.join("\n")}
-
-  Based on this theory the following observations will get us closer to an answer:
+Based on this information, we can formulate the following theories that might help us answer the question:
   -}
-    prompt(prompt_text)
+    theories = prompt(prompt_text)["message"]["content"].split(" - ").map(&:strip)
+    theories
   end
 end
 end

@@ -1,14 +1,6 @@
 module Deckhand::Tasks
-class InvestigateWithTools
+class InvestigateWithTools < Task
   include Deckhand::Lm
-
-  attr_accessor :context, :tools, :question
-
-  def initialize(question: nil, tools: all_tools)
-    @question = question
-    @tools = tools
-    @context = []
-  end
 
   def prompt_text
 %Q{# Solving a problem with tools

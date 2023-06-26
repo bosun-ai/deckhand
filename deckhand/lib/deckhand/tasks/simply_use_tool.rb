@@ -1,26 +1,6 @@
 module Deckhand::Tasks
-  class SimplyUseTool
+  class SimplyUseTool < Task
     include Deckhand::Lm
-  
-    attr_accessor :context, :tools, :question
-  
-    def initialize(question, context: [], tools: all_tools)
-      @question = question
-      @tools = tools
-      @context = context
-    end
-  
-    def context_prompt
-      if context.blank?
-        ""
-      else
-        %Q{You are given the following context to the question:
-          
-  #{context.join("\n\n").indent(2)}
-  
-  }
-      end
-    end
   
     def run
       prompt_text = %Q{# Using a tool 

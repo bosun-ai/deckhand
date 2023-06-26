@@ -1,24 +1,27 @@
-module Deckhand::Tasks::MakeObservations
-  def run(question, theory, observations, tools: all_tools)
-    prompt_text = %Q{# Solving a problem with tools
-  While formulating an answer to the following question:
+module Deckhand::Tasks
+  class MakeObservations < Task
 
-    #{question}
+    def run
+      prompt_text = %Q{# Solving a problem with tools
+While formulating an answer to the following question:
 
-  We postulate the following theory:
+#{question.indent(2)}
 
-    #{theory}
+We postulate the following theory:
 
-  We have the following tools to our disposal:
+#{theory.indent(2)}
 
-  #{summarize_tools(tools)}
+We have the following tools to our disposal:
 
-  We have established the following observations:
+#{summarize_tools(tools).indent(2)}
 
-  #{observations.map {|o| "  - #{o}"}.join("\n")}
+We have established the following observations:
 
-  Based on this theory the following observations will get us closer to an answer:
-  -}
-    prompt(prompt_text)
+#{observations.map {|o| "  - #{o}"}.join("\n")}
+
+Based on this theory the following observations will get us closer to an answer:
+    -}
+      prompt(prompt_text)
+    end
   end
 end

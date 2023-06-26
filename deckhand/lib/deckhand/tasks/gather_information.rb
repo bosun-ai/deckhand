@@ -1,27 +1,5 @@
 module Deckhand::Tasks
-class GatherInformation
-  include Deckhand::Lm
-
-  attr_accessor :context, :tools, :question
-
-  def initialize(question, context: [], tools: all_tools)
-    @question = question
-    @tools = tools
-    @context = context
-  end
-
-  def context_prompt
-    if context.blank?
-      ""
-    else
-      %Q{We have the following information about the context of the question:
-        
-#{context.join("\n\n").indent(2)}
-
-}
-    end
-  end
-
+class GatherInformation < Task
   def run
     prompt_text = %Q{# Gathering information
 We are trying to answer the following question:
