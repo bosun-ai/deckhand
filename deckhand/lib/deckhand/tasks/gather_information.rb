@@ -6,7 +6,7 @@ We are trying to answer the following question:
 
   #{question}
 
-#{context_prompt}  
+#{context_prompt}
 
 To have a better chance of solving the question we should get answers to the following question(s):
 
@@ -14,11 +14,9 @@ To have a better chance of solving the question we should get answers to the fol
     information_questions = prompt(prompt_text)["message"]["content"]
 
     information_questions.split(" - ").map(&:strip).each do |question|
-      result = SimplyUseTool.new(question, context: context, tools: tools).run
+      result = SimplyUseTool.run(question, context: context, tools: tools)
       if result
-        context.push "O: #{result}"
-      else
-        context.push "Q: #{question}"
+        context.add_observation(result)
       end
     end
   end

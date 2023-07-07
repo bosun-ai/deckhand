@@ -4,7 +4,7 @@ module Deckhand::Tasks
 
     attr_accessor :context, :tools, :question
 
-    def initialize(question, context: [], tools: all_tools)
+    def initialize(question, context: Deckhand::Context.new, tools: all_tools)
       @question = question
       @tools = tools
       @context = context

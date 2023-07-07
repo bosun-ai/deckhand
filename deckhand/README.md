@@ -107,7 +107,7 @@ Because files often don't fit into the prompt context, we have feed in the files
 
 (sidenote: at some point a system will probably be able to write a parser that removes irrelevant information from files in arbitrary programming languages)
 
-### Counterpoint
+#### Counterpoint
 
 Instead of building a knowledge base a priori, we could also gather knowledge on demand. This is more how Github Copilot seems to do it, where they only have context about recent files that you've opened.
 
@@ -138,3 +138,49 @@ Example prompt:
 For each step of gathering knowledge, the system will perform search queries, both in the codebase and online.
 
 I think it will be more effective to perform codebase search queries in a graph database than it would be in the raw codebase, just because we can more easily isolate relevant facts.
+
+### Automatic reasoning
+
+To discover information and establish useful facts about the codebase we need an automatic reasoning system that can
+gather information, formulate theories and consider their correctness.
+
+Because validating a theory usually involves formulating and validating more theories, the reasoning process will be
+a tree, a DAG or maybe even a full graph. The graph will grow as information is gathered, new theories are generated,
+validated or refuted. Since it is a graph, it can be traversed in several ways: naively in either depth first or breadth
+first, or more sophisticated in a way where different branches are weighted by a machine learning system and the most
+promising (or most cheap?) options are explored first.
+
+If we go breadth first we might waste a lot of time expanding the search space indefinitely. If we go depth first we
+might spend a lot of effort trying to establish something that takes too much effort to establish. An easy way to
+avoid this would be to always order options by some metric decided by the LLM. For example ask the LLM to reorder the
+list of options by chance of likelihood of truth, or the expected amount of work.
+
+#### Architecture
+
+We split up the different tasks in the reasoning system in their own modules. Each task has an input and an output
+object that's specific to that task. In addition they receive a context object from whatever system invoked them. The
+context object needs to be carefully designed so it can be made useful to any task.
+
+##### Context
+
+A context establishes a history of what has happened before the current point. In that way it is like an event log that
+has multiple types of events added to it. A task could ask of it all events, or maybe only events of a certain type.
+
+The context could have associated helper functions that formulate the context in a way that is suitable for LLM
+prompting.
+
+Besides controlling and accessing the log of historic events, a context might also be rolled up into a parent context
+when a chain of reasoning is wrapped up. At first I thought this might be a function that's implemented by the context
+but now that I've typed this out I think it makes more sense if this is something that's done by the task that is
+wrapping up.
+
+#### Information types
+
+As the system is reasoning different types of information are generated:
+
+    observations, theories, conclusions, tool outputs
+
+#### Execution
+
+There is a simple process for working towards a conclusion to any theory, but there are many branches within that
+process.
