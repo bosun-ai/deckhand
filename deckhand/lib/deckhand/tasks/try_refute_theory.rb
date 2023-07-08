@@ -1,7 +1,7 @@
 module Deckhand::Tasks
   class TryRefuteTheory < Task
 
-    attr_accessor :answer, :need_information, :incorrect
+    attr_accessor :correct, :incorrect
 
     def run
       question = self.question[:main_question]
@@ -26,7 +26,7 @@ If you can refute the theory, state why it is incorrect. Begin your answer with 
 ## Answer
 }
       resolution = prompt(prompt_text)["message"]["content"].strip
-      elsif resolution =~ /Correct:/
+      if resolution =~ /Correct:/
         self.correct = resolution.split("Correct:",2).last.strip
       elsif resolution =~ /Incorrect:/
         self.incorrect = resolution.split("Incorrect:",2).last.strip

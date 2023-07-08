@@ -1,4 +1,7 @@
 module Deckhand::Tools
+  class ToolError < StandardError
+  end
+
   class Tool
     include Deckhand::Lm
 
@@ -18,6 +21,9 @@ module Deckhand::Tools
         example: { tool_name: self.class.name, arguments: self.class.arguments_shape}.to_json
       ).run
       @arguments = JSON.parse(reformatted)["arguments"]
+      if @arguments.class != self.class.arguments_shape.class
+        raise ToolError.new("The arguments you gave for tool #{self.class.name} are not in the correct format.")
+      end
     end
 
     def initialize(arguments)

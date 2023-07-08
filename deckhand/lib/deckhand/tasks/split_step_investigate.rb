@@ -24,12 +24,15 @@ module Deckhand::Tasks
         # 4. We choose a theory to investigate.
         theory = choose_theory(theories)
 
+        puts "Exploring theory: #{theory}"
+
         conclusion = nil
         while conclusion.nil?
           # 5. We try to immediately prove the theory based on the current information.
           resolution = TryResolveTheory.run({ main_question: question, theory: theory}, context: context, tools: tools)
 
           if resolution.answer
+            puts "Investigating answer: #{resolution.answer}}"
             # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.
             refutation = TryRefuteTheory.run({ main_question: question, theory: theory, resolution: resolution.answer}, context: context, tools: tools)
 
@@ -42,9 +45,11 @@ module Deckhand::Tasks
 
             # 5b. If we can't immediately answer or all our answers are invalid continue to 6.
           elsif resolution.need_information
+            puts "Gathering more information: #{resolution.need_information}"
             # Add gather informatino to task stack
             GatherInformation.run(resolution.need_information, context: context, tools: tools)
           elsif resolution.incorrect
+            puts "Discarding theory: #{resolution.incorrect}"
             conclusion = false
             # Discard theory
             # TODO try refuting the incorrectness assertion

@@ -13,6 +13,8 @@ To have a better chance of solving the question we should get answers to the fol
   - }
     information_questions = prompt(prompt_text)["message"]["content"]
 
+    puts "Trying to answer the following question(s): #{information_questions}"
+
     information_questions.split(" - ").map(&:strip).each do |question|
       result = SimplyUseTool.run(question, context: context, tools: tools)
       if result

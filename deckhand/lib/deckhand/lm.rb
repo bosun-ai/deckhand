@@ -52,14 +52,14 @@ module Deckhand::Lm
     choices.first
   end
 
-  def all_tools
+  def self.all_tools
     # HACK next line is needed to load all tools in development mode
     Deckhand::Tools.constants.map { |c| Deckhand::Tools.const_get(c) }
     Deckhand::Tools::Tool.descendants
   end
 
   def summarize_tools(tools)
-    tools.map { |t| "* #{t.usage} # #{t.description}" }.join("\n")
+    tools.map { |t| "  * #{t.name}: #{t.description}\n#{t.usage.indent(2)}" }.join("\n")
   end
 
 end

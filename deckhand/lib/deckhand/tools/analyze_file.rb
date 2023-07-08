@@ -14,7 +14,7 @@ class AnalyzeFile < Tool
   end
 
   def self.usage
-    "#{name} <file_path> <question>"
+    "#{name} <file_path> <question>, for example #{example}"
   end
 
   def self.arguments_shape
@@ -50,7 +50,9 @@ class AnalyzeFile < Tool
     self.question = arguments["question"]
 
     # read the file and then pass it into a LLM together with the question
-    return "That file does not exist" if !File.exist?(file_path)
+    raise ToolError.new("Must give a specific file name") if file_path.blank?
+    raise ToolError.new("Path `#{file_path}` does not exist") if !File.exist?(file_path)
+    raise ToolError.new("Path `#{file_path}` is a directory") if File.directory?(file_path)
 
     file = File.read(file_path)
 

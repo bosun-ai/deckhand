@@ -4,10 +4,10 @@ module Deckhand::Tasks
 
     attr_accessor :context, :tools, :question
 
-    def initialize(question, context: Deckhand::Context.new, tools: all_tools)
+    def initialize(question, context: nil, tools: Deckhand::Lm.all_tools)
       @question = question
       @tools = tools
-      @context = context
+      @context = context || Deckhand::Context.new(question)
     end
 
     def context_prompt
@@ -16,13 +16,13 @@ module Deckhand::Tasks
       else
         %Q{You are given the following context to the question:
           
-#{context.join("\n\n").indent(2)}
+#{context.summarize_knowledge.indent(2)}
   
 }
       end
     end
 
-    def self.run(question, context: [], tools: all_tools)
+    def self.run(question, context: nil, tools: Deckhand::Lm.all_tools)
       task = new(question, context: context, tools: tools)
       task.run()
     end

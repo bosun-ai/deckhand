@@ -29,7 +29,7 @@ module Deckhand
 
     def knowledge
       history
-        .filter({|h| [:observation, :information, :conclusion].include? h[:type] })
+        .filter {|h| [:observation, :information, :conclusion].include? h[:type] }
     end
 
     def summarize_knowledge

@@ -30,7 +30,7 @@ your answer with the word "Missing: ". If the theory is incorrect, state why it 
       if resolution =~ /Conclusion:/
         self.answer = resolution.split("Conclusion:",2).last.strip
       elsif resolution =~ /Missing:/
-        self.need_information = missing.split("Missing:",2).last.strip
+        self.need_information = resolution.split("Missing:",2).last.strip
       elsif resolution =~ /Incorrect:/
         self.incorrect = resolution.split("Incorrect:",2).last.strip
       else
