@@ -17,29 +17,30 @@ module Deckhand::Tasks
     end
 
     def tool_using_prompt
-%Q{# Using a tool 
-You are trying to answer the following question:
+%Q{# Using functions
+You are an assisstant that is helping a programmer come up with inputs to functions. The programmer is trying to answer
+the following question:
   
   #{question}
   
 #{context_prompt}  
   
-To get the information needed to answer this question you have the following tools at your disposal:
+To get the information needed to answer this question the programmer has the following fuctions at their disposal:
 
 #{summarize_tools(tools)}
 
 # Task
 
-Complete the following tasks:
+Help the programmer by answering these questions:
 
 a. Specify the name of the tool you will use 
 b. Specify the arguments you will supply to the tool
 
-Be concise, only give the answer without explanation.
+Only use 1 tool from the list of functions, give exactly the arguments as they should be supplied to the function.
 
 #{retry_history}
 
-# Solution
+# Answer
 
 a. }
     end

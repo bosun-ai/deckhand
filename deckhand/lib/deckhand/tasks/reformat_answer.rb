@@ -11,6 +11,10 @@ class ReformatAnswer
     @example = example
   end
 
+  def self.run(question, answer, format, example: nil)
+    new(question, answer, format, example: example).run
+  end
+
   def run
     format_prompt = %Q{When asked the question:
 
