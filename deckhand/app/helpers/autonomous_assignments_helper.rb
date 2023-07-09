@@ -1,0 +1,2 @@
+module AutonomousAssignmentsHelper
+end

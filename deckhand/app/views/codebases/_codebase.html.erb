@@ -14,4 +14,6 @@
     <%= link_to 'Edit this codebase', edit_codebase_path(codebase), class: "rounded-lg py-3 ml-2 px-5 bg-gray-100 inline-block font-medium" %>
     <hr class="mt-6">
   <% end %>
+
+  <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
 </div>

@@ -1,6 +1,6 @@
-class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, keyword_init: true)
-  def self.run(codebase)
-    new(codebase: codebase)
+class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :event_callback, keyword_init: true)
+  def self.run(codebase, &event_callback)
+    new(codebase: codebase, event_callback: event_callback)
       .analyze_codebase()
   end
 
@@ -17,7 +17,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, keyw
   #
   # For each of those scripts we want to receive a coverage report at the end of the run.
   def analyze_codebase
-    root_context = Deckhand::Context.new("Analyzing the codebase")
+    root_context = Deckhand::Context.new("Analyzing the codebase", event_callback: event_callback)
 
     # First we have to establish a basic context of the codebase.
     root_context.add_observation("The codebase is named #{codebase.name}")

@@ -19,13 +19,28 @@ class CodebasesController < ApplicationController
   def edit
   end
 
+  def discover_testing_infrastructure
+    @codebase = Codebase.find(params[:codebase_id])
+    thread = Thread.new do
+      @codebase.discover_testing_infrastructure
+    end
+
+    10.times do
+      break if !thread.alive?
+      sleep 1
+    end
+
+    redirect_to main_deck_url, notice: "Discovering testing infrastructure for codebase."
+  end
+
   # POST /codebases or /codebases.json
   def create
     @codebase = Codebase.new(codebase_params)
 
     respond_to do |format|
       if @codebase.save
-        format.html { redirect_to codebase_url(@codebase), notice: "Codebase was successfully created." }
+        # format.html { redirect_to codebase_url(@codebase), notice: "Codebase was successfully created." }
+        format.html { redirect_to main_deck_url, notice: "Codebase was successfully created." }
         format.json { render :show, status: :created, location: @codebase }
       else
         format.html { render :new, status: :unprocessable_entity }

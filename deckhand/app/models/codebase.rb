@@ -5,6 +5,8 @@ class Codebase < ApplicationRecord
   validates_presence_of :name, on: :create, message: "can't be blank"
   validates_presence_of :url, on: :create, message: "can't be blank"
 
+  has_many :autonomous_assignments, dependent: :destroy
+
   CODEBASE_DIR = Rails.root.join("tmp", "code")
 
   def ensure_name_slug
@@ -51,6 +53,6 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    Codebase::FileAnalysis::TestingInfrastructure.run(self)
+    AutonomousAssignment.run(Codebase::FileAnalysis::TestingInfrastructure, self)
   end
 end

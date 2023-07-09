@@ -1,14 +1,18 @@
 module Deckhand
   class Context
-    attr_accessor :history, :assignment
+    attr_accessor :history, :assignment, :event_callback
 
-    def initialize(assignment)
+    def initialize(assignment, event_callback: nil)
       self.assignment = assignment
       self.history = []
+      self.event_callback = event_callback
     end
 
     def add_history(type:, content: )
+      event = { type: type, content: content}
       history << { type: type, content: content}
+      event_callback.call(event) if event_callback
+      history
     end
 
     def add_observation(observation)
