@@ -7,7 +7,11 @@ class Codebase < ApplicationRecord
 
   has_many :autonomous_assignments, dependent: :destroy
 
-  CODEBASE_DIR = Rails.root.join("tmp", "code")
+  CODEBASE_DIR = if Rails.env.production?
+    "/data/code"
+  else
+    Rails.root.join("tmp", "code")
+  end
 
   def ensure_name_slug
     self.name_slug = name.parameterize if name

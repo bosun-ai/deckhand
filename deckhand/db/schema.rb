@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_07_09_194852) do
+ActiveRecord::Schema[7.0].define(version: 2023_07_16_193403) do
   create_table "autonomous_assignment_events", force: :cascade do |t|
     t.integer "autonomous_assignment_id", null: false
     t.string "event"
@@ -38,6 +38,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_09_194852) do
     t.index ["name_slug"], name: "index_codebases_on_name_slug", unique: true
   end
 
+  create_table "github_access_tokens", force: :cascade do |t|
+    t.integer "codebase_id", null: false
+    t.string "token"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["codebase_id"], name: "index_github_access_tokens_on_codebase_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.string "description"
     t.string "script"
@@ -50,4 +58,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_09_194852) do
 
   add_foreign_key "autonomous_assignment_events", "autonomous_assignments"
   add_foreign_key "autonomous_assignments", "codebases"
+  add_foreign_key "github_access_tokens", "codebases"
 end

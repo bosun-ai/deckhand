@@ -4,7 +4,11 @@ require 'deckhand/process'
 module Task::Runnable
   extend ActiveSupport::Concern
 
-  TASKS_DIR = Rails.root.join("tmp", "tasks")
+  TASKS_DIR = if Rails.env.production?
+    "/data/tasks"
+  else
+    Rails.root.join("tmp", "tasks")
+  end
   STANDARD_TIMEOUT = 3 * 60 # seconds
 
   def run(lines_mode: true, &callback)
