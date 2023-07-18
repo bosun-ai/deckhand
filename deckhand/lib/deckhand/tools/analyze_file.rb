@@ -51,10 +51,13 @@ class AnalyzeFile < Tool
 
     # read the file and then pass it into a LLM together with the question
     raise ToolError.new("Must give a specific file name") if file_path.blank?
-    raise ToolError.new("Path `#{file_path}` does not exist") if !File.exist?(file_path)
-    raise ToolError.new("Path `#{file_path}` is a directory") if File.directory?(file_path)
 
-    file = File.read(file_path)
+    full_file_path = File.join(path_prefix, file_path)
+
+    raise ToolError.new("Path `#{file_path}` does not exist") if !File.exist?(full_file_path)
+    raise ToolError.new("Path `#{file_path}` is a directory") if File.directory?(full_file_path)
+
+    file = File.read(full_file_path)
 
     i = 0
     

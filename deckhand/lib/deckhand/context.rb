@@ -1,11 +1,12 @@
 module Deckhand
   class Context
-    attr_accessor :history, :assignment, :event_callback
+    attr_accessor :history, :assignment, :event_callback, :codebase
 
-    def initialize(assignment, event_callback: nil)
+    def initialize(assignment, codebase: nil, history: [], event_callback: nil)
       self.assignment = assignment
-      self.history = []
+      self.history = history
       self.event_callback = event_callback
+      self.codebase = codebase
     end
 
     def add_history(type:, content: )
@@ -38,6 +39,13 @@ module Deckhand
 
     def summarize_knowledge
       knowledge.map {|h| h[:content] }.join("\n\n")
+    end
+
+    def as_json(*options)
+      {
+        assignment: assignment,
+        history: history
+      }
     end
 
     def deep_dup

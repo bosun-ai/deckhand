@@ -30,7 +30,7 @@ Formatted answer:
 }
       system = "You are an application that reformats answers into #{format} documents. Your answers are always syntactically correct and have no extra information."
       answer = prompt(format_prompt, system: system)["message"]["content"]
-      awnswer.split("``````").first.strip
+      answer.split("``````").first.strip
     end
   end
   end

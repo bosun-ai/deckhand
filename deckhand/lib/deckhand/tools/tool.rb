@@ -5,10 +5,10 @@ module Deckhand::Tools
   class Tool
     include Deckhand::Lm
 
-    attr_accessor :arguments
+    attr_accessor :arguments, :context
 
-    def self.run(arguments)
-      tool = new(arguments)
+    def self.run(arguments, context: nil)
+      tool = new(arguments, context: context)
       tool.infer_arguments()
       tool.run()
     end
@@ -32,8 +32,13 @@ module Deckhand::Tools
       end
     end
 
-    def initialize(arguments)
+    def initialize(arguments, context: nil)
       @arguments = arguments
+      @context = nil
+    end
+
+    def path_prefix
+      context&.codebase&.path
     end
   end
 end

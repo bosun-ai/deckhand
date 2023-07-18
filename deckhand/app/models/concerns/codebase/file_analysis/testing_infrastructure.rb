@@ -21,7 +21,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
 
     # First we have to establish a basic context of the codebase.
     root_context.add_observation("The codebase is named #{codebase.name}")
-    root_context.add_observation("The codebase is located at #{codebase.path}")
+    root_context.add_observation("The codebase is checked out locally and tools can use paths relative to the root of the codebase like `./README.md`.")
 
     question = "What languages and frameworks are used in the codebase?"
 

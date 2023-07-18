@@ -52,6 +52,7 @@ module Deckhand::Tasks
             information_tries += 1
           elsif resolution.incorrect || resolution.need_information
             puts "Discarding theory: #{resolution.incorrect}"
+            context.add_information("Discarded theory: #{resolution.incorrect}")
             conclusion = false
             # Discard theory
             # TODO try refuting the incorrectness assertion

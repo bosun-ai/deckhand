@@ -96,6 +96,16 @@ class Codebase < ApplicationRecord
     end
   end
 
+  def discover_undocumented_files
+    files = AutonomousAssignment.run(Codebase::FileAnalysis::UndocumentedFiles, self)
+    if !files.blank?
+      markdown = %Q{## Undocumented files\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
+\n\nIf you would like for Bosun Deckhand to add documentation to these files, please react with a :+1: to this comment.}
+      html = github_client.markdown(markdown, mode: "gfm", context: name)
+      add_main_issue_comment(html)
+    end
+  end
+
   def describe_project_in_github_issue
     markdown = Deckhand::Tasks::RewriteInMarkdown.run(context)
     html = github_client.markdown(markdown, mode: "gfm", context: name)

@@ -23,10 +23,10 @@ class ListFiles < Tool
   end
 
   def run
-    self.file_path = arguments["file_path"] || "."
+    self.file_path = File.join(path_prefix, arguments["file_path"] || "")
 
     if File.directory?(file_path)
-      files = Dir.glob(@file_path + "/*")
+      files = Dir.glob(@file_path + "/*").map {|f| f.delete_prefix(path_prefix + "/")}
       %Q{Files in #{@file_path}:
   #{files.join("\n").indent(2)}
   End of files

@@ -15,6 +15,8 @@ To have a better chance of solving the question we should get answers to the fol
 
     puts "Trying to answer the following question(s): #{information_questions}"
 
+    context.add_information("Tried to answer question: #{information_questions}")
+
     information_questions.split(" - ").map(&:strip).each do |question|
       result = SimplyUseTool.run(question, context: context, tools: tools)
       if result
