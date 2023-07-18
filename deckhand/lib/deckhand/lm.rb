@@ -5,7 +5,7 @@ module Deckhand::Lm
     cheap: 'gpt-3.5-turbo', # $0.002 / 1K tokens
     instruct: 'text-davinci-003', # $0.02 / 1K tokens
     default: 'gpt-4', # $0.03 / 1K tokens
-    very_large: 'gpt-4-32k' # $0.06 / 1K tokens
+    very_large: 'gpt-3.5-turbo-16k' #
   }
 
   def embedding(text)
@@ -46,8 +46,10 @@ module Deckhand::Lm
     response = OpenAIClient.chat(parameters: parameters)
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
     choices = response["choices"]
-    puts "Got response: #{response}"
-    if choices.count > 1
+    if choices.nil?
+      puts "Invalid OpenAI response: #{response.inspect}"
+      return nil
+    elsif choices.count > 1
       puts "Got response with multiple choices: #{choices.inspect}"
     end
     choices.first

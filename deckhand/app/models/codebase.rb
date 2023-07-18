@@ -86,11 +86,13 @@ class Codebase < ApplicationRecord
   end
 
   def commit(message)
-    system("cd #{path} && git add . && git commit -m '#{message}'")
+    system(%Q{git config --global user.email "139715209+bosun-deckhand[bot]@users.noreply.github.com"})
+    system(%Q{git config --global user.name "bosun-deckhand[bot]"})
+    system(%Q{cd #{path} && git remote set-url origin "#{git_url}" && git add . && git commit -m '#{message}'})
   end
 
-  def git_push(&block)
-    Task.run!(description: "Pushing for #{name}", script: "cd #{path} && git config push.autoSetupRemote true ; git push") do |message|
+  def git_push(branch_name, &block)
+    Task.run!(description: "Pushing for #{name}", script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
       if status = message[:status]
         block.call(status) if block
       end
@@ -148,7 +150,9 @@ class Codebase < ApplicationRecord
   end
 
   def process_event(event)
-    issue_id = event.dig(:issue, :id)
+    issue_id = event.dig(:issue, :number).to_s
+
+    Rails.logger.info "Received event: #{issue_id.inspect}"
 
     if issue_id == github_app_issue_id
       process_main_issue_event(event)
@@ -156,6 +160,7 @@ class Codebase < ApplicationRecord
   end
 
   def process_main_issue_event(event)
+    Rails.logger.info "Received main issue event: #{event.dig(:comment, :user, :login).inspect}"
     if event.dig(:comment, :user, :login) == "bosun-deckhand[bot]"
       process_bot_action_event(event)
     end
@@ -164,6 +169,7 @@ class Codebase < ApplicationRecord
   def process_bot_action_event(event)
     comment = event.dig(:comment, :body)
 
+    puts "Received process_bot_action_event: #{comment.inspect}"
     if comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
       files = comment.split("*")[1..-2].map(&:strip)
       add_documentation_to_undocumented_files(files)
