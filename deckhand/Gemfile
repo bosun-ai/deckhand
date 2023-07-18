@@ -59,6 +59,7 @@ gem 'ansi-to-html'
 gem "ruby-openai"
 gem 'activegraph'
 
+gem 'jwt'
 gem 'octokit'
 
 group :development, :test do

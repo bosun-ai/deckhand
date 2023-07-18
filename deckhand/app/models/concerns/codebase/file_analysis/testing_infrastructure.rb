@@ -23,6 +23,15 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
     root_context.add_observation("The codebase is named #{codebase.name}")
     root_context.add_observation("The codebase is located at #{codebase.path}")
 
+    question = "What languages and frameworks are used in the codebase?"
+
+    answer = Deckhand::Tasks::SplitStepInvestigate.run(question, context: root_context.deep_dup)
+    root_context.add_observation(answer)
+
+    question = "What is the purpose of the project?"
+    answer = Deckhand::Tasks::SplitStepInvestigate.run(question, context: root_context.deep_dup)
+    root_context.add_observation(answer)
+
     # Second we need to find out if the codebase has any test framework at all.
     question = "If the codebase has tests, what test framework is used?"
 
@@ -56,6 +65,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
 
     puts "The codebase has test coverage. Context: #{root_context.summarize_knowledge}"
 
+    codebase.update! context: root_context.summarize_knowledge
     root_context
 
     # analysis = Deckhand::Tasks::InvestigateWithTools.new.run(question)

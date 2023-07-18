@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_07_16_193403) do
+ActiveRecord::Schema[7.0].define(version: 2023_07_17_233419) do
   create_table "autonomous_assignment_events", force: :cascade do |t|
     t.integer "autonomous_assignment_id", null: false
     t.string "event"
@@ -35,6 +35,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_16_193403) do
     t.datetime "updated_at", null: false
     t.boolean "checked_out", default: false
     t.string "name_slug"
+    t.string "github_app_installation_id"
+    t.string "github_app_issue_id"
+    t.string "context"
     t.index ["name_slug"], name: "index_codebases_on_name_slug", unique: true
   end
 

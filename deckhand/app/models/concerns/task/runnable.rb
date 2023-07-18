@@ -36,7 +36,11 @@ module Task::Runnable
         on_out(out)
       elsif err = message[:err]
         on_err(err)
+        # TODO why are we checking the message channel here?
       elsif (status = message[:status]) && message[:channel] == :out
+        update! finished_at: Time.now, exit_code: status.exitstatus
+        on_done(status)
+      elsif (status = message[:status]) && message[:channel] == :err
         update! finished_at: Time.now, exit_code: status.exitstatus
         on_done(status)
       else

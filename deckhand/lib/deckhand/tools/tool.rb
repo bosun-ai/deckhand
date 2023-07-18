@@ -20,7 +20,13 @@ module Deckhand::Tools
         "json",
         example: { tool_name: self.class.name, arguments: self.class.arguments_shape}.to_json
       ).run
-      @arguments = JSON.parse(reformatted)["arguments"]
+
+      begin
+        @arguments = JSON.parse(reformatted)["arguments"]
+      rescue => e
+        raise ToolError.new("The arguments you gave for tool #{self.class.name} are not in the correct format.")
+      end
+
       if @arguments.class != self.class.arguments_shape.class
         raise ToolError.new("The arguments you gave for tool #{self.class.name} are not in the correct format.")
       end

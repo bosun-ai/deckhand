@@ -31,6 +31,7 @@ module Deckhand::Tasks
           # 5. We try to immediately prove the theory based on the current information.
           resolution = TryResolveTheory.run({ main_question: question, theory: theory}, context: context, tools: tools)
 
+          information_tries = 0
           if resolution.answer
             puts "Investigating answer: #{resolution.answer}}"
             # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.
@@ -44,11 +45,12 @@ module Deckhand::Tasks
             end
 
             # 5b. If we can't immediately answer or all our answers are invalid continue to 6.
-          elsif resolution.need_information
+          elsif resolution.need_information && information_tries < 2
             puts "Gathering more information: #{resolution.need_information}"
             # Add gather informatino to task stack
             GatherInformation.run(resolution.need_information, context: context, tools: tools)
-          elsif resolution.incorrect
+            information_tries += 1
+          elsif resolution.incorrect || resolution.need_information
             puts "Discarding theory: #{resolution.incorrect}"
             conclusion = false
             # Discard theory

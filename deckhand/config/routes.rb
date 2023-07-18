@@ -8,9 +8,9 @@ Rails.application.routes.draw do
 
   root "main_deck#show", as: :main_deck
 
-  namespace "github_app" do
-    get 'callback', to: 'github_app#github_app_callback', as: :callback
-    get 'setup', to: 'github_app#github_app_setup', as: :setup
-    post 'event', to: 'github_app#github_app_event', as: :event   
+  resource "github_app", only: [] do
+    get 'callback', to: 'github_app#callback', as: :callback
+    get 'setup', to: 'github_app#setup', as: :setup
+    post 'event', to: 'github_app#event', as: :event   
   end
 end
