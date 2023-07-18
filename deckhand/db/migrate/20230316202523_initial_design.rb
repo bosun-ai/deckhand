@@ -14,9 +14,8 @@ class InitialDesign < ActiveRecord::Migration[7.0]
       t.timestamp :finished_at
 
       t.integer :exit_code
-    
+
       t.timestamps
     end
-    
   end
 end

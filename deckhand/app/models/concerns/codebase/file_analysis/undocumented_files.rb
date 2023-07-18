@@ -9,11 +9,10 @@ class Codebase::FileAnalysis::UndocumentedFiles < Struct.new(:codebase, :event_c
   def analyze_codebase
     tries = 0
     begin
-        
       context = codebase.context.split("\n\n").map do |line|
         {
           type: :observation,
-          content: line
+          content: line,
         }
       end
 

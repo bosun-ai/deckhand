@@ -6,7 +6,7 @@ namespace :openai do
       puts "Model:\n #{model.to_s}"
     else
       models = OpenAIClient.models.list["data"]
-      puts "Models:\n#{models.map {|m| m["id"]}.inspect}"
+      puts "Models:\n#{models.map { |m| m["id"] }.inspect}"
     end
   end
 end

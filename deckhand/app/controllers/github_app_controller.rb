@@ -15,7 +15,7 @@ class GithubAppController < ApplicationController
   def event
     installation = params[:installation]
     repo_name = params.dig(:repository, :full_name)
-    
+
     if installation.present?
       codebase = Codebase.find_by(github_app_installation_id: installation[:id], name: repo_name)
       if codebase

@@ -8,10 +8,10 @@ class Codebase < ApplicationRecord
   has_many :autonomous_assignments, dependent: :destroy
 
   CODEBASE_DIR = if Rails.env.production?
-    "/data/code"
-  else
-    Rails.root.join("tmp", "code")
-  end
+      "/data/code"
+    else
+      Rails.root.join("tmp", "code")
+    end
 
   ADD_DOCUMENTATION_HEADER = "## Undocumented files"
 
@@ -116,7 +116,7 @@ class Codebase < ApplicationRecord
   def discover_undocumented_files
     files = AutonomousAssignment.run(Codebase::FileAnalysis::UndocumentedFiles, self)
     if !files.blank?
-      markdown = %Q{#{ ADD_DOCUMENTATION_HEADER }\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
+      markdown = %Q{#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
 \n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n}
       # html = github_client.markdown(markdown, mode: "gfm", context: name)
       # add_main_issue_comment(html)
@@ -176,10 +176,9 @@ class Codebase < ApplicationRecord
     end
   end
 
-
   # discover basic facts is going to establish a list of basic facts about the codebase
   # that we can use to make decisions about how to analyze it.
-  # 
+  #
   # For example, we can use this to determine if the codebase is a Rails app, or a
   # Node app, or a Python app, etc.
   # Also what tools are used, what frameworks are used, etc.

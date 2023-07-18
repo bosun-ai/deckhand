@@ -33,7 +33,7 @@ module Deckhand::Tasks
         system: documenter_system,
         max_tokens: 8000,
         mode: :very_large,
-      )["message"]["content"].strip.split(/```.*\n/,2).last.strip.delete_suffix("```").strip
+      )["message"]["content"].strip.split(/```.*\n/, 2).last.strip.delete_suffix("```").strip
 
       result
     end

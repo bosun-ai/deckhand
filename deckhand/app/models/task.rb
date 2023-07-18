@@ -8,10 +8,10 @@ class Task < ApplicationRecord
     task.run do |message|
       if line = message[:line]
         task.broadcast_append_to "tasks",
-          partial: 'tasks/output',
+          partial: "tasks/output",
           target: output_stream_id,
           locals: {
-            output: line
+            output: line,
           }
       end
       callback[message] if callback

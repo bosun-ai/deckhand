@@ -48,6 +48,7 @@ class Fact < ApplicationModel
   end
 
   private
+
   def set_id
     self.id = "fact:#{SecureRandom.uuid}"
   end

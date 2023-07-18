@@ -9,7 +9,7 @@ namespace :redis do
   desc "Create indexes"
   task "create_indexes" => :environment do
     [
-      Fact
+      Fact,
     ].each do |model|
       puts "Creating index for #{model}.."
       model.create_index

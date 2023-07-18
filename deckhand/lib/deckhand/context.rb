@@ -9,9 +9,9 @@ module Deckhand
       self.codebase = codebase
     end
 
-    def add_history(type:, content: )
-      event = { type: type, content: content}
-      history << { type: type, content: content}
+    def add_history(type:, content:)
+      event = { type: type, content: content }
+      history << { type: type, content: content }
       event_callback.call(event) if event_callback
       history
     end
@@ -34,17 +34,17 @@ module Deckhand
 
     def knowledge
       history
-        .filter {|h| [:observation, :information, :conclusion].include? h[:type] }
+        .filter { |h| [:observation, :information, :conclusion].include? h[:type] }
     end
 
     def summarize_knowledge
-      knowledge.map {|h| h[:content] }.join("\n\n")
+      knowledge.map { |h| h[:content] }.join("\n\n")
     end
 
     def as_json(*options)
       {
         assignment: assignment,
-        history: history
+        history: history,
       }
     end
 
