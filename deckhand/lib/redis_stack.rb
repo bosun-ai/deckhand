@@ -1,6 +1,6 @@
-require 'redis'
-require 'rejson'
-require 'active_graph/core/query'
+require "redis"
+require "rejson"
+require "active_graph/core/query"
 
 RClient = Redis.new(host: "localhost", port: 36379, db: 0)
 
@@ -9,16 +9,16 @@ class RedisStack
 
   class << self
     REDIS_GRAPH_VALUE_UNKNOWN = 0,
-    REDIS_GRAPH_VALUE_NULL = 1,
-    REDIS_GRAPH_VALUE_STRING = 2,
-    REDIS_GRAPH_VALUE_INTEGER = 3,
-    REDIS_GRAPH_VALUE_BOOLEAN = 4,
-    REDIS_GRAPH_VALUE_DOUBLE = 5,
-    REDIS_GRAPH_VALUE_ARRAY = 6,
-    REDIS_GRAPH_VALUE_EDGE = 7,
-    REDIS_GRAPH_VALUE_NODE = 8,
-    REDIS_GRAPH_VALUE_PATH = 9,
-    REDIS_GRAPH_VALUE_MAP = 10,
+                                REDIS_GRAPH_VALUE_NULL = 1,
+                                REDIS_GRAPH_VALUE_STRING = 2,
+                                REDIS_GRAPH_VALUE_INTEGER = 3,
+                                REDIS_GRAPH_VALUE_BOOLEAN = 4,
+                                REDIS_GRAPH_VALUE_DOUBLE = 5,
+                                REDIS_GRAPH_VALUE_ARRAY = 6,
+                                REDIS_GRAPH_VALUE_EDGE = 7,
+                                REDIS_GRAPH_VALUE_NODE = 8,
+                                REDIS_GRAPH_VALUE_PATH = 9,
+                                REDIS_GRAPH_VALUE_MAP = 10,
     REDIS_GRAPH_VALUE_POINT = 11
 
     REDIS_GRAPH_VALUE_TYPES = {
@@ -33,7 +33,7 @@ class RedisStack
       REDIS_GRAPH_VALUE_NODE => "NODE",
       REDIS_GRAPH_VALUE_PATH => "PATH",
       REDIS_GRAPH_VALUE_MAP => "MAP",
-      REDIS_GRAPH_VALUE_POINT => "POINT"
+      REDIS_GRAPH_VALUE_POINT => "POINT",
     }
 
     def graph_cache(graph_id)
@@ -41,7 +41,7 @@ class RedisStack
       @graph_cache[graph_id] ||= {
         properties: [],
         labels: [],
-        relationship_types: []
+        relationship_types: [],
       }
     end
 
@@ -52,7 +52,7 @@ class RedisStack
       serialized << node[:id] if node[:id]
       if (labels = node[:labels]) && labels.any?
         serialized << ":"
-        serialized << labels.map { |label| label }.join(':')
+        serialized << labels.map { |label| label }.join(":")
       end
 
       if (properties = node[:properties]) && properties.any?
@@ -123,7 +123,7 @@ class RedisStack
     def graph_attach_new(graph_id, target, edge, node)
       match = {
         id: "target",
-        labels: target[:labels]
+        labels: target[:labels],
       }
 
       query = "MATCH #{serialize_graph_node(match)}"
@@ -139,9 +139,9 @@ class RedisStack
 
     def graph_simple_insert(graph_id, source, edge, target)
       graph_insert(graph_id,
-        source: { labels: [source] },
-        edge: {label: edge}, 
-        target: { labels: [target]})
+                   source: { labels: [source] },
+                   edge: { label: edge },
+                   target: { labels: [target] })
     end
 
     def get_property_cache(graph_id, property_id)
@@ -185,8 +185,8 @@ class RedisStack
 
     def parse_redis_graph_properties(graph_id, properties)
       Hash[properties.map do |property|
-        [get_property_cache(graph_id, property[0]), parse_redis_graph_result(graph_id, property[1..2])]
-      end]
+             [get_property_cache(graph_id, property[0]), parse_redis_graph_result(graph_id, property[1..2])]
+           end]
     end
 
     def parse_redis_graph_result(graph_id, result)
@@ -196,9 +196,9 @@ class RedisStack
       when REDIS_GRAPH_VALUE_NODE
         {
           id: value[0],
-          labels: value[1].map {|label_id| get_label_cache(graph_id, label_id)},
+          labels: value[1].map { |label_id| get_label_cache(graph_id, label_id) },
           properties: parse_redis_graph_properties(graph_id, value[2]),
-          type: "NODE"
+          type: "NODE",
         }
       when REDIS_GRAPH_VALUE_EDGE
         {
@@ -207,7 +207,7 @@ class RedisStack
           source: value[2],
           destination: value[3],
           properties: parse_redis_graph_properties(graph_id, value[4]),
-          type: "EDGE"
+          type: "EDGE",
         }
       when REDIS_GRAPH_VALUE_STRING
         value
@@ -285,7 +285,7 @@ class RedisStack
 
       results_count = results.first
       index = 1
-      
+
       results_count.times.map do |_|
         id = results[index]
         index += 1
@@ -295,7 +295,7 @@ class RedisStack
         VectorSimilaritySearchResult.new(
           id: id,
           score: result[1].to_f,
-          object: JSON.parse(result[3])
+          object: JSON.parse(result[3]),
         )
       end
     end

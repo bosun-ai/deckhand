@@ -1,1 +1,1 @@
-require 'redis_stack'
+require "redis_stack"

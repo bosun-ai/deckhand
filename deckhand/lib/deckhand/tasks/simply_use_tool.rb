@@ -8,16 +8,14 @@ module Deckhand::Tasks
       return "" if tries.empty?
       text = "These were your prior answers that were incorrect:\n\n"
       tries.each do |try|
-        text += (
-          "a. #{try[:tool_name]}\n" +
-          "b. #{try[:arguments]}\n" +
-          "Incorrect because: #{try[:error]}\n\n"
-        ).indent(2)
+        text += ("a. #{try[:tool_name]}\n" +
+                 "b. #{try[:arguments]}\n" +
+                 "Incorrect because: #{try[:error]}\n\n").indent(2)
       end
     end
 
     def tool_using_prompt
-%Q{# Using functions
+      %Q{# Using functions
 You are an assisstant that is helping a programmer come up with inputs to functions. The programmer is trying to answer
 the following question:
   
@@ -44,7 +42,7 @@ Only use 1 tool from the list of functions, give exactly the arguments as they s
 
 a. }
     end
-  
+
     def run
       puts "Trying to use a tool to answer the following question: #{question}"
       @tries = []
@@ -70,7 +68,7 @@ a. }
         @tries << {
           tool_name: tool_name,
           arguments: arguments,
-          error: e.message
+          error: e.message,
         }
         retry if tries.length < 3
         nil

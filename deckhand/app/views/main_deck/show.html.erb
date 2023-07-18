@@ -5,7 +5,7 @@
 
   <div class="flex justify-between items-center">
     <h1 class="font-bold text-4xl">Codebases</h1>
-    <%= link_to 'New codebase', new_codebase_path, class: "rounded-lg py-3 px-5 bg-blue-600 text-white block font-medium" %>
+    <%= link_to "New codebase", new_codebase_path, class: "rounded-lg py-3 px-5 bg-blue-600 text-white block font-medium" %>
   </div>
 
   <div id="codebases" class="min-w-full">
@@ -14,7 +14,7 @@
 
   <div id="autonomous_assignments_output">
     <%= turbo_stream_from :autonomous_assignment_events %>
-    <%= turbo_frame_tag "autonomous_assignment_events", class: 'min-w-full' do %>
+    <%= turbo_frame_tag "autonomous_assignment_events", class: "min-w-full" do %>
     <% end %>
   </div>
 
@@ -26,7 +26,7 @@
   </div>
 
   <%= turbo_stream_from :tasks %>
-  <%= turbo_frame_tag "tasks", class: 'min-w-full' do %>
+  <%= turbo_frame_tag "tasks", class: "min-w-full" do %>
     <%= render @tasks.reverse %>
   <% end %>
 </div>

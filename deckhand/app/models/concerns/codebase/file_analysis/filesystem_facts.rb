@@ -24,11 +24,11 @@ class Codebase::FileAnalysis::FilesystemFacts < Struct.new(:codebase, :root_path
     base_name = File.basename(path)
     relative_path = path.gsub(root_path + "/", "")
     node = {
-      labels: ['directory'],
+      labels: ["directory"],
       properties: {
         path: relative_path,
-        name: base_name
-      }
+        name: base_name,
+      },
     }
 
     # TODO we should be prompting the LLM to determine if we should recurse into this directory
@@ -55,12 +55,12 @@ class Codebase::FileAnalysis::FilesystemFacts < Struct.new(:codebase, :root_path
 
       entry_path = File.join(path, entry)
       child_properties[entry] = if File.directory?(entry_path)
-        analyze_directory(entry_path)
-      else
-        analyze_file(entry_path)
-      end
+          analyze_directory(entry_path)
+        else
+          analyze_file(entry_path)
+        end
     end
-    
+
     # we count the file extensions of the files that we just analyzed
     extensions = child_properties.values.reduce({}) do |acc, child|
       if child[:labels].include?("file")
@@ -77,7 +77,7 @@ class Codebase::FileAnalysis::FilesystemFacts < Struct.new(:codebase, :root_path
       acc
     end
 
-    node[:properties][:file_extensions] = extensions 
+    node[:properties][:file_extensions] = extensions
 
     node
   end
@@ -86,12 +86,12 @@ class Codebase::FileAnalysis::FilesystemFacts < Struct.new(:codebase, :root_path
     base_name = File.basename(path)
     relative_path = path.gsub(root_path + "/", "")
     node = {
-      labels: ['file'],
+      labels: ["file"],
       properties: {
         path: relative_path,
         name: base_name,
-        ext: File.extname(path)
-      }
+        ext: File.extname(path),
+      },
     }
 
     save_file_entry_node(node)

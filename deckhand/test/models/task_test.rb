@@ -6,7 +6,7 @@ class TaskTest < ActiveSupport::TestCase
   end
 
   test "running a task" do
-    task = Task.run!(description: 'hello-test', script: "echo Hello")
+    task = Task.run!(description: "hello-test", script: "echo Hello")
     task.wait
     assert_equal "Hello\n", task.standard_output
     assert_equal 0, task.exit_code

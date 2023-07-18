@@ -1,6 +1,5 @@
 module Deckhand::Tasks
   class TryResolveTheory < Task
-
     attr_accessor :answer, :need_information, :incorrect
 
     def run
@@ -28,15 +27,15 @@ your answer with the word "Missing: ". If the theory is incorrect, state why it 
 }
       resolution = prompt(prompt_text)["message"]["content"].strip
       if resolution =~ /Conclusion:/
-        self.answer = resolution.split("Conclusion:",2).last.strip
+        self.answer = resolution.split("Conclusion:", 2).last.strip
       elsif resolution =~ /Missing:/
-        self.need_information = resolution.split("Missing:",2).last.strip
+        self.need_information = resolution.split("Missing:", 2).last.strip
       elsif resolution =~ /Incorrect:/
-        self.incorrect = resolution.split("Incorrect:",2).last.strip
+        self.incorrect = resolution.split("Incorrect:", 2).last.strip
       else
         raise "Invalid resolution: #{resolution}"
       end
       self
     end
   end
-  end
+end

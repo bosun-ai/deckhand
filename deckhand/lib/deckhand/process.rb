@@ -3,7 +3,7 @@ class Deckhand::Process
   attr_reader :pid
 
   # spawn a process asynchronously, retuninrg a Deckhand::Process that
-  # can be used to await the process and read its output. 
+  # can be used to await the process and read its output.
   # args: the arguments to pass to Process.spawn
   # out: a path to a file to write the process's output to
   # done: a callback to call when the process is finished
@@ -31,7 +31,7 @@ class Deckhand::Process
     ensure
       begin
         [
-          input_read, @input_write
+          input_read, @input_write,
         ].compact.each(&:close)
       end
     end
@@ -53,13 +53,13 @@ class Deckhand::Process
 
   private
 
-  def tail(out_read, out_path, channel=:out, &callback)
+  def tail(out_read, out_path, channel = :out, &callback)
     Thread.new do
       file = File.open(out_path, "w")
       stopping = false
       loop do
         begin
-          buffer = out_read.read_nonblock(1024*16)
+          buffer = out_read.read_nonblock(1024 * 16)
           file.write(buffer)
           callback.call(Hash[channel, buffer])
         rescue IO::WaitReadable
@@ -77,7 +77,7 @@ class Deckhand::Process
       callback.call(
         {
           status: @status,
-          channel: channel
+          channel: channel,
         }
       )
     end

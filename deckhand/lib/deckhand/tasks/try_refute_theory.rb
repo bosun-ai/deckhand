@@ -1,6 +1,5 @@
 module Deckhand::Tasks
   class TryRefuteTheory < Task
-
     attr_accessor :correct, :incorrect
 
     def run
@@ -27,13 +26,13 @@ If you can refute the theory, state why it is incorrect. Begin your answer with 
 }
       resolution = prompt(prompt_text)["message"]["content"].strip
       if resolution =~ /Correct:/
-        self.correct = resolution.split("Correct:",2).last.strip
+        self.correct = resolution.split("Correct:", 2).last.strip
       elsif resolution =~ /Incorrect:/
-        self.incorrect = resolution.split("Incorrect:",2).last.strip
+        self.incorrect = resolution.split("Incorrect:", 2).last.strip
       else
         raise "Invalid resolution: #{resolution}"
       end
       self
     end
   end
-  end
+end

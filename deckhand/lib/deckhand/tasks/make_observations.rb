@@ -1,6 +1,5 @@
 module Deckhand::Tasks
   class MakeObservations < Task
-
     def run
       prompt_text = %Q{# Solving a problem with tools
 While formulating an answer to the following question:
@@ -17,7 +16,7 @@ We have the following tools to our disposal:
 
 We have established the following observations:
 
-#{observations.map {|o| "  - #{o}"}.join("\n")}
+#{observations.map { |o| "  - #{o}" }.join("\n")}
 
 Based on this theory the following observations will get us closer to an answer:
     -}

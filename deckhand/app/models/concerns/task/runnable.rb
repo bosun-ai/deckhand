@@ -1,14 +1,14 @@
-require 'async/io/stream'
-require 'deckhand/process'
+require "async/io/stream"
+require "deckhand/process"
 
 module Task::Runnable
   extend ActiveSupport::Concern
 
   TASKS_DIR = if Rails.env.production?
-    "/data/tasks"
-  else
-    Rails.root.join("tmp", "tasks")
-  end
+      "/data/tasks"
+    else
+      Rails.root.join("tmp", "tasks")
+    end
   STANDARD_TIMEOUT = 3 * 60 # seconds
 
   def run(lines_mode: true, &callback)
@@ -30,7 +30,7 @@ module Task::Runnable
     @process = Deckhand::Process.spawn(
       %Q{bash -c "set -e; cd #{task_dir}; #{script_path}"},
       out: standard_output_path,
-      err: error_output_path
+      err: error_output_path,
     ) do |message|
       if out = message[:out]
         on_out(out)

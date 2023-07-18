@@ -1,9 +1,8 @@
 module Deckhand::Tasks
   class SimpleFormattedQuestion < Task
-
     attr_accessor :answer, :format, :example
-  
-    def self.run(question, format="JSON", example: nil)
+
+    def self.run(question, format = "JSON", example: nil)
       new(question, format, example: example).run
     end
 
@@ -12,7 +11,7 @@ module Deckhand::Tasks
       @format = format
       @example = example
     end
-  
+
     def run
       format_prompt = %Q{Please answer the following question:
 
@@ -33,4 +32,4 @@ Formatted answer:
       answer.split("``````").first.strip
     end
   end
-  end
+end

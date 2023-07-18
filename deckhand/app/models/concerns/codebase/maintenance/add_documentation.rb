@@ -30,7 +30,6 @@ class Codebase::Maintenance::AddDocumentation < Struct.new(:codebase, :files, :e
             raise "Failed to push changes to #{codebase.name}: #{status.inspect}"
           end
         end
-
       end
     end
   end
@@ -39,7 +38,7 @@ class Codebase::Maintenance::AddDocumentation < Struct.new(:codebase, :files, :e
     context = codebase.context.split("\n\n").map do |line|
       {
         type: :observation,
-        content: line
+        content: line,
       }
     end
 

@@ -1,6 +1,6 @@
-require 'test_helper'
+require "test_helper"
 
-require 'deckhand/process'
+require "deckhand/process"
 
 class DeckhandProcessTest < ActiveSupport::TestCase
   test "tail should call the callback with what's up" do
@@ -9,7 +9,7 @@ class DeckhandProcessTest < ActiveSupport::TestCase
     out_path = "/tmp/test_output#{rand(10000)}"
 
     buffer = ""
-    process = Deckhand::Process.spawn(*args, out: out_path ) do |output|
+    process = Deckhand::Process.spawn(*args, out: out_path) do |output|
       if output[:buffer]
         buffer += output[:buffer]
       end

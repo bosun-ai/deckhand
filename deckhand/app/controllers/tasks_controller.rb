@@ -13,7 +13,8 @@ class TasksController < ApplicationController
   def destroy
   end
 
-  private  
+  private
+
   def task_params
     params.require(:task).permit(:description, :script)
   end

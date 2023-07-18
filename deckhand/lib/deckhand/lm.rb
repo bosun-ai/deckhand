@@ -1,18 +1,18 @@
 module Deckhand::Lm
   MODELS = {
-    code: 'code-davinci-002',
-    very_cheap: 'text-babbage-001', # $0.0005 / 1K tokens
-    cheap: 'gpt-3.5-turbo', # $0.002 / 1K tokens
-    instruct: 'text-davinci-003', # $0.02 / 1K tokens
-    default: 'gpt-4', # $0.03 / 1K tokens
-    very_large: 'gpt-3.5-turbo-16k' #
+    code: "code-davinci-002",
+    very_cheap: "text-babbage-001", # $0.0005 / 1K tokens
+    cheap: "gpt-3.5-turbo", # $0.002 / 1K tokens
+    instruct: "text-davinci-003", # $0.02 / 1K tokens
+    default: "gpt-4", # $0.03 / 1K tokens
+    very_large: "gpt-3.5-turbo-16k", #
   }
 
   def embedding(text)
     response = OpenAIClient.embeddings(
       parameters: {
-        model: 'text-embedding-ada-002', input: text 
-      }
+        model: "text-embedding-ada-002", input: text,
+      },
     )
     response["data"].first["embedding"]
   end
@@ -35,10 +35,10 @@ module Deckhand::Lm
     parameters = {
       model: model,
       messages: [
-        { role: 'system', 'content': system},
-        { role: 'user', 'content': prompt_text }
+        { role: "system", 'content': system },
+        { role: "user", 'content': prompt_text },
       ],
-      max_tokens: max_tokens
+      max_tokens: max_tokens,
     }
 
     puts "Prompting.."
@@ -64,5 +64,4 @@ module Deckhand::Lm
   def summarize_tools(tools)
     tools.map { |t| "  * #{t.name}: #{t.description}\n#{t.usage.indent(2)}" }.join("\n")
   end
-
 end

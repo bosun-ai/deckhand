@@ -1,6 +1,5 @@
 module Deckhand::Tasks
   class SplitStepInvestigate < Task
-
     def choose_theory(theories)
       theories.shift
     end
@@ -32,12 +31,12 @@ module Deckhand::Tasks
 
         while conclusion.nil?
           # 5. We try to immediately prove the theory based on the current information.
-          resolution = TryResolveTheory.run({ main_question: question, theory: theory}, context: context, tools: tools)
+          resolution = TryResolveTheory.run({ main_question: question, theory: theory }, context: context, tools: tools)
 
           if resolution.answer
             puts "Investigating answer: #{resolution.answer}}"
             # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.
-            refutation = TryRefuteTheory.run({ main_question: question, theory: theory, resolution: resolution.answer}, context: context, tools: tools)
+            refutation = TryRefuteTheory.run({ main_question: question, theory: theory, resolution: resolution.answer }, context: context, tools: tools)
 
             if refutation.correct
               conclusion = resolution.answer
