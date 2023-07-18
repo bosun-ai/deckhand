@@ -17,7 +17,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
   #
   # For each of those scripts we want to receive a coverage report at the end of the run.
   def analyze_codebase
-    root_context = Deckhand::Context.new("Analyzing the codebase", event_callback: event_callback)
+    root_context = Deckhand::Context.new("Analyzing the codebase", codebase: codebase, event_callback: event_callback)
 
     # First we have to establish a basic context of the codebase.
     root_context.add_observation("The codebase is named #{codebase.name}")
@@ -35,7 +35,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
     # Second we need to find out if the codebase has any test framework at all.
     question = "If the codebase has tests, what test framework is used?"
 
-    answer = Deckhand::Tasks::SplitStepInvestigate.run(question, context: root_context.deep_dup)
+    answer = Deckhand::Tasks::SplitStepInvestigate.run(question, context: root_context.deep_dup) || "No"
 
     root_context.add_observation(answer)
 
@@ -51,7 +51,7 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
 
     question = "If the codebase supports running the tests and generating a coverage report, what command should be used to do so?"
 
-    answer = Deckhand::Tasks::SplitStepInvestigate.run(question, context: root_context.deep_dup)
+    answer = Deckhand::Tasks::SplitStepInvestigate.run(question, context: root_context.deep_dup) || "No"
 
     root_context.add_observation(answer)
 
@@ -65,7 +65,6 @@ class Codebase::FileAnalysis::TestingInfrastructure < Struct.new(:codebase, :eve
 
     puts "The codebase has test coverage. Context: #{root_context.summarize_knowledge}"
 
-    codebase.update! context: root_context.summarize_knowledge
     root_context
 
     # analysis = Deckhand::Tasks::InvestigateWithTools.new.run(question)

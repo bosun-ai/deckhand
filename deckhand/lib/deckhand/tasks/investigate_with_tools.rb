@@ -94,7 +94,7 @@ This is the next step you should take or the final answer:
 
           if tool
             puts "Using tool #{tool_name} with arguments #{arguments}"
-            tool_response = tool.run(*arguments)
+            tool_response = tool.run(*arguments, context: context)
             context << "> #{tool_response}"
             # puts "Got response from tool: #{tool_response}"
           else

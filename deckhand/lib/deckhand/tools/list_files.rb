@@ -23,19 +23,26 @@ class ListFiles < Tool
   end
 
   def run
-    self.file_path = File.join(path_prefix, arguments["file_path"] || "")
+    relative_path = arguments["file_path"] || "."
+    self.file_path = File.join(path_prefix, relative_path)
 
     if File.directory?(file_path)
-      files = Dir.glob(@file_path + "/*").map {|f| f.delete_prefix(path_prefix + "/")}
-      %Q{Files in #{@file_path}:
-  #{files.join("\n").indent(2)}
-  End of files
-      }
+      directories, files = Dir.glob(File.join(@file_path, "*"))
+        .map {|f| "- #{Pathname.new(f).relative_path_from(path_prefix)}}" }
+        .sort
+        .partition {|f| File.directory?(File.join(path_prefix, f))}
+      <<~FILES
+        Files in #{relative_path}:
+        #{files.join("\n").indent(2)}
+
+        Directories in #{relative_path}:
+        #{directories.join("\n").indent(2)}
+      FILES
     else
       if File.exist?(file_path)
-        raise ToolError.new("The path `#{file_path}` is not a directory")
+        raise ToolError.new("The path `#{relative_path}` is not a directory")
       else
-        raise ToolError.new("The path `#{file_path}` does not exist")
+        raise ToolError.new("The path `#{relative_path}` does not exist")
       end
     end
   end

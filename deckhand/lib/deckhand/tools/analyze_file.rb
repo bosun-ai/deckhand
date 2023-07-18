@@ -25,9 +25,9 @@ class AnalyzeFile < Tool
     "#{name} config/database.yml What database is configured?"
   end
   
-  def scan_text(text, window_size: 20, window_overlap: 5, &block)
+  def scan_text(text, window_size: 50, window_overlap: 5, &block)
     position = 0
-    lines = text.lines
+    lines = text.lines || []
     total = lines.size
     chunk_increment = window_size - window_overlap
     total_chunks = (total / chunk_increment.to_f).ceil
@@ -35,7 +35,7 @@ class AnalyzeFile < Tool
     loop do
       iteration += 1
       remaining_chunks = (total_chunks - iteration - 1).clamp(0, total_chunks)
-      window = lines[position..window_size].join("\n")
+      window = (lines[position..window_size] || []).join("\n")
       if window.nil? || window.empty?
         break yield "", remaining_chunks
       end

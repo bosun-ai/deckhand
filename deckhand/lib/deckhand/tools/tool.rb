@@ -8,9 +8,19 @@ module Deckhand::Tools
     attr_accessor :arguments, :context
 
     def self.run(arguments, context: nil)
+      @cache ||= {}
+      return @cache[arguments] if @cache[arguments]
+
       tool = new(arguments, context: context)
       tool.infer_arguments()
-      tool.run()
+
+      serialized_args = JSON.dump(tool.arguments)
+      return @cache[serialized_args] if @cache[serialized_args]
+
+      result = tool.run()
+      @cache[serialized_args] = result
+      @cache[arguments] = result
+      result
     end
 
     def infer_arguments
@@ -34,7 +44,7 @@ module Deckhand::Tools
 
     def initialize(arguments, context: nil)
       @arguments = arguments
-      @context = nil
+      @context = context
     end
 
     def path_prefix

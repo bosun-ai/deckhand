@@ -17,7 +17,7 @@ class Codebase::FileAnalysis::UndocumentedFiles < Struct.new(:codebase, :event_c
         }
       end
 
-      root_context = Deckhand::Context.new("Finding undocumented files", history: context, event_callback: event_callback)
+      root_context = Deckhand::Context.new("Finding undocumented files", history: context, codebase: codebase, event_callback: event_callback)
 
       extensions = JSON.parse(Deckhand::Tasks::SimpleFormattedQuestion.run("Given the following context:\n\n#{codebase.context}\n\nWhat file extensions are used for files that classes, modules, functions, interfaces and/or types?", example: { "extensions": ["rb", "js"] }.to_json))["extensions"]
 

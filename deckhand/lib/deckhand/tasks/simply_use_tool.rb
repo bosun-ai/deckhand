@@ -59,7 +59,7 @@ a. }
 
         if tool
           puts "Using tool #{tool_name} with arguments #{arguments}"
-          tool.run(arguments)
+          tool.run(arguments, context: context)
         else
           # puts "Prompt was: #{prompt_text}"
           puts "Tools were: #{tools.map(&:name).join(", ")}"

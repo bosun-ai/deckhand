@@ -25,13 +25,15 @@ module Deckhand::Tasks
         theory = choose_theory(theories)
 
         puts "Exploring theory: #{theory}"
+        context.add_theory(theory)
 
         conclusion = nil
+        information_tries = 0
+
         while conclusion.nil?
           # 5. We try to immediately prove the theory based on the current information.
           resolution = TryResolveTheory.run({ main_question: question, theory: theory}, context: context, tools: tools)
 
-          information_tries = 0
           if resolution.answer
             puts "Investigating answer: #{resolution.answer}}"
             # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.

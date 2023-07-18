@@ -13,6 +13,15 @@ class Codebase < ApplicationRecord
     Rails.root.join("tmp", "code")
   end
 
+  def self.create_from_github_installation_id!(installation_id)
+    client = GithubApp.client(installation_id)
+    repositories = client.list_app_installation_repositories.repositories.map do |repo|
+      repo_uri = URI.parse(repo.clone_url)
+      repo_uri.user = client.access_token
+      Codebase.find_or_create_by!(name: repo.full_name, url: repo.ssh_url, github_app_installation_id: installation_id)
+    end
+  end
+
   def ensure_name_slug
     self.name_slug = name.parameterize if name
   end
@@ -115,7 +124,7 @@ class Codebase < ApplicationRecord
   def create_main_github_issue
     if github_client
       issue = github_client.create_issue(name, "Bosun AI autonomous tasks", "This issue is used to track autonomous tasks for this repository.")
-      update!(github_app_issue_id: issue.id)
+      update!(github_app_issue_id: issue.number)
     end
   end
 
@@ -144,6 +153,7 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    AutonomousAssignment.run(Codebase::FileAnalysis::TestingInfrastructure, self)
+    context = AutonomousAssignment.run(Codebase::FileAnalysis::TestingInfrastructure, self)
+    update!(context: context.summarize_knowledge)
   end
 end

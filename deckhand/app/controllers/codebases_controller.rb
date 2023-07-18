@@ -25,11 +25,6 @@ class CodebasesController < ApplicationController
       @codebase.discover_testing_infrastructure
     end
 
-    10.times do
-      break if !thread.alive?
-      sleep 1
-    end
-
     redirect_to main_deck_url, notice: "Discovering testing infrastructure for codebase."
   end
 
