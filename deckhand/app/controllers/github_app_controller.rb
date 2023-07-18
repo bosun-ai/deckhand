@@ -13,7 +13,15 @@ class GithubAppController < ApplicationController
   end
 
   def event
-    Rails.logger.info "GithubAppController#event: #{params.inspect}"
+    installation = params[:installation]
+    
+    if installation.present?
+      codebase = Codebase.find_by(github_app_installation_id: installation[:id])
+      if codebase
+        codebase.process_event(params)
+      end
+    end
+
     render json: { status: :ok }
   end
 end

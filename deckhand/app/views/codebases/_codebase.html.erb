@@ -15,5 +15,10 @@
     <hr class="mt-6">
   <% end %>
 
-  <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
+  <% if codebase.checked_out %>
+    <% if codebase.context.blank? %>
+      <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
+    <% end%>
+    <%= link_to "Visit github issue", codebase.main_issue_url, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
+  <% end %>
 </div>

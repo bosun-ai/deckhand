@@ -46,6 +46,7 @@ module Deckhand::Lm
     response = OpenAIClient.chat(parameters: parameters)
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
     choices = response["choices"]
+    puts "Got response: #{response}"
     if choices.count > 1
       puts "Got response with multiple choices: #{choices.inspect}"
     end

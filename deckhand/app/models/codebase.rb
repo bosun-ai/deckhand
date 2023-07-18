@@ -13,6 +13,8 @@ class Codebase < ApplicationRecord
     Rails.root.join("tmp", "code")
   end
 
+  ADD_DOCUMENTATION_HEADER = "## Undocumented files"
+
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
     repositories = client.list_app_installation_repositories.repositories.map do |repo|
@@ -57,7 +59,7 @@ class Codebase < ApplicationRecord
     end
   end
 
-  def merge_request(title:, body:, branch_name:, &block)
+  def merge_request(title:, body:, branch_name:)
     github_client.create_pull_request(name, default_branch, branch_name, title, body)
   end
 
@@ -81,6 +83,10 @@ class Codebase < ApplicationRecord
         block.call(status) if block
       end
     end
+  end
+
+  def commit(message)
+    system("cd #{path} && git add . && git commit -m '#{message}'")
   end
 
   def git_push(&block)
@@ -108,10 +114,11 @@ class Codebase < ApplicationRecord
   def discover_undocumented_files
     files = AutonomousAssignment.run(Codebase::FileAnalysis::UndocumentedFiles, self)
     if !files.blank?
-      markdown = %Q{## Undocumented files\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
-\n\nIf you would like for Bosun Deckhand to add documentation to these files, please react with a :+1: to this comment.}
-      html = github_client.markdown(markdown, mode: "gfm", context: name)
-      add_main_issue_comment(html)
+      markdown = %Q{#{ ADD_DOCUMENTATION_HEADER }\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
+\n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n}
+      # html = github_client.markdown(markdown, mode: "gfm", context: name)
+      # add_main_issue_comment(html)
+      add_main_issue_comment(markdown)
     end
   end
 
@@ -134,6 +141,36 @@ class Codebase < ApplicationRecord
     end
   end
 
+  def main_issue_url
+    if github_client && github_app_issue_id
+      github_client.issue(name, github_app_issue_id).url
+    end
+  end
+
+  def process_event(event)
+    issue_id = event.dig(:issue, :id)
+
+    if issue_id == github_app_issue_id
+      process_main_issue_event(event)
+    end
+  end
+
+  def process_main_issue_event(event)
+    if event.dig(:comment, :user, :login) == "bosun-deckhand[bot]"
+      process_bot_action_event(event)
+    end
+  end
+
+  def process_bot_action_event(event)
+    comment = event.dig(:comment, :body)
+
+    if comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
+      files = comment.split("*")[1..-2].map(&:strip)
+      add_documentation_to_undocumented_files(files)
+    end
+  end
+
+
   # discover basic facts is going to establish a list of basic facts about the codebase
   # that we can use to make decisions about how to analyze it.
   # 
@@ -155,5 +192,9 @@ class Codebase < ApplicationRecord
   def discover_testing_infrastructure
     context = AutonomousAssignment.run(Codebase::FileAnalysis::TestingInfrastructure, self)
     update!(context: context.summarize_knowledge)
+  end
+
+  def add_documentation_to_undocumented_files(files)
+    AutonomousAssignment.run(Codebase::Maintenance::AddDocumentation, self, files: files)
   end
 end
