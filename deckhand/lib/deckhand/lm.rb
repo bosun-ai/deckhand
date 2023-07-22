@@ -43,15 +43,26 @@ module Deckhand::Lm
 
     puts "Prompting.."
     # puts "\n----\n#{prompt_text}\n----\n"
-    response = OpenAIClient.chat(parameters: parameters)
-    # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
-    choices = response["choices"]
-    if choices.nil?
-      puts "Invalid OpenAI response: #{response.inspect}"
-      return nil
-    elsif choices.count > 1
-      puts "Got response with multiple choices: #{choices.inspect}"
+    tries = 0
+    begin
+      response = OpenAIClient.chat(parameters: parameters)
+      choices = response["choices"]
+      if choices.nil?
+        raise "Invalid OpenAI response: #{response.inspect}"
+      elsif choices.count > 1
+        raise "Got response with multiple choices: #{choices.inspect}"
+      end
+    rescue => e
+      tries += 1
+      if tries < 3
+        puts "Retrying..."
+        sleep 5
+        retry
+      else
+        raise e
+      end
     end
+    # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
     choices.first
   end
 
