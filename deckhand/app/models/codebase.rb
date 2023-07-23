@@ -6,6 +6,7 @@ class Codebase < ApplicationRecord
   validates_presence_of :url, on: :create, message: "can't be blank"
 
   has_many :autonomous_assignments, dependent: :destroy
+  has_many :github_access_tokens, dependent: :destroy
 
   CODEBASE_DIR = if Rails.env.production?
       "/data/code"
@@ -63,8 +64,12 @@ class Codebase < ApplicationRecord
     github_client.create_pull_request(name, default_branch, branch_name, title, body)
   end
 
+  def dispatch_create_repository
+    perform_later :create_repository
+  end
+
   def create_repository
-    Task.run!(description: "Creating repository for #{name}", script: "git clone #{git_url} #{path}") do |message|
+    ShellTask.run!(description: "Creating repository for #{name}", script: "git clone #{git_url} #{path}") do |message|
       if status = message[:status]
         check_out_finished!(status)
       end
@@ -76,9 +81,9 @@ class Codebase < ApplicationRecord
   end
 
   # TODO instead of just checking out a new branch, we should clone the whole repo and create the new branch there
-  # so we don't run into conflicts when doing multiple tasks at the same time for the same repo.
+  # so we don't run into conflicts when doing multiple shell_tasks at the same time for the same repo.
   def new_branch(branch_name, &block)
-    Task.run!(description: "Creating branch #{branch_name} for #{name}", script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
+    ShellTask.run!(description: "Creating branch #{branch_name} for #{name}", script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
       if status = message[:status]
         block.call(status) if block
       end
@@ -92,25 +97,30 @@ class Codebase < ApplicationRecord
   end
 
   def git_push(branch_name, &block)
-    Task.run!(description: "Pushing for #{name}", script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
+    ShellTask.run!(description: "Pushing for #{name}", script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
       if status = message[:status]
         block.call(status) if block
       end
     end
   end
 
+  def perform_later(action)
+    CodebaseJob.perform_later(self, action)
+  end
+
   def check_out_finished!(status)
-    update!(checked_out: status.success?)
-    create_main_github_issue
+    success = status == 0
+    update!(checked_out: success)
 
-    Thread.new do
-      discover_basic_facts
-    end
+    Rails.logger.info "Checked out #{name} with status #{status}"
 
-    Thread.new do
-      discover_testing_infrastructure
-      describe_project_in_github_issue
-    end
+    return unless success
+
+    perform_later :create_main_github_issue
+
+    perform_later :discover_basic_facts
+
+    perform_later :discover_testing_infrastructure
   end
 
   def discover_undocumented_files
@@ -132,7 +142,7 @@ class Codebase < ApplicationRecord
 
   def create_main_github_issue
     if github_client
-      issue = github_client.create_issue(name, "Bosun AI autonomous tasks", "This issue is used to track autonomous tasks for this repository.")
+      issue = github_client.create_issue(name, "Bosun AI autonomous shell_tasks", "This issue is used to track autonomous shell_tasks for this repository.")
       update!(github_app_issue_id: issue.number)
     end
   end
@@ -197,6 +207,8 @@ class Codebase < ApplicationRecord
   def discover_testing_infrastructure
     context = AutonomousAssignment.run(Codebase::FileAnalysis::TestingInfrastructure, self)
     update!(context: context.summarize_knowledge)
+
+    perform_later :describe_project_in_github_issue
   end
 
   def add_documentation_to_undocumented_files(files)

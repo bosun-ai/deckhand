@@ -8,7 +8,7 @@ module Deckhand::Lm
     very_large: "gpt-3.5-turbo-16k", #
   }
 
-  def embedding(text)
+  def self.embedding(text)
     response = OpenAIClient.embeddings(
       parameters: {
         model: "text-embedding-ada-002", input: text,
@@ -17,7 +17,7 @@ module Deckhand::Lm
     response["data"].first["embedding"]
   end
 
-  def cached_embedding(text)
+  def self.cached_embedding(text)
     text_hash = Digest::SHA256.hexdigest(text)
     if embedding = RClient.json_get("embeddings_cache:#{text_hash}", "$.v")
       embedding.first

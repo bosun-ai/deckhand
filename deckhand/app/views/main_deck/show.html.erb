@@ -19,14 +19,14 @@
   </div>
 
   <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl">Tasks</h1>
-    <%= turbo_frame_tag @new_task do %>
-      <%= render "tasks/form", task: @new_task %>
+    <h1 class="font-bold text-4xl">ShellTasks</h1>
+    <%= turbo_frame_tag @new_shell_task do %>
+      <%= render "shell_tasks/form", shell_task: @new_shell_task %>
     <% end %>
   </div>
 
-  <%= turbo_stream_from :tasks %>
-  <%= turbo_frame_tag "tasks", class: "min-w-full" do %>
-    <%= render @tasks.reverse %>
+  <%= turbo_stream_from :shell_tasks %>
+  <%= turbo_frame_tag "shell_tasks", class: "min-w-full" do %>
+    <%= render @shell_tasks.reverse %>
   <% end %>
 </div>

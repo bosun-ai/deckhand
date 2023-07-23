@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   resources :autonomous_assignments
-  resources :tasks
+  resources :shell_tasks
 
   resources :codebases do
     post "discover_testing_infrastructure", to: "codebases#discover_testing_infrastructure", as: :discover_testing_infrastructure

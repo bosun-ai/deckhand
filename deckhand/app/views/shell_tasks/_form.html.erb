@@ -1,10 +1,10 @@
-<%= form_with(model: task, class: "contents") do |form| %>
-  <% if task.errors.any? %>
+<%= form_with(model: shell_task, class: "contents") do |form| %>
+  <% if shell_task.errors.any? %>
     <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-lg mt-3">
-      <h2><%= pluralize(task.errors.count, "error") %> prohibited this task from being saved:</h2>
+      <h2><%= pluralize(shell_task.errors.count, "error") %> prohibited this shell_task from being saved:</h2>
 
       <ul>
-        <% task.errors.each do |error| %>
+        <% shell_task.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
       </ul>

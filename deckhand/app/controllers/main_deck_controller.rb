@@ -1,7 +1,7 @@
 class MainDeckController < ApplicationController
   def show
     @codebases = Codebase.all
-    @tasks = Task.all
-    @new_task = Task.new
+    @shell_tasks = ShellTask.all
+    @new_shell_task = ShellTask.new
   end
 end

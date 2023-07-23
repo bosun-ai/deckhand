@@ -1,3 +1,4 @@
+$stdout.sync = true
 # Purpose: A class for managing processes spawned by Deckhand
 class Deckhand::Process
   attr_reader :pid
@@ -23,11 +24,10 @@ class Deckhand::Process
     @err_tail_thread = tail(err_read, err, :err, &callback)
     @run_thread = Thread.new do
       @pid = ::Process.spawn(*args, in: input_read, out: output_write, err: err_write)
-      ::Process.waitpid(@pid)
-      @status = $?
+      ::Process.wait(@pid)
+      @status = ::Process.last_status&.exitstatus
     rescue Errno::ECHILD
       puts "Warning: ECHILD"
-      @status = 1 # nothing was spawned I think?
     ensure
       begin
         [
@@ -55,12 +55,12 @@ class Deckhand::Process
 
   def tail(out_read, out_path, channel = :out, &callback)
     Thread.new do
-      file = File.open(out_path, "w")
+      file = File.open(out_path, "w") if out_path
       stopping = false
       loop do
         begin
           buffer = out_read.read_nonblock(1024 * 16)
-          file.write(buffer)
+          file.write(buffer) if file
           callback.call(Hash[channel, buffer])
         rescue IO::WaitReadable
           break if stopping
@@ -71,12 +71,15 @@ class Deckhand::Process
           break
         end
       end
+    rescue => e
+      puts "Stopping #{channel} tail due to error: #{e.message}"
     ensure
-      file.close
+      @run_thread.join
+      file.close if file
       out_read.close
       callback.call(
         {
-          status: @status,
+          status: @status || -1,
           channel: channel,
         }
       )

@@ -2,7 +2,7 @@ require "redis"
 require "rejson"
 require "active_graph/core/query"
 
-RClient = Redis.new(host: "localhost", port: 36379, db: 0)
+# RClient = Redis.new(host: "localhost", port: 36379, db: 0)
 
 class RedisStack
   GraphQuery = ActiveGraph::Core::Query

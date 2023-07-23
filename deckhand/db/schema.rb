@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_07_17_233419) do
+ActiveRecord::Schema[7.0].define(version: 2023_07_23_190709) do
   create_table "autonomous_assignment_events", force: :cascade do |t|
     t.integer "autonomous_assignment_id", null: false
     t.string "event"
@@ -49,7 +49,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_17_233419) do
     t.index ["codebase_id"], name: "index_github_access_tokens_on_codebase_id"
   end
 
-  create_table "tasks", force: :cascade do |t|
+  create_table "shell_tasks", force: :cascade do |t|
     t.string "description"
     t.string "script"
     t.datetime "started_at", precision: nil

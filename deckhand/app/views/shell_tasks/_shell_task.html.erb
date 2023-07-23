@@ -1,0 +1,32 @@
+<div id="<%= dom_id shell_task %>" data-controller="shell_tasks">
+  <p class="my-5">
+    <strong class="block font-medium mb-1">
+      <%= shell_task.description %>
+    </strong>
+    <% if shell_task.exit_code %>
+    Finished at <%= shell_task.finished_at %> with exit code <%= shell_task.exit_code %>
+    <% end %>
+  </p>
+
+  <p class="my-5">
+    <!-- 
+      render the shell_task.script like it would be rendered in a code editor like vscode 
+      making use of the tailwind css classes
+    -->
+    <div class="text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full">
+      <pre><code><%= script_to_html(shell_task.script) %></code></pre>
+    </div>
+
+  </p>
+
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Output:</strong>
+    <div class="text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full">
+      <%= render "shell_tasks/output", output: shell_task.standard_output %>
+      <%= render "shell_tasks/output", output: shell_task.error_output %>
+      <% if shell_task.exit_code.nil? %>
+        <%= turbo_frame_tag "#{dom_id shell_task}_output" %>
+      <% end %>
+    </div>
+  </p>
+</div>

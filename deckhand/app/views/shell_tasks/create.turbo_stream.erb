@@ -1,0 +1,2 @@
+<%= turbo_stream.prepend "shell_tasks", partial: "shell_tasks/shell_task", locals: { shell_task: @shell_task } %>
+<%= turbo_stream.update "new_shell_task", partial: "shell_tasks/form", locals: { shell_task: ShellTask.new } %>

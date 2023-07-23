@@ -20,7 +20,7 @@ class CodebasesControllerTest < ActionDispatch::IntegrationTest
       post codebases_url, params: { codebase: { name: @codebase.name, url: @codebase.url } }
     end
 
-    assert_redirected_to codebase_url(Codebase.last)
+    assert_redirected_to main_deck_url
   end
 
   test "should show codebase" do

@@ -1,18 +1,18 @@
 require "async/io/stream"
 require "deckhand/process"
 
-module Task::Runnable
+module ShellTask::Runnable
   extend ActiveSupport::Concern
 
   TASKS_DIR = if Rails.env.production?
-      "/data/tasks"
+      "/data/shell_tasks"
     else
-      Rails.root.join("tmp", "tasks")
+      Rails.root.join("tmp", "shell_tasks")
     end
   STANDARD_TIMEOUT = 3 * 60 # seconds
 
   def run(lines_mode: true, &callback)
-    FileUtils.mkdir_p(task_dir)
+    FileUtils.mkdir_p(shell_task_dir)
     File.write(script_path, script)
     FileUtils.chmod("+x", script_path)
     FileUtils.touch standard_output_path
@@ -23,12 +23,14 @@ module Task::Runnable
     @lines_mode = lines_mode
     @callback = callback
 
+    @done_status = Concurrent::Event.new
+
     update! started_at: Time.now
     # TODO instead of writing out and err to separate files only, also
     # write them to a combined file. This will allow us to tail the
     # combined file and show the output in the UI.
     @process = Deckhand::Process.spawn(
-      %Q{bash -c "set -e; cd #{task_dir}; #{script_path}"},
+      %Q{bash -c "set -e; cd #{shell_task_dir}; #{script_path}"},
       out: standard_output_path,
       err: error_output_path,
     ) do |message|
@@ -38,10 +40,10 @@ module Task::Runnable
         on_err(err)
         # TODO why are we checking the message channel here?
       elsif (status = message[:status]) && message[:channel] == :out
-        update! finished_at: Time.now, exit_code: status.exitstatus
+        update! finished_at: Time.now, exit_code: status
         on_done(status)
       elsif (status = message[:status]) && message[:channel] == :err
-        update! finished_at: Time.now, exit_code: status.exitstatus
+        update! finished_at: Time.now, exit_code: status
         on_done(status)
       else
         raise "Unknown message: #{message.inspect}"
@@ -105,21 +107,26 @@ module Task::Runnable
       @callback.call({ line: line })
     end
     @callback.call({ status: status })
+    @done_status.set
   end
 
-  def task_dir
+  def wait
+    @done_status.wait(STANDARD_TIMEOUT)
+  end
+
+  def shell_task_dir
     File.join(TASKS_DIR, id.to_s)
   end
 
   def script_path
-    File.join(task_dir, "script")
+    File.join(shell_task_dir, "script")
   end
 
   def standard_output_path
-    File.join(task_dir, "out")
+    File.join(shell_task_dir, "out")
   end
 
   def error_output_path
-    File.join(task_dir, "err")
+    File.join(shell_task_dir, "err")
   end
 end
