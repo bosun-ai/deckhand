@@ -1,0 +1,2 @@
+class ApplicationActor < AutonomousActor
+end
