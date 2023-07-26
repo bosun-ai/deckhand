@@ -1,4 +1,6 @@
 class GatherInformationActor < ApplicationActor 
+  arguments :question
+
   def prompt_text
     <<~PROMPT_TEXT
       Gathering information

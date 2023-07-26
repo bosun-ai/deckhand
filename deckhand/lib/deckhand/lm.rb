@@ -79,7 +79,7 @@ module Deckhand::Lm
   end
 
   def prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
-    self.class.prompt(prompt_text, system: system, max_tokens: max_tokens, mode: mode)
+    Deckhand::Lm.prompt(prompt_text, system: system, max_tokens: max_tokens, mode: mode)
   end
 
   def self.all_tools
