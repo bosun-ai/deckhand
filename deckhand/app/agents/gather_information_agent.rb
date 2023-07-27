@@ -1,4 +1,4 @@
-class GatherInformationActor < ApplicationActor 
+class GatherInformationAgent < ApplicationAgent 
   arguments :question
 
   def prompt_text
@@ -22,7 +22,7 @@ class GatherInformationActor < ApplicationActor
     context.add_information("Tried to answer question: #{information_questions}")
 
     information_questions.split(" - ").map(&:strip).each do |question|
-      result = run(SimplyUseToolActor, question, context: context.dup, tools: tools)
+      result = run(SimplyUseToolAgent, question, context: context.dup, tools: tools)
       if result
         context.add_observation(result)
       end

@@ -1,4 +1,4 @@
-class ApplicationActor < AutonomousActor
+class ApplicationAgent < AutonomousAgent
   arguments context: Deckhand::Context.new("Answering questions"), tools: Deckhand::Lm.all_tools
   
   set_callback :run, :before do |object|

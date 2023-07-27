@@ -1,4 +1,4 @@
-class SimplyUseToolActor < ApplicationActor
+class SimplyUseToolAgent < ApplicationAgent
   arguments :question
 
   attr_accessor :tries

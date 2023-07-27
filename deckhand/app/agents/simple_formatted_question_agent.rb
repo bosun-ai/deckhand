@@ -1,4 +1,4 @@
-class SimpleFormattedQuestionActor < ApplicationActor
+class SimpleFormattedQuestionAgent < ApplicationAgent
   arguments :question, :example, format: "JSON"
 
   def prompt_text

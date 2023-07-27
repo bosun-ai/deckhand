@@ -1,4 +1,4 @@
-class AutonomousActor
+class AutonomousAgent
   include ActiveSupport::Callbacks
   define_callbacks :run
 
@@ -26,12 +26,12 @@ class AutonomousActor
     end
   end
 
-  include AutonomousActor::LlmActions
+  include AutonomousAgent::LlmActions
 
-  module RunActor
+  module RunAgent
     def run(*args, **kwargs)
       klass = args.first
-      if klass.is_a?(Class) && klass < AutonomousActor
+      if klass.is_a?(Class) && klass < AutonomousAgent
         return klass.run(*args[1..], **kwargs.merge(parent: self))
       end
       run_callbacks :run do
@@ -41,7 +41,7 @@ class AutonomousActor
   end
 
   def self.inherited(subclass)
-    subclass.prepend(RunActor)
+    subclass.prepend(RunAgent)
   end
 
   def initialize(*args, **kwargs)
