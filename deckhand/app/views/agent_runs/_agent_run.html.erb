@@ -1,0 +1,37 @@
+<div id="<%= dom_id agent_run %>">
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Name:</strong>
+    <%= agent_run.name %>
+  </p>
+
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Arguments:</strong>
+    <%= agent_run.arguments %>
+  </p>
+
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Context:</strong>
+    <%= agent_run.context %>
+  </p>
+
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Output:</strong>
+    <%= agent_run.output %>
+  </p>
+
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Finshed at:</strong>
+    <%= agent_run.finished_at %>
+  </p>
+
+  <p class="my-5">
+    <strong class="block font-medium mb-1">Parent:</strong>
+    <%= agent_run.parent_id %>
+  </p>
+
+  <% if action_name != "show" %>
+    <%= link_to "Show this agent run", agent_run, class: "rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
+    <%= link_to 'Edit this agent run', edit_agent_run_path(agent_run), class: "rounded-lg py-3 ml-2 px-5 bg-gray-100 inline-block font-medium" %>
+    <hr class="mt-6">
+  <% end %>
+</div>

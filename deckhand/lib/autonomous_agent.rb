@@ -55,4 +55,14 @@ class AutonomousAgent
       instance_variable_set("@#{arg}", value)
     end
   end
+
+  def arguments
+    self.class.class_variable_get(:@@pos_arguments).map do |arg|
+      [arg, instance_variable_get("@#{arg}")]
+    end.to_h.merge(
+      self.class.class_variable_get(:@@arguments).keys.map do |arg|
+        [arg, instance_variable_get("@#{arg}")]
+      end.to_h
+    )
+  end
 end

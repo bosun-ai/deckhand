@@ -21,11 +21,10 @@ class GatherInformationAgent < ApplicationAgent
 
     context.add_information("Tried to answer question: #{information_questions}")
 
-    information_questions.split(" - ").map(&:strip).each do |question|
+    information_questions.split(" - ").map(&:strip).map do |question|
       result = run(SimplyUseToolAgent, question, context: context.dup, tools: tools)
-      if result
-        context.add_observation(result)
-      end
+      context.add_observation(result) if result
+      result
     end
   end
 end

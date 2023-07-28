@@ -1,9 +1,28 @@
 class ApplicationAgent < AutonomousAgent
   arguments context: Deckhand::Context.new("Answering questions"), tools: Deckhand::Lm.all_tools
+
+  attr_accessor :agent_run
   
-  set_callback :run, :before do |object|
-    puts "Going to run! #{object.class}"
+  set_callback :run, :around do |object, block|
+    result = nil
+
+    agent_run = AgentRun.create!(
+      name: self.class.name,
+      arguments: object.arguments.to_json(except: [:context]),
+      context: context.to_json,
+      parent: object.parent&.agent_run
+    )
+
+    object.agent_run = agent_run
+
+    result = block.call
+  rescue => e
+    puts "Caught error while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+  ensure
+    object.agent_run.update!(output: result&.to_json, context: context.to_json, finished_at: Time.now)
+    result
   end
+
 
   def context_prompt
     return "" if context.blank?
