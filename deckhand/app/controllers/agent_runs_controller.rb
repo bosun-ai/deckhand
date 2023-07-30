@@ -3,7 +3,7 @@ class AgentRunsController < ApplicationController
 
   # GET /agent_runs or /agent_runs.json
   def index
-    @agent_runs = AgentRun.all
+    @agent_runs = AgentRun.root.order(created_at: 'DESC')
   end
 
   # GET /agent_runs/1 or /agent_runs/1.json

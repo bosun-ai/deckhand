@@ -1,37 +1,47 @@
-<div id="<%= dom_id agent_run %>">
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Name:</strong>
-    <%= agent_run.name %>
-  </p>
+<div id="<%= dom_id agent_run %>" class="card bg-neutral m-3 p-3 mb-5">
+  <div class="card-body">
+    <h2 class="card-title"> <%= agent_run.name %> 
+    <% if agent_run.finished_at %>
+      <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
+        Finished: <%= agent_run.finished_at %>
+      </span></h2>
+    <% else %>
+      <span class="badge badge-outline badge-warning">running</span>
+    <% end %>
+    </h2>
 
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Arguments:</strong>
-    <%= agent_run.arguments %>
-  </p>
+    <% agent_run.arguments.each do |argument, value| %>
+      <div class="form-control w-full max-w-xs">
+        <label class="label">
+          <span class="label-text"><%= argument.capitalize %></span>
+        </label>
+        <input type="text" class="input input-bordered w-full max-w-xs"
+          value="<%= value %>"
+        />
+      </div>
+    <% end %>
 
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Context:</strong>
-    <%= agent_run.context %>
-  </p>
+    <% if agent_run.output %>
+    <p class="my-5">
+      <strong class="block font-medium mb-1">Output:</strong>
+      <% [*agent_run.output].each do |output| %>
+        <textarea class="textarea textarea-info w-full textarea-md" placeholder=""><%= output %></textarea>
+      <% end %>
+    </p>
+    <% end %>
 
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Output:</strong>
-    <%= agent_run.output %>
-  </p>
+    <ul class="steps steps-vertical">
+      <% agent_run.children.each do |child| %>
+        <li class="step step-secondary"><%= link_to child.name, child, class: '' %></li> 
+      <% end %>
+    </ul>
 
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Finshed at:</strong>
-    <%= agent_run.finished_at %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Parent:</strong>
-    <%= agent_run.parent_id %>
-  </p>
-
-  <% if action_name != "show" %>
-    <%= link_to "Show this agent run", agent_run, class: "rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
-    <%= link_to 'Edit this agent run', edit_agent_run_path(agent_run), class: "rounded-lg py-3 ml-2 px-5 bg-gray-100 inline-block font-medium" %>
-    <hr class="mt-6">
-  <% end %>
+    <div class="card-actions justify-end">
+    <% if action_name != "show" %>
+      <%= link_to "More details", agent_run, class: "btn btn-secondary" %>
+    <% else %>
+      <%= button_to 'Destroy this agent_run', agent_run_path(agent_run), method: :delete, class: "btn btn-error" %>
+    <% end %>
+    </div>
+  </div>
 </div>

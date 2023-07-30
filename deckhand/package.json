@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "daisyui": "^3.5.0",
     "vite": "^4.2.1",
     "vite-plugin-ruby": "^3.2.1"
   },

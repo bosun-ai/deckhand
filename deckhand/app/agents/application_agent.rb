@@ -8,7 +8,7 @@ class ApplicationAgent < AutonomousAgent
 
     agent_run = AgentRun.create!(
       name: self.class.name,
-      arguments: object.arguments.to_json(except: [:context]),
+      arguments: object.arguments.to_json(except: [:context, :parent]),
       context: context.to_json,
       parent: object.parent&.agent_run
     )
