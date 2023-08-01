@@ -1,5 +1,5 @@
 class ApplicationAgent < AutonomousAgent
-  arguments context: Deckhand::Context.new("Answering questions"), tools: Deckhand::Lm.all_tools
+  arguments context: ApplicationAgent::Context.new("Answering questions"), tools: Deckhand::Lm.all_tools
 
   attr_accessor :agent_run
   
@@ -14,6 +14,7 @@ class ApplicationAgent < AutonomousAgent
     )
 
     object.agent_run = agent_run
+    context.agent_run = agent_run
 
     result = block.call
   rescue => e

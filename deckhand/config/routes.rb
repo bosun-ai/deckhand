@@ -1,6 +1,5 @@
 Rails.application.routes.draw do
   resources :agent_runs
-  resources :autonomous_assignments
   resources :shell_tasks
 
   resources :codebases do

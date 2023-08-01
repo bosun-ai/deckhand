@@ -1,9 +1,7 @@
-class AutonomousAssignmentEvent < ApplicationRecord
-  belongs_to :autonomous_assignment
+class AgentRunEvent < ApplicationRecord
+  belongs_to :agent_run
 
-  alias_attribute :assignment, :autonomous_assignment
-
-  after_create_commit -> { broadcast_prepend_to "autonomous_assignment_events" }
+  after_create_commit -> { broadcast_prepend_to "agent_run_events" }
 
   def event_hash=(event)
     self.event = JSON.dump(event)

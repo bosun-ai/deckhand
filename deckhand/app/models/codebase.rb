@@ -5,8 +5,11 @@ class Codebase < ApplicationRecord
   validates_presence_of :name, on: :create, message: "can't be blank"
   validates_presence_of :url, on: :create, message: "can't be blank"
 
-  has_many :autonomous_assignments, dependent: :destroy
   has_many :github_access_tokens, dependent: :destroy
+
+  def context
+    attributes["context"] ? JSON.parse(attributes["context"]) : {}
+  end
 
   CODEBASE_DIR = if Rails.env.production?
       "/data/code"
@@ -124,7 +127,7 @@ class Codebase < ApplicationRecord
   end
 
   def discover_undocumented_files
-    files = AutonomousAssignment.run(Codebase::FileAnalysis::UndocumentedFiles, self)
+    files = Codebase::FileAnalysis::UndocumentedFiles.run(self)
     if !files.blank?
       markdown = %Q{#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
 \n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n}
@@ -205,13 +208,13 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    context = AutonomousAssignment.run(Codebase::FileAnalysis::TestingInfrastructure, self)
-    update!(context: context.summarize_knowledge)
+    context = Codebase::FileAnalysis::TestingInfrastructure.run(self)
+    update!(context: context.to_json)
 
     perform_later :describe_project_in_github_issue
   end
 
   def add_documentation_to_undocumented_files(files)
-    AutonomousAssignment.run(Codebase::Maintenance::AddDocumentation, self, files: files)
+    Codebase::Maintenance::AddDocumentation.run(self, files: files)
   end
 end
