@@ -235,6 +235,7 @@ GEM
       httparty (>= 0.18.1)
     ruby2_keywords (0.0.5)
     rubyzip (2.3.2)
+    rufo (0.16.1)
     sawyer (0.9.2)
       addressable (>= 2.3.5)
       faraday (>= 0.17.3, < 3)
@@ -320,6 +321,7 @@ DEPENDENCIES
   redis (~> 5.0)
   rejson-rb!
   ruby-openai
+  rufo
   selenium-webdriver
   sprockets-rails
   sqlite3 (~> 1.4)

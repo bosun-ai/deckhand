@@ -1,5 +1,5 @@
-<% event = autonomous_assignment_event %>
+<% event = agent_run_event_event %>
 
-<div class="autonomous_assignment_event <%= event.type %> text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full mb-5 mt-5">
+<div class="agent_run_event_event <%= event.type %> text-sm text-gray-700 bg-gray-100 rounded-lg p-3 w-full mb-5 mt-5">
   <div class="assignment_name"><%= event.assignment.name %></div><div class="type"><%= event.type %></div><div class="content"><%= markdown_to_html(event.content) %></div>
 </div>

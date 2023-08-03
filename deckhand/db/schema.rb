@@ -10,7 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_07_23_190709) do
+ActiveRecord::Schema[7.0].define(version: 2023_07_31_202144) do
+  create_table "agent_run_events", force: :cascade do |t|
+    t.string "event"
+    t.integer "agent_run_id", null: false
+    t.string "agent_run_ids", default: "[]"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_run_id"], name: "index_agent_run_events_on_agent_run_id"
+  end
+
+  create_table "agent_runs", force: :cascade do |t|
+    t.string "name"
+    t.string "arguments"
+    t.string "context"
+    t.string "output"
+    t.datetime "finished_at", precision: nil
+    t.integer "parent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "parent_ids", default: "[]"
+    t.index ["parent_id"], name: "index_agent_runs_on_parent_id"
+  end
+
   create_table "autonomous_assignment_events", force: :cascade do |t|
     t.integer "autonomous_assignment_id", null: false
     t.string "event"
@@ -59,6 +81,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_23_190709) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "agent_run_events", "agent_runs"
+  add_foreign_key "agent_runs", "agent_runs", column: "parent_id"
   add_foreign_key "autonomous_assignment_events", "autonomous_assignments"
   add_foreign_key "autonomous_assignments", "codebases"
   add_foreign_key "github_access_tokens", "codebases"

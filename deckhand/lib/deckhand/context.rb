@@ -1,18 +1,15 @@
 module Deckhand
   class Context
-    attr_accessor :history, :assignment, :event_callback, :codebase
+    attr_accessor :history, :assignment
 
-    def initialize(assignment, codebase: nil, history: [], event_callback: nil)
+    def initialize(assignment, history: [])
       self.assignment = assignment
       self.history = history
-      self.event_callback = event_callback
-      self.codebase = codebase
     end
 
     def add_history(type:, content:)
       event = { type: type, content: content }
       history << { type: type, content: content }
-      event_callback.call(event) if event_callback
       history
     end
 
@@ -46,6 +43,10 @@ module Deckhand
         assignment: assignment,
         history: history,
       }
+    end
+
+    def to_json(*options)
+      JSON.dump(as_json(*options))
     end
 
     def deep_dup

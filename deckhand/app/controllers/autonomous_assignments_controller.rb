@@ -1,2 +1,0 @@
-class AutonomousAssignmentsController < ApplicationController
-end

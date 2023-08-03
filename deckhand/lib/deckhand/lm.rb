@@ -30,7 +30,7 @@ module Deckhand::Lm
 
   DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities."
 
-  def prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
+  def self.prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
     model = MODELS[mode]
     parameters = {
       model: model,
@@ -64,6 +64,24 @@ module Deckhand::Lm
     end
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
     choices.first
+  end
+
+  class PromptResponse
+    attr_accessor :raw_response, :prompt, :options
+
+    def initialize(response, prompt: nil, options: nil)
+      @raw_response = response
+      @prompt = prompt
+      @options = options
+    end
+
+    def full_response
+      raw_response["message"]["content"]
+    end
+  end
+
+  def prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
+    Deckhand::Lm.prompt(prompt_text, system: system, max_tokens: max_tokens, mode: mode)
   end
 
   def self.all_tools

@@ -32,11 +32,11 @@ module Deckhand::Tools
           .sort
           .partition { |f| File.directory?(File.join(path_prefix, f)) }
         <<~FILES
-                    Files in #{relative_path}:
-        #{files.join("\n").indent(2)}
+          Files in #{relative_path}:
+          #{files.join("\n").indent(2)}
 
-                    Directories in #{relative_path}:
-        #{directories.join("\n").indent(2)}
+          Directories in #{relative_path}:
+          #{directories.join("\n").indent(2)}
         FILES
       else
         if File.exist?(file_path)
