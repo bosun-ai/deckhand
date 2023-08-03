@@ -2,6 +2,26 @@
 
 Bosun deckhand is a system that applies tasks on a software repository.
 
+## Running
+
+Make a .env with these values:
+```
+OPENAI_ACCESS_TOKEN=<snip>
+GITHUB_APP_IDENTIFIER=361955
+GITHUB_APP_KEY=<SNIP>
+REDIS_URL=<snip>
+```
+
+Then
+
+```
+  bundle
+  ps aux |grep redis
+  # kill all redis
+  kill <redispid>
+  ./bin/dev
+```
+
 ### Tasks:
 
   - Control git repositories
