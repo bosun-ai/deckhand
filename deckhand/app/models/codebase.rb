@@ -9,6 +9,8 @@ class Codebase < ApplicationRecord
 
   def context
     attributes["context"] ? JSON.parse(attributes["context"]) : {}
+  rescue JSON::ParserError
+    {}
   end
 
   CODEBASE_DIR = if Rails.env.production?

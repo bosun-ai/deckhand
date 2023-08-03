@@ -3,7 +3,7 @@
     <h2 class="card-title"> <%= agent_run.name %> 
     <% if agent_run.finished_at %>
       <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
-        Finished: <%= agent_run.finished_at %>
+        Finished: <%= agent_run.duration.inspect %>
       </span></h2>
     <% else %>
       <span class="badge badge-outline badge-warning">running</span>
@@ -35,6 +35,8 @@
         <li class="step step-secondary"><%= link_to child.name, child, class: '' %></li> 
       <% end %>
     </ul>
+
+    <%= render partial: 'tree_view', locals: { agent_run: agent_run } %>
 
     <div class="card-actions justify-end">
     <% if action_name != "show" %>

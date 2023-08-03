@@ -67,10 +67,12 @@ module Deckhand::Lm
   end
 
   class PromptResponse
-    attr_accessor :raw_response
+    attr_accessor :raw_response, :prompt, :options
 
-    def initialize(response)
+    def initialize(response, prompt: nil, options: nil)
       @raw_response = response
+      @prompt = prompt
+      @options = options
     end
 
     def full_response

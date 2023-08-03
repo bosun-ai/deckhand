@@ -1,0 +1,12 @@
+<span>Agent <%= agent_run.name %></span>
+<ul class="pl-2">
+  <% agent_run.events.each do |event| %>
+    <li>
+    <% if event.type == 'run_agent' %>
+      <%= render partial: 'tree_view', locals: { agent_run: event.new_agent } %>
+    <% else %>
+        <%= event.type %>: <%= event.content %>
+    <% end %>
+    </li>
+  <% end %>
+</ul>

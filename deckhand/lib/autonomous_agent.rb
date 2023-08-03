@@ -1,6 +1,6 @@
 class AutonomousAgent
   include ActiveSupport::Callbacks
-  define_callbacks :run
+  define_callbacks :run, :prompt
 
   class << self
     def arguments(*args, **kwargs)
