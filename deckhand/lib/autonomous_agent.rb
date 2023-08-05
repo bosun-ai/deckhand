@@ -1,6 +1,6 @@
 class AutonomousAgent
   include ActiveSupport::Callbacks
-  define_callbacks :run, :prompt
+  define_callbacks :run, :prompt, :call_function
 
   class << self
     def arguments(*args, **kwargs)
@@ -34,7 +34,16 @@ class AutonomousAgent
       if klass.is_a?(Class) && klass < AutonomousAgent
         return klass.run(*args[1..], **kwargs.merge(parent: self))
       end
+
       run_callbacks :run do
+        super
+      end
+    end
+  end
+
+  module FunctionCallingAgent
+    def call_function(prompt_result, **kwargs)
+      run_callbacks :call_function do
         super
       end
     end
@@ -42,6 +51,7 @@ class AutonomousAgent
 
   def self.inherited(subclass)
     subclass.prepend(RunAgent)
+    subclass.prepend(FunctionCallingAgent)
   end
 
   def initialize(*args, **kwargs)
@@ -64,5 +74,13 @@ class AutonomousAgent
         [arg, instance_variable_get("@#{arg}")]
       end.to_h
     )
+  end
+
+  def run(*args, **kwargs)
+    raise NotImplementedError.new("You forgot to implement the run method on #{self.class.name}.")
+  end
+
+  def call_function(prompt_result, **kwargs)
+    raise NotImplementedError.new("You forgot to implement the call_function method on #{self.class.name}.")
   end
 end

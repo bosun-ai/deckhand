@@ -30,7 +30,7 @@ module Deckhand::Lm
 
   DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities."
 
-  def self.prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
+  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
     model = MODELS[mode]
     parameters = {
       model: model,
@@ -41,9 +41,10 @@ module Deckhand::Lm
       max_tokens: max_tokens,
     }
 
-    puts "Prompting.."
-    # puts "\n----\n#{prompt_text}\n----\n"
+    parameters[:functions] = functions if functions.present?
+    
     tries = 0
+    response = nil
     begin
       response = OpenAIClient.chat(parameters: parameters)
       choices = response["choices"]
@@ -52,6 +53,7 @@ module Deckhand::Lm
       elsif choices.count > 1
         raise "Got response with multiple choices: #{choices.inspect}"
       end
+
     rescue => e
       tries += 1
       if tries < 3
@@ -63,7 +65,7 @@ module Deckhand::Lm
       end
     end
     # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
-    choices.first
+    PromptResponse.new(response, prompt: prompt_text, options: parameters)
   end
 
   class PromptResponse
@@ -75,8 +77,45 @@ module Deckhand::Lm
       @options = options
     end
 
+    def as_json(*args)
+      {
+        prompt: prompt,
+        options: options,
+        response: raw_response,
+      }
+    end
+
+    def to_json(*args)
+      as_json.to_json(*args)
+    end
+
     def full_response
-      raw_response["message"]["content"]
+      if is_function_call?
+        "function_call #{function_call_name} #{function_call_args.inspect}"
+      else
+        message["content"]
+      end
+    end
+
+    def message
+      raw_response.dig("choices", 0, "message")
+    end
+
+    def is_function_call?
+      message && message["role"] == "assistant" && message["function_call"]
+    end
+
+    def function_call_name
+      return nil unless is_function_call?
+      function_name = message.dig("function_call", "name")
+    end
+
+    def function_call_args
+      return nil unless is_function_call?
+      JSON.parse(
+        message.dig("function_call", "arguments"),
+        { symbolize_names: true },
+      )
     end
   end
 

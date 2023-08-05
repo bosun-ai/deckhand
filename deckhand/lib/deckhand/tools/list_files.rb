@@ -7,7 +7,7 @@ module Deckhand::Tools
     end
 
     def self.description
-      "List files in a directory"
+      "List entries in a directory on the filesystem"
     end
 
     def self.usage
@@ -21,6 +21,20 @@ module Deckhand::Tools
     def self.arguments_shape
       { "file_path" => "some_path" }
     end
+
+    def self.parameters
+      {
+        type: :object,
+        properties: {
+          file_path: {
+            type: :string,
+            description: "The path of which to list the entries"
+          }
+        },
+        required: ["file_path"]
+      }
+    end
+
 
     def run
       relative_path = arguments["file_path"] || "."

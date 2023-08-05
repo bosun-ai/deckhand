@@ -1,8 +1,13 @@
 module AutonomousAgent::LlmActions
   def prompt(text, **kwargs)
+    result = nil
     run_callbacks :prompt do
-      response = Deckhand::Lm.prompt(text, **kwargs)
-      Deckhand::Lm::PromptResponse.new(response, prompt: text, options: kwargs)
+      result = Deckhand::Lm.prompt(text, **kwargs)
+    end
+    if result.is_function_call?
+      call_function(result, **kwargs)
+    else
+      result
     end
   end
 end

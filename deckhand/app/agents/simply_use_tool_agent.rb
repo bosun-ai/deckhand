@@ -13,7 +13,7 @@ class SimplyUseToolAgent < ApplicationAgent
     end
   end
 
-  def prompt_text
+  def non_function_prompt_text
     <<~PROMPT_TEXT
       # Using functions
       You are an assisstant that is helping a programmer come up with inputs to functions. The programmer is trying to answer
@@ -44,7 +44,33 @@ class SimplyUseToolAgent < ApplicationAgent
     PROMPT_TEXT
   end
 
+  def prompt_text
+    <<~PROMPT_TEXT
+      # Using functions
+        
+      #{question}
+        
+      #{context_prompt}  
+  
+      ## Task
+      Use a function to get more information to answer the question.
+
+      You have access to the full filesystem and any devices exposed through the functions.
+
+      Make sure you give the functions exact parameters, not examples.
+    PROMPT_TEXT
+  end
+
   def run
+    result = prompt(prompt_text, functions: tools.map(&:openai_signature))
+    if result.is_a? Deckhand::Lm::PromptResponse
+      result.full_response
+    else
+      result
+    end
+  end
+
+  def non_function_run
     puts "Trying to use a tool to answer the following question: #{question}"
     @tries = []
     begin

@@ -31,7 +31,7 @@ Please reformat your answer as a #{format} document. For example:
 Reformatted answer:
 }
       system = "You are an application that reformats answers into #{format} documents. Your answers are always syntactically correct and have no extra information."
-      prompt(format_prompt, system: system)["message"]["content"]
+      prompt(format_prompt, system: system).full_response
     end
   end
 end

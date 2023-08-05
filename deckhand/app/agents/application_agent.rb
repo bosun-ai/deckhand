@@ -1,5 +1,6 @@
 class ApplicationAgent < AutonomousAgent
-  arguments context: ApplicationAgent::Context.new("Answering questions"), tools: Deckhand::Lm.all_tools
+  # TODO allow lambdas for default argument values
+  arguments context: nil, tools: Deckhand::Lm.all_tools
 
   attr_accessor :agent_run
   
@@ -38,6 +39,11 @@ class ApplicationAgent < AutonomousAgent
     result
   end
 
+  def call_function(prompt_response, **kwargs)
+    tool = tools.find {|t| t.name == prompt_response.function_call_name }
+    raise ToolError.new("No tool found with name #{prompt_response.function_call_name}") unless tool
+    tool.run(prompt_response.function_call_args, context: context)
+  end
 
   def context_prompt
     return "" if context.blank?

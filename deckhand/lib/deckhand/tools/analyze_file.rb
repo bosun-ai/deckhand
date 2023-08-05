@@ -21,6 +21,19 @@ module Deckhand::Tools
       { "file_path" => "some_path", "question" => "some_question" }
     end
 
+    def self.parameters
+      {
+        type: :object,
+        properties: {
+          file_path: {
+            type: :string,
+            description: "The path to the file to analyze"
+          }
+        },
+        required: ["file_path"]
+      }
+    end
+
     def self.example
       "#{name} config/database.yml What database is configured?"
     end

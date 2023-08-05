@@ -23,6 +23,14 @@ module Deckhand::Tools
       result
     end
 
+    def self.openai_signature
+      {
+        name: name,
+        description: description,
+        parameters: parameters,
+      }
+    end
+
     def infer_arguments
       reformatted = Deckhand::Tasks::ReformatAnswer.new(
         "You are using tool #{self.class.name}`, what arguments will you give it?",
@@ -48,7 +56,8 @@ module Deckhand::Tools
     end
 
     def path_prefix
-      context&.codebase&.path
+      # TODO maybe configure the path prefix somehow?
+      '/'
     end
   end
 end
