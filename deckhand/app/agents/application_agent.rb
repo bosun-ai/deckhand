@@ -57,4 +57,24 @@ class ApplicationAgent < AutonomousAgent
   def summarize_tools(tools)
     tools.map { |t| "  * #{t.name}: #{t.description}\n#{t.usage.indent(2)}" }.join("\n")
   end
+
+  def render(**kwargs)
+    template_name, parameters = kwargs.first
+    template = read_template_file(template_name)
+    puts "Passing in parameters: #{parameters.inspect}"
+    template.render!(parameters.with_indifferent_access, { strict_variables: true, strict_filters: true })
+  end
+
+  private
+
+  def read_template_file(template_name)
+    dir_name = self.class.name.underscore.chomp('_agent')
+    dir = Rails.root / 'app' / 'agents' / 'templates' / dir_name
+    file_path = dir / (template_name.to_s + ".liquid")
+    if file_path.exist?
+      Liquid::Template.parse(file_path.read, error_mode: :strict)
+    else
+      raise "Could not find agent template file: #{file_path}"
+    end
+  end
 end

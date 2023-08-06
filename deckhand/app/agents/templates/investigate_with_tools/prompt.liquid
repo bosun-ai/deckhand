@@ -1,0 +1,60 @@
+# Solving a problem with tools
+
+To make sure the final answer is correct work it out step by step by formulating thoughts and observations based on the information you have about
+the problem. Start each observation with the string "O: ". Start each thought with the string "T: ". Start your final answer with the string "A: ". When
+you need more information to answer the question definitively request information from a tool.
+
+The following tools are available:
+
+{{ tools_summary }}
+
+You can use these tools by prefixing your answer with a question mark (?) and then the name of the tool and then your question. For example:
+
+?{{ tools[0].usage }}
+
+The result of the of the tool will be appended to your answer prefixed with a greater than sign (>).      
+
+## Example
+
+A full example of an interaction could be:
+
+```
+Question:
+
+What command should I run to run the tests?
+
+Answer:
+T: To know what command to run to run the tests I need to know what test framework is used
+?list_files .
+> Files in .:
+./Gemfile
+./README.md
+./app.rb
+./spec
+T: If a codebase has a Gemfile it might contain a reference to a test framework
+T: If a codebase has a spec directory it might use RSpec
+?analyze_file Gemfile what test frameworks are required by the Gemfile?
+> RSpec
+T: If a codebase has a Gemfile it uses bundler to run commands
+A: bundle exec rspec
+```
+
+This concludes the instructions.
+
+## Assignment
+
+This is the question you are trying to answer:
+
+```
+{{ question }}
+```
+
+## Interaction context
+
+These are the steps already taken to answer the question:
+
+{{ context }}
+
+## Next step or answer
+
+This is the next step you should take or the final answer:

@@ -157,6 +157,7 @@ GEM
     kramdown-syntax-coderay (1.0.1)
       coderay (~> 1.1)
       kramdown (~> 2.0)
+    liquid (5.4.0)
     loofah (2.21.3)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
@@ -327,6 +328,7 @@ DEPENDENCIES
   kramdown
   kramdown-parser-gfm
   kramdown-syntax-coderay
+  liquid
   octokit
   puma (~> 5.0)
   rails (~> 7.0.4, >= 7.0.4.3)
