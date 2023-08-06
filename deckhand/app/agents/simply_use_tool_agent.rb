@@ -47,11 +47,11 @@ class SimplyUseToolAgent < ApplicationAgent
   def prompt_text
     <<~PROMPT_TEXT
       # Using functions
-        
+
       #{question}
-        
+
       #{context_prompt}  
-  
+
       ## Task
       Use a function to get more information to answer the question.
 
