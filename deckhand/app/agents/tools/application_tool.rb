@@ -1,6 +1,4 @@
 class ApplicationTool < AutonomousAgent::Tool
-  attr_accessor :arguments, :context
-
   set_callback :run, :around do |object, block|
     object.cached(&block)
   end
@@ -17,11 +15,13 @@ class ApplicationTool < AutonomousAgent::Tool
   def self.cached(tool, &block)
     @cache ||= {}
     serialized_args = JSON.dump(tool.arguments)
-    return @cache[serialized_args] if @cache[serialized_args]
+    if @cache[serialized_args]
+      Rails.logger.debug "Using cached result for #{name} with args #{serialized_args}"
+      return @cache[serialized_args]
+    end
 
     result = block.call
     @cache[serialized_args] = result
-    result
   end
 
   def self.arguments_shape
