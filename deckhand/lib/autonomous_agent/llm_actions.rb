@@ -5,7 +5,7 @@ module AutonomousAgent::LlmActions
       result = Deckhand::Lm.prompt(text, **kwargs)
     end
     if result.is_function_call?
-      call_function(result, **kwargs)
+      AutonomousAgent::Response.new(call_function(result, **kwargs))
     else
       result
     end

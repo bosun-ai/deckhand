@@ -63,11 +63,7 @@ class SimplyUseToolAgent < ApplicationAgent
 
   def run
     result = prompt(prompt_text, functions: tools.map(&:openai_signature))
-    if result.is_a? Deckhand::Lm::PromptResponse
-      result.full_response
-    else
-      result
-    end
+    result.full_response
   end
 
   def non_function_run
@@ -89,9 +85,9 @@ class SimplyUseToolAgent < ApplicationAgent
         # puts "Prompt was: #{prompt_text}"
         puts "Tools were: #{tools.map(&:name).join(", ")}"
         puts "Tried to use unknown tool #{tool_name} with arguments: #{arguments}"
-        raise Deckhand::Tools::ToolError.new("Must use a tool from the list of tools")
+        raise ApplicationTool::Error.new("Must use a tool from the list of tools")
       end
-    rescue Deckhand::Tools::ToolError => e
+    rescue ApplicationTool::Error => e
       @tries << {
         tool_name: tool_name,
         arguments: arguments,

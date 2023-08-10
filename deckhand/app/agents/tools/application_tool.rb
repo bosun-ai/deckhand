@@ -1,6 +1,14 @@
 class ApplicationTool < AutonomousAgent::Tool
-  set_callback :run, :around do |object, block|
-    object.cached(&block)
+  arguments context: nil
+
+  module Cached
+    def run
+      cached { super }
+    end
+  end
+
+  def self.inherited(subclass)
+    subclass.prepend Cached
   end
 
   def self.all_tools
@@ -44,12 +52,6 @@ class ApplicationTool < AutonomousAgent::Tool
     "#{name} #{arguments_shape.to_json}"
   end
 
-  def self.run(arguments, context: nil)
-    tool = new(arguments, context: context)
-    # tool.infer_arguments()
-    tool.run
-  end
-
   def self.openai_signature
     {
       name: name,
@@ -59,12 +61,12 @@ class ApplicationTool < AutonomousAgent::Tool
   end
 
   def infer_arguments
-    reformatted = ReformatAnswerAgent.new(
+    reformatted = run(ReformatAnswerAgent,
       "You are using tool #{self.class.name}`, what arguments will you give it?",
       arguments,
       "json",
       example: { tool_name: self.class.name, arguments: self.class.arguments_shape }.to_json,
-    ).run
+    )
 
     begin
       @arguments = JSON.parse(reformatted)["arguments"]
@@ -77,13 +79,8 @@ class ApplicationTool < AutonomousAgent::Tool
     end
   end
 
-  def initialize(arguments, context: nil)
-    @arguments = arguments
-    @context = context
-  end
-
   def path_prefix
-    context&.codebase&.path_prefix || '/'
+    context&.codebase&.path || '/'
   end
 
   class Error < StandardError
