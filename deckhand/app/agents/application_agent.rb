@@ -15,7 +15,7 @@ class ApplicationAgent < AutonomousAgent
     )
 
     object.agent_run = agent_run
-    context.agent_run = agent_run
+    object.context.agent_run = agent_run
 
     if agent_run.parent
       agent_run.parent.events.create!(event_hash: { type: "run_agent", content: object.agent_run.id })
