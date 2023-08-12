@@ -218,7 +218,8 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    context = Codebase::FileAnalysis::TestingInfrastructure.run(self)
+    context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
+    return context
     update!(context: context.to_json)
 
     perform_later :describe_project_in_github_issue

@@ -1,6 +1,6 @@
 class ApplicationAgent < AutonomousAgent
   # TODO allow lambdas for default argument values
-  arguments context: nil, tools: []
+  arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
   attr_accessor :agent_run
   

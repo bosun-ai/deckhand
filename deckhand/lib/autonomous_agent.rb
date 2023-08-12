@@ -3,6 +3,8 @@ class AutonomousAgent
   define_callbacks :run, :prompt, :call_function
 
   class << self
+    # TODO there's a bug here, we want the @@arguments to be inherited, but not shared
+    # between the parent and the child
     def arguments(*args, **kwargs)
       @@pos_arguments ||= []
       @@arguments ||= { }
