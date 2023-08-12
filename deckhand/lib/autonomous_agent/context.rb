@@ -6,7 +6,11 @@ class AutonomousAgent::Context
 
   def initialize(assignment, history: [])
     self.assignment = assignment
-    self.history = history
+    self.history = history.map do |entry|
+      entry.deep_symbolize_keys!
+      entry[:type] = entry[:type].to_sym
+      entry
+    end
   end
 
   def add_history(type:, content:)

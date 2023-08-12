@@ -25,5 +25,6 @@ module Deckhand
     # config.eager_load_paths << Rails.root.join("extras")
     config.autoload_paths += Dir[Rails.root / "lib"]
     config.autoload_paths += Dir[Rails.root / "app" / "agents"]
+    config.autoload_paths += Dir[Rails.root / "app" / "agents" / "tools"]
   end
 end

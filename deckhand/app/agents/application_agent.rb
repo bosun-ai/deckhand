@@ -1,6 +1,6 @@
 class ApplicationAgent < AutonomousAgent
   # TODO allow lambdas for default argument values
-  arguments context: nil, tools: Deckhand::Lm.all_tools
+  arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
   attr_accessor :agent_run
   
@@ -15,10 +15,10 @@ class ApplicationAgent < AutonomousAgent
     )
 
     object.agent_run = agent_run
-    context.agent_run = agent_run
+    object.context.agent_run = agent_run
 
-    if object.parent
-      object.parent.agent_run.events.create!(event_hash: { type: "run_agent", content: object.agent_run.id })
+    if agent_run.parent
+      agent_run.parent.events.create!(event_hash: { type: "run_agent", content: object.agent_run.id })
     end
 
     result = block.call

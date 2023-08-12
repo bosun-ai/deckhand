@@ -8,9 +8,17 @@ class Codebase < ApplicationRecord
   has_many :github_access_tokens, dependent: :destroy
 
   def context
-    attributes["context"] ? JSON.parse(attributes["context"]) : {}
+    deserialized = attributes["context"] ? JSON.parse(attributes["context"]) : {}
   rescue JSON::ParserError
     {}
+  end
+
+  def agent_context(assignment)
+    ApplicationAgent::Context.new(assignment, codebase: self, history: context["history"] || [])
+  end
+
+  def run_agent(agent, assignment, *args, **kwargs)
+    agent.run(*args, context: agent_context(assignment), **kwargs)
   end
 
   CODEBASE_DIR = if Rails.env.production?
@@ -129,7 +137,7 @@ class Codebase < ApplicationRecord
   end
 
   def discover_undocumented_files
-    files = Codebase::FileAnalysis::UndocumentedFiles.run(self)
+    files = run_agent(::FileAnalysis::UndocumentedFilesAgent, "Finding undocumented files")
     if !files.blank?
       markdown = %Q{#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
 \n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n}
@@ -140,7 +148,7 @@ class Codebase < ApplicationRecord
   end
 
   def describe_project_in_github_issue
-    markdown = Deckhand::Tasks::RewriteInMarkdown.run(context)
+    markdown = run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge)
     html = github_client.markdown(markdown, mode: "gfm", context: name)
     add_main_issue_comment(html)
   end
@@ -210,7 +218,7 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    context = Codebase::FileAnalysis::TestingInfrastructure.run(self)
+    context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
     update!(context: context.to_json)
 
     perform_later :describe_project_in_github_issue
