@@ -148,7 +148,7 @@ class Codebase < ApplicationRecord
   end
 
   def describe_project_in_github_issue
-    markdown = Deckhand::Tasks::RewriteInMarkdown.run(context)
+    markdown = run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge)
     html = github_client.markdown(markdown, mode: "gfm", context: name)
     add_main_issue_comment(html)
   end
