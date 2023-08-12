@@ -1,11 +1,14 @@
 class FileAnalysis::UndocumentedFilesAgent < ApplicationAgent
   def file_extensions_prompt
     <<~PROMPT
-      Given the following context:
+      Given the following description of the project:
 
       #{context.summarize_knowledge.indent(2)}
       
-      What file extensions are used for files that classes, modules, functions, interfaces and/or types?
+      Given the programming languages and frameworks mentioned in this project description, what file extensions would
+      be used for files that define classes, modules, functions, interfaces and/or types in those languages and
+       frameworks?
+
     PROMPT
   end
 

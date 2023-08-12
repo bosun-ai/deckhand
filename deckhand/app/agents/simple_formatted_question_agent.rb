@@ -5,7 +5,7 @@ class SimpleFormattedQuestionAgent < ApplicationAgent
     <<~PROMPT_TEXT
       Please answer the following question:
 
-      #{question}
+      #{question.indent(2)}
 
       Please format your answer as a #{format} document structured exactly like the following example:
 
