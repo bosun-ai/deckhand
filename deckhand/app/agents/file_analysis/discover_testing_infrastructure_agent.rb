@@ -36,7 +36,6 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     has_tests = JSON.parse(run(
       ReformatAnswerAgent,
-      "Reformatting",
       "Does the codebase have tests?",
       answer,
       "json",
@@ -60,7 +59,6 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     has_test_coverage = JSON.parse(run(
       ReformatAnswerAgent,
-      "Reformatting",
       "Does the codebase have test coverage?",
       answer,
       "json",
