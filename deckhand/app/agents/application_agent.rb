@@ -34,7 +34,14 @@ class ApplicationAgent < AutonomousAgent
     result = nil
 
     result = block.call
-    object.agent_run.events.create!(event_hash: { type: "prompt", content: { prompt: result.prompt, response: result.full_response}.to_json})
+    if object.agent_run
+      object.agent_run.events.create!(
+        event_hash: {
+          type: "prompt",
+          content: { prompt: result.prompt, response: result.full_response}.to_json
+        }
+      )
+    end
   ensure
     result
   end

@@ -2,7 +2,7 @@ class InvestigateWithToolsAgent < ApplicationAgent
   arguments :question
 
   def prompt_text
-    render prompt: {
+    render 'prompt', locals: {
       tools_summary: 'No tools available',
       tools: [{ name: 'a_tool', usage: 'with_usage'}],
       question: question,
