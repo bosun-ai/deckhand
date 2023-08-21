@@ -1,7 +1,7 @@
 module GptMigrate::Utils
-  def prompt_constructor(templates)
+  def prompt_constructor(*templates, locals: {})
     templates.map do |template|
-      render template, locals: globals.to_h
+      render template, locals: locals
     end.join("\n")
   end
 

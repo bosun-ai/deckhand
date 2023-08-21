@@ -4,9 +4,12 @@ class GptMigrate::MigrationAgent < ApplicationAgent
   arguments :target_language
 
   attr_accessor :target_dependencies_per_file
+  attr_accessor :external_dependencies
 
   def run
     @target_dependencies_per_file = Hash.new { |h, k| h[k] = [] }
+    @external_dependencies = Set.new
+
     # it recursively migrates source files, starting from the entrypoint and working its way through the
     # dependency graph. It splits dependencies based on wether they're internal or external.
     # It goes depth first on the internal dependencies, and in the base case it actually performs
@@ -32,7 +35,6 @@ class GptMigrate::MigrationAgent < ApplicationAgent
   def write_migration(file, external_dependencies, file_dependencies, globals)
     signatures = get_function_signatures(file_dependencies, globals)
     
-    # write_migration_template = prompt_constructor(HIERARCHY, GUIDELINES, WRITE_CODE, WRITE_MIGRATION, SINGLEFILE)
     write_migration_template = prompt_constructor(:hierarchy, :guidelines, :write_code, :write_migration, :singlefile)
 
     sourcefile_content = File.read(File.join(globals.source_dir, file))
@@ -46,6 +48,53 @@ class GptMigrate::MigrationAgent < ApplicationAgent
         target_directory_structure: build_directory_structure(globals.targetdir),
       }
     ))
+  end
+
+  # Get external and internal dependencies of source file '''
+  def get_dependencies(file, globals)
+    sourcefile_content = File.read(File.join(globals.source_dir, file))
+
+    parameters = globals.to_h.merge(
+      {
+        source_file: file,
+        source_file_content: sourcefile_content,
+      }
+    )
+    external_deps_prompt = prompt_constructor(
+      :hierarchy, :guidelines, :get_external_deps,
+      locals: parameters
+    )
+    internal_deps_prompt = prompt_constructor(
+      :hierarchy, :guidelines, :get_internal_deps,
+      locals: parameters
+    )
+
+    external_dependencies_result = prompt(external_deps_prompt).full_response.strip
+    
+    external_deps_list = if external_dependencies_result != 'NONE'
+      external_dependencies_result.split(',').map(&:strip)
+    else
+      []
+    end
+
+    external_deps_list.each do |dep|
+      external_dependencies << dep.strip
+    end
+
+    internal_dependencies_result = prompt(internal_deps_prompt).full_response.strip
+    internal_dependencies = if internal_dependencies_result != 'NONE'
+      internal_dependencies_result.split(',').map(&:strip)
+    else
+      []
+    end
+    
+    # Sanity checking internal dependencies to avoid infinite loops 
+    if internal_dependencies.include?(file)
+      puts "Warning: #{file} seems to depend on itself. Automatically removing #{file} from the list of internal dependencies."
+      internal_dependencies.reject! file
+    end
+    
+    [ internal_dependencies, external_deps_list ]
   end
 
   def get_function_signatures(target_files=[], globals)
