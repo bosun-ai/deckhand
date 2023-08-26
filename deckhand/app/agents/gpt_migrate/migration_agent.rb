@@ -5,11 +5,17 @@ class GptMigrate::MigrationAgent < ApplicationAgent
 
   attr_accessor :target_dependencies_per_file
   attr_accessor :external_dependencies
+  attr_accessor :function_signatures
 
-  def run
+  def initialize(*args, **kwargs)
     @target_dependencies_per_file = Hash.new { |h, k| h[k] = [] }
     @external_dependencies = Set.new
+    @function_signatures = {}
 
+    super
+  end
+
+  def run
     # it recursively migrates source files, starting from the entrypoint and working its way through the
     # dependency graph. It splits dependencies based on wether they're internal or external.
     # It goes depth first on the internal dependencies, and in the base case it actually performs
@@ -99,26 +105,29 @@ class GptMigrate::MigrationAgent < ApplicationAgent
 
   def get_function_signatures(target_files=[], globals)
     all_sigs = []
+
     target_files.each do |target_file|
-      sigs_file_name = target_file + "_sigs.json"
-      if file_exists_in_memory(sigs_file_name)
-        sigs = read_json_from_memory(sigs_file_name)
-        all_sigs.extend(sigs)
+      if sigs = function_signatures[target_file]
+        all_sigs << sigs
       else
         target_file_content = File.read(File.join(globals.target_dir, target_file))
-        prompt = render 'function_signatures_template', locals: globals.to_h.merge(
+
+        # function_signatures_template = prompt_constructor(HIERARCHY, GUIDELINES, GET_FUNCTION_SIGNATURES)
+        prompt_template = prompt_constructor(
+          :hierarchy, :guidelines, :get_function_signatures, locals: globals.to_h.merge(
           {
             targetfile_content: target_file_content,
           }
-        )
-        sigs = JSON.parse(llm_run(prompt,
-                                  waiting_message: "Parsing function signatures for {target_file}...",
-                                  success_message: None,
-                                  globals: globals))
-        all_sigs.extend(sigs)
-        write_json_to_memory(sigs_file_name, sigs)
+        ))
+
+        result = prompt(prompt_template).full_response
+
+        sigs = JSON.parse(result)
+        function_signatures[target_file] = sigs
+        all_sigs << sigs
       end
     end
-    return all_sigs
+
+    all_sigs
   end
 end
