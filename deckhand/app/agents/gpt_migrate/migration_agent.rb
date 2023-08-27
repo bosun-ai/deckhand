@@ -3,61 +3,60 @@ class GptMigrate::MigrationAgent < ApplicationAgent
 
   arguments :target_language
 
-  attr_accessor :target_dependencies_per_file
-  attr_accessor :external_dependencies
-  attr_accessor :function_signatures
+  attr_accessor :target_dependencies_per_file,
+                :external_dependencies,
+                :function_signatures,
+                :globals
 
-  def initialize(*args, **kwargs)
+  def run
     @target_dependencies_per_file = Hash.new { |h, k| h[k] = [] }
     @external_dependencies = Set.new
     @function_signatures = {}
 
-    super
+    @globals = construct_globals
+
+    migrate(globals.entry_point)
+    add_env_files()
   end
 
-  def run
-    # it recursively migrates source files, starting from the entrypoint and working its way through the
-    # dependency graph. It splits dependencies based on wether they're internal or external.
-    # It goes depth first on the internal dependencies, and in the base case it actually performs
-    # the migration of the file, passing along the external dependencies to the migration function and
-    # keeps track of the generated file for the parent file.
-    globals = construct_globals
-
-    migrate(globals.entry_point, globals)
-    add_env_files(globals)
-  end
-
-  def migrate(file, globals, parent_file=nil)
-    internal_dependencies, external_dependencies = get_dependencies(file, globals)
+  # it recursively migrates source files, starting from the entrypoint and working its way through the
+  # dependency graph. It splits dependencies based on wether they're internal or external.
+  # It goes depth first on the internal dependencies, and in the base case it actually performs
+  # the migration of the file, passing along the external dependencies to the migration function and
+  # keeps track of the generated file for the parent file.
+  def migrate(file, parent_file=nil)
+    internal_dependencies, external_dependencies = get_dependencies(file)
     internal_dependencies.each do |dependency|
-      migrate(dependency, globals, file)
+      migrate(dependency, file)
     end
 
     target_dependencies = target_dependencies_per_file[file]
-    new_file_name = write_migration(file, external_dependencies, target_dependencies, globals)
+    new_file_name = write_migration(file, external_dependencies, target_dependencies)
     target_deps_per_file[parent_file] << new_file_name
   end
 
-  def write_migration(file, external_dependencies, file_dependencies, globals)
-    signatures = get_function_signatures(file_dependencies, globals)
+  def write_migration(file, external_dependencies, file_dependencies)
+    signatures = get_function_signatures(file_dependencies)
     
-    write_migration_template = prompt_constructor(:hierarchy, :guidelines, :write_code, :write_migration, :singlefile)
-
     sourcefile_content = File.read(File.join(globals.source_dir, file))
-    
-    migration_prompt = render('write_migration_template', locals: globals.to_h.merge(
+
+    write_migration_template = prompt_constructor(
+      :hierarchy, :guidelines, :write_code, :write_migration, :singlefile,
+      locals: globals.to_h.merge(
       {
-        targetlang_function_signatures: convert_sigs_to_string(sigs),
+        target_lang_function_signatures: convert_sigs_to_string(sigs),
         sourcefile: sourcefile,
         sourcefile_content: sourcefile_content,
         external_deps: ','.join(external_deps_list),
-        target_directory_structure: build_directory_structure(globals.targetdir),
+        target_directory_structure: build_directory_structure(globals.target_dir),
       }
     ))
+
+    llm_write_file(write_migration_template, globals.target_dir, nil)
   end
 
   # Get external and internal dependencies of source file '''
-  def get_dependencies(file, globals)
+  def get_dependencies(file)
     sourcefile_content = File.read(File.join(globals.source_dir, file))
 
     parameters = globals.to_h.merge(
@@ -103,7 +102,7 @@ class GptMigrate::MigrationAgent < ApplicationAgent
     [ internal_dependencies, external_deps_list ]
   end
 
-  def get_function_signatures(target_files=[], globals)
+  def get_function_signatures(target_files=[])
     all_sigs = []
 
     target_files.each do |target_file|
@@ -129,5 +128,49 @@ class GptMigrate::MigrationAgent < ApplicationAgent
     end
 
     all_sigs
+  end
+
+  def add_env_files
+    copy_files(globals.source_dir, globals.target_dir, excluded_files=EXCLUDED_FILES)
+
+    return # not doing the docker stuff for now
+
+    dockerfile_content = File.read(File.join(globals.target_dir, 'Dockerfile'))
+    external_deps = external_dependencies.to_a.join(',')
+
+    add_docker_requirements_prompt = prompt_constructor(
+      :hierarchy, :guidelines, :write_code, :add_docker_requirements, :singlefile,
+      locals: globals.to_h.merge(
+      {
+        target_directory_structure: build_directory_structure(globals.target_dir),
+        target_lang: globals.target_lang,
+        guidelines: globals.guidelines,
+        dockerfile_content: dockerfile_content,
+        external_deps: external_deps,
+      }
+    ))
+
+    external_deps_name, _, external_deps_content = llm_write_file(add_docker_requirements_prompt, globals.target_dir, nil)
+
+    refine_dockerfile_template = prompt_constructor(
+      :hierarchy, :guidelines, :write_code, :refine_dockerfile, :singlefile,
+      locals: globals.to_h.merge(
+      {
+        dockerfile_content: dockerfile_content,
+        target_directory_structure: build_directory_structure(globals.target_dir),
+        external_deps_name: external_deps_name,
+        external_deps_content: external_deps_content,
+        guidelines: globals.guidelines,
+      }
+    ))
+
+    prompt = refine_dockerfile_template.format(
+      dockerfile_content: dockerfile_content,
+      target_directory_structure: build_directory_structure(globals.target_dir),
+      external_deps_name: external_deps_name,
+      external_deps_content: external_deps_content,
+    )
+
+    llm_write_file(prompt, globals.target_dir, "Dockerfile")
   end
 end

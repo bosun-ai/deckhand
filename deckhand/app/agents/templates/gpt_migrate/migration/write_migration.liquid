@@ -1,0 +1,27 @@
+\n\n PREFERENCE LEVEL 3
+
+You are a principal software engineer at Google with particular expertise migrating codebases from {{ source_lang }} to {{ target_lang }}. We are doing a migration from {{ source_lang }} to {{ target_lang }}. You are allowed to use the following external libraries, but no other external libraries: {{ external_deps }}. You will be given the current target directory structure of the {{ target_lang }} project, the source directory structure of the existing {{ source_lang }} project, and the contents of the {{ source_lang }} file. Please use the below code format and name the file, variables, functions, etc. to be consistent with the existing {{ source_lang }} file where possible. The only exception is if this is an entrypoint file and {{ target_lang }} requires a certain naming convention, such as main.ext etc. For the filename, include the full relative path if applicable. If the {{ source_lang }} code imports internal libraries from a given location, take special care to preserve this topology in the code you write for the {{ target_lang }} project and use the functions in the internal libraries accordingly. Any port listening should be on 8080. Please ensure that all functions and variables are available to other files that may call them.
+
+Current target directory structure, which is under active development and may have files added later which you can import from:
+
+```
+{{ target_directory_structure }}
+```
+
+Existing source directory structure:
+
+```
+{{ source_directory_structure }}
+```
+
+Existing {{ source_lang }} file, {{ sourcefile }}:
+
+```
+{{ sourcefile_content }}
+```
+
+Available internal functions in {{ target_lang }}, their signatures and descriptions:
+
+```
+{{ target_lang_function_signatures }}
+```

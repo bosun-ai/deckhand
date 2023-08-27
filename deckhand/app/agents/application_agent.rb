@@ -25,7 +25,9 @@ class ApplicationAgent < AutonomousAgent
   rescue => e
     puts "Caught error while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
   ensure
-    object.agent_run.update!(output: result&.to_json, context: context.to_json, finished_at: Time.now)
+    if object.agent_run
+      object.agent_run.update!(output: result&.to_json, context: context.to_json, finished_at: Time.now)
+    end
     result
   end
 
