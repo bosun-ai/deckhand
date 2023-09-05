@@ -1,24 +1,27 @@
-<div id="<%= dom_id codebase %>">
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Name:</strong>
-    <%= codebase.name %>
-  </p>
+<div id="<%= dom_id codebase %>" class="card bg-base-200 shadow-xl mt-4 mb-4">
+  <div class="card-body">
+    <h3 class="card-title">
+      <%= codebase.name %>
+      <div class="badge badge-accent badge-outline">
+        <%= codebase.url %>
+      </div>
+    </h3>
 
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Url:</strong>
-    <%= codebase.url %>
-  </p>
-
-  <% if action_name != "show" %>
-    <%= link_to "Show this codebase", codebase, class: "rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
-    <%= link_to "Edit this codebase", edit_codebase_path(codebase), class: "rounded-lg py-3 ml-2 px-5 bg-gray-100 inline-block font-medium" %>
-    <hr class="mt-6">
-  <% end %>
-
-  <% if codebase.checked_out %>
-    <% if codebase.context.blank? %>
-      <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
+    <div class="card-actions justify-end">
+    <% if action_path != "codebases#show" %>
+      <%= link_to "Show this codebase", codebase, class: "btn btn-primary" %>
     <% end %>
-    <%= link_to "Visit github issue", codebase.main_issue_url, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
-  <% end %>
+
+    <% if controller_name == "codebases" %>
+      <%= link_to "Edit this codebase", edit_codebase_path(codebase), class: "btn btn-primary" %>
+    <% end %>
+
+    <% if codebase.checked_out %>
+      <% if codebase.context.blank? %>
+        <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
+      <% end %>
+      <%= link_to "Visit github issue", codebase.main_issue_url, class: "btn btn-primary" %>
+    <% end %>
+    </div>
+  </div>
 </div>

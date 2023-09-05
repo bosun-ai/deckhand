@@ -1,4 +1,8 @@
 module ApplicationHelper
+  def action_path
+    "#{controller_path}##{action_name}"
+  end
+
   def ansi_to_html(ansi)
     Ansi::To::Html.new(script_to_html(ansi)).to_html.html_safe
   end
