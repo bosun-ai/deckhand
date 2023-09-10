@@ -1,10 +1,14 @@
 class ApplicationAgent::Context < AutonomousAgent::Context
   attr_accessor :agent_run
-  attr_accessor :codebase
+  attr_accessor :codebase_id
 
   def initialize(assignment, codebase: nil, **kwargs)
-    @codebase = codebase
+    @codebase_id = codebase.id
     super(assignment, **kwargs)
+  end
+
+  def codebase
+    Codebase.find(codebase_id)
   end
 
   def deep_dup

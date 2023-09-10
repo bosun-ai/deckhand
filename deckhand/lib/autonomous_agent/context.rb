@@ -47,10 +47,9 @@ class AutonomousAgent::Context
   end
 
   def as_json(*options)
-    {
-      assignment: assignment,
-      history: history,
-    }
+    instance_variables.map do |name|
+      [name[1..-1].to_sym, instance_variable_get(name)]
+    end.to_h
   end
 
   def to_json(*options)

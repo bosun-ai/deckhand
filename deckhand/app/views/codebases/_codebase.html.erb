@@ -14,6 +14,7 @@
 
     <% if controller_name == "codebases" %>
       <%= link_to "Edit this codebase", edit_codebase_path(codebase), class: "btn btn-primary" %>
+      <%= button_to "Destroy this codebase", codebase_path(@codebase), method: :delete, class: "btn btn-error" %>
     <% end %>
 
     <% if codebase.checked_out %>
