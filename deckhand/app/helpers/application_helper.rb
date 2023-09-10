@@ -1,4 +1,8 @@
 module ApplicationHelper
+  def middle_truncate(str, total: 30, lead: 15, trail: 15, fill: "...")
+    str.truncate(total, omission: "#{str.first(lead)}#{fill}#{str.last(trail)}")
+  end
+
   def action_path
     "#{controller_path}##{action_name}"
   end

@@ -1,0 +1,12 @@
+<% case event.type %>
+<% when "prompt" %>
+  <%= render partial: 'agent_runs/prompt_event', locals: { event: event } %>
+<% when "run_agent" %>
+  <h1>TODO RUN_AGENT</h1>
+<% when "run_command" %>
+  <h1>TODO RUN_COMMAND</h1>
+<% when "run_script" %>
+  <h1>TODO RUN_SCRIPT</h1>
+<% else %>
+  <%= event.type %>: <%= event.content %>
+<% end %>
