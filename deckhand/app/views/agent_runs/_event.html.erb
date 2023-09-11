@@ -1,3 +1,4 @@
+<% begin %>
 <% case event.type %>
 <% when "prompt" %>
   <%= render partial: 'agent_runs/prompt_event', locals: { event: event } %>
@@ -7,6 +8,31 @@
   <h1>TODO RUN_COMMAND</h1>
 <% when "run_script" %>
   <h1>TODO RUN_SCRIPT</h1>
+<% when "observation" %>
+
+<div class="textarea textarea-info">
+  <h3>Observation</h3>
+  <%= markdown_to_html event.content %>
+</div>
+
+<% when "information" %>
+
+<div class="textarea textarea-info">
+  <h3>Information</h3>
+  <%= markdown_to_html event.content %>
+</div>
+
+
+
 <% else %>
   <%= event.type %>: <%= event.content %>
+<% end %>
+<% rescue => e %>
+  <div class="textarea textarea-error">
+    <h3>Invalid event</h3>
+    <pre><%= e %></pre>
+
+    <%= event.type %>: <%= event.content %>
+  </div>
+
 <% end %>
