@@ -22,6 +22,13 @@
   <%= markdown_to_html event.content %>
 </div>
 
+<% when "theory" %>
+
+<div class="textarea textarea-success">
+  <h3>Theory</h3>
+  <%= markdown_to_html event.content %>
+</div>
+
 
 
 <% else %>
