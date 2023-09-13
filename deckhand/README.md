@@ -119,7 +119,7 @@ To write a test for an endpoint on a rails application, we need to build a promp
 
 Some of these queries will be recursive if necessary.
 
-#### Building the database
+.#### Building the database
 
 For each file, we'll have to parse through the file, finding all definitions of relevance. For each definition entries in the knowledge database will be made that summarise the associated body or values, record external references and other properties, and placing them within the graph.
 
@@ -198,9 +198,78 @@ wrapping up.
 
 As the system is reasoning different types of information are generated:
 
-    observations, theories, conclusions, tool outputs
+    observations, theories, facts (conclusions), tool outputs
 
 #### Execution
 
 There is a simple process for working towards a conclusion to any theory, but there are many branches within that
 process.
+
+
+### Data gathering steps
+
+Information gathering steps:
+
+1. General techniques / technologies used
+2. External dependencies
+3. Gather information about codebase structure
+4. Modules and public members
+
+#### General techniques and technologies
+
+In this step we want to discover what programming language is used, wether the codebase is a library, a network service,
+ a website, a commandline tool, a system service, a component or plugin, a desktop application, a hardware driver or
+  operating system.
+
+In that category we also want to determine what tooling is used for dependency management, compilation, testing, 
+deployment and running.
+
+For example a project written in Ruby could be packaged as a Gem and/or have dependencies be managed using bundler.
+There are hints about what tooling is used strewn about the repository. For example the presence of a `Gemspec` or
+`Gemfile` and `Gemfile.lock` files. The presence of a `config.ru` or a `bin` or `exe` directory. There might also be
+a `Dockerfile`. Often there's a `README.md` or other documentation files explaining how to perform common tasks in the
+project.
+
+#### External dependencies
+
+Once the tooling is established it should in most cases be possible to discover all external dependencies. Either using
+very well defined dependency files like a `Gemfile`, `package.json` or `Cargo.toml` or less well defined like Python's
+`requirements.txt` or C++'s `CMake` or even less defined like preparations listed in documentation or based on the steps
+defined in a `Dockerfile` or `Makefile`. Some programming languages like Go and I think Deno even have their external
+dependencies at the top of every codefile, though I believe both have switched away from that now. 
+
+Once the dependencies are enumerated information about what resources they expose to the project should be memorized.
+Usually dependencies expose modules with public members, but some dependencies add other things like testing or 
+deployment infrastructure. Some dependencies form a framework in which the codebase is embedded, and they could dictate
+where the entrypoints and endpoints are located.
+
+#### Codebase structure
+
+During this step it should be established how code is organized in the project. Where the entrypoints are, where the
+endpoints are defined, where the tests are. What files expose certain functionalities, like models, views, controllers.
+What directories organize the codebase by those functionalities, or by solution domains.
+
+#### Modules and public members
+
+For each code file it should be determined what names are exposed to other files within the project, or to users of the
+project. The result of this step should be a dependency graph, that could be traversed from the leaves inward during 
+whole codebase analysis or transformation steps. Or outward from a node in a targeted operation.
+
+### Premature optimizations
+
+Various techniques could be applied to improve the performance in several ways. Unless there's some bottleneck that
+prevents feasibility these techniques are probably not worth exploring until clear value has been demonstrated and there
+is a demonstrated need for them.
+
+#### Self-controlled / Alternative LLM's
+
+There's LLM's we could run ourselves such as LLama2 and finetuned variants. Unless one of them very decidedly out
+performs GPT4 in quality or there is an extreme cost benefit we don't need to bother with running our own LLM or even
+switching to another one.
+
+#### Finetuning LLM's
+
+There exists increasingly sophisticated tooling that could be used for finetuning high quality pretrained LLM's like 
+LLama2 or fancy extra cheap LLM's like Microsoft's (announced but not yet released) Phi. We could for example train
+a model to be very good at translating between certain language pairs, or to have intimate knowledge of the problem
+domain of a certain codebase, after which accuracy is increased for the model, and cost is reduced.
