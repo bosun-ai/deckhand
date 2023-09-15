@@ -273,3 +273,19 @@ There exists increasingly sophisticated tooling that could be used for finetunin
 LLama2 or fancy extra cheap LLM's like Microsoft's (announced but not yet released) Phi. We could for example train
 a model to be very good at translating between certain language pairs, or to have intimate knowledge of the problem
 domain of a certain codebase, after which accuracy is increased for the model, and cost is reduced.
+
+### Memory
+
+#### Memory structure
+
+Because the context for an LLM is limited we can't simply dump everything we learned about the codebase into a context.
+For each each a context should be constructed that is not too long but does include precisely the information that is
+needed. Each of the 4 data gathering steps have information that might be relevant to the task at hand.
+
+We could formulate the context by asking an LLM to condense or select from the information of each step to suit the
+task.
+
+For example, to write a test, we might first ask the "General tools / technologies" memory to give us the information
+that pertains to how the codebase is tested. Then we might ask the "Codebase structure" memory where we should be
+putting that test. And then to actually write the test we might consult the "Modules and public members" and "External
+ dependencies" memories for relevant code we might make use of.
