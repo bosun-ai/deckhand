@@ -47,17 +47,64 @@ The user is then presented with a list of possible operations deckhand could per
 
 The user selects improve the test coverage. 
 
-### Example 1: Improving test coverage
+### Example 1: Writing regression test
 
-To improve test coverage on a project the system should go through the following steps:
+To write regression tests for a file, we would first need to:
+ 
+  1. Figure out where the test should be added
+  2. If the file does not exist yet, it should be created in a way that's compatible with the tooling
+  3. If the file where the test should be already exists, figure out where in the file it should be added
+  4. Write the setup for the test
+  5. Write the exercise, verification and teardown
+  6. Run the test and improve the test if it does not
 
-  1. Establish current test coverage
-  2. Find public function with lowest test coverage and smallest amount of dependencies
-  3. Generate a test for the function
-  4. Run the test
-  5. Improve the test
-  6. Run the test again
-  7. Repeat from step 2
+In the next sections I'll write out what information is needed to perform each step. Not necessarily so that this could
+be hardcoded, but more to make sure we're not missing any vital sources of information that the agent should have access
+to.
+
+#### Step 1: Figure out where the test should be added 
+
+To understand where the test should be added the agent should know the following things:
+
+  - What sort of tests are suitable for the code in the file (i.e. unit tests or integration tests)
+  - The location of tests of that type in the codebase
+  - What conventions there are for naming the test file in the codebase
+
+#### Step 2: If the file does not exist yet, it should be created in a way that's compatible with the tooling 
+
+To understand how to create the file the agent should understand:
+
+  - How and where new tests should be registered
+  - What boilerplate is necessary to create test files
+
+#### Step 3: If the file where the test should be already exists, figure out where in the file it should be added
+
+To understand where in the file the test should be added the agent should know the following things:
+
+  - What structure is used for defining tests of this type
+  - Where the subject of the test would fit in that structure
+
+#### Step 4: Write the setup for the test
+
+For writing the setup the agent should know:
+
+  - For each test, what common and edge cases should be tested
+  - What global state, and inputs affect the outputs and side effects of the function under test
+  - What internal and external functions are available to achieve that state
+  - If necessary how the global state and inputs can be mocked to limit the extent of the test
+
+#### Step 5: Write the exercise, verification and teardown
+
+To complete the test the agent should know:
+
+  - The expected output values and or side effects for the case under test
+  - How to invoke the function under test
+  - How to restore and or release the resources acquired for the test
+
+#### Step 6: Run the test and improve the test if it does not
+
+  - To run the test the agent should know about the tooling
+  - It should know the output of the test and how to relate error messages to the codebase
 
 ## Architecture
 
@@ -318,61 +365,3 @@ Alright so when and how do we do memory retrieval from these knowledge domain st
 test. To build the context we could ask each memory system to contribute its expertise to the subject, summarizing as it
 sees fit.
 
-### Example case
-
-To write regression tests for a file, we would first need to:
- 
-  1. Figure out where the test should be added
-  2. If the file does not exist yet, it should be created in a way that's compatible with the tooling
-  3. If the file where the test should be already exists, figure out where in the file it should be added
-  4. Write the setup for the test
-  5. Write the exercise, verification and teardown
-  6. Run the test and improve the test if it does not
-
-In the next sections I'll write out what information is needed to perform each step. Not necessarily so that this could
-be hardcoded, but more to make sure we're not missing any vital sources of information that the agent should have access
-to.
-
-#### Step 1: Figure out where the test should be added 
-
-To understand where the test should be added the agent should know the following things:
-
-  - What sort of tests are suitable for the code in the file (i.e. unit tests or integration tests)
-  - The location of tests of that type in the codebase
-  - What conventions there are for naming the test file in the codebase
-
-#### Step 2: If the file does not exist yet, it should be created in a way that's compatible with the tooling 
-
-To understand how to create the file the agent should understand:
-
-  - How and where new tests should be registered
-  - What boilerplate is necessary to create test files
-
-#### Step 3: If the file where the test should be already exists, figure out where in the file it should be added
-
-To understand where in the file the test should be added the agent should know the following things:
-
-  - What structure is used for defining tests of this type
-  - Where the subject of the test would fit in that structure
-
-#### Step 4: Write the setup for the test
-
-For writing the setup the agent should know:
-
-  - For each test, what common and edge cases should be tested
-  - What global state, and inputs affect the outputs and side effects of the function under test
-  - What internal and external functions are available to achieve that state
-  - If necessary how the global state and inputs can be mocked to limit the extent of the test
-
-#### Step 5: Write the exercise, verification and teardown
-
-To complete the test the agent should know:
-
-  - The expected output values and or side effects for the case under test
-  - How to invoke the function under test
-  - How to restore and or release the resources acquired for the test
-
-#### Step 6: Run the test and improve the test if it does not
-
-  - To run the test the agent should know about the tooling
-  - It should know the output of the test and how to relate error messages to the codebase
