@@ -1,4 +1,4 @@
-class GptMigrateAgent < ApplicationAgent
+class GptMigrate::GptMigrateAgent < ApplicationAgent
   arguments :target_language
 
   def run

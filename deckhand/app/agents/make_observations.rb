@@ -1,7 +1,6 @@
-module Deckhand::Tasks
-  class MakeObservations < Task
-    def run
-      prompt_text = %Q{# Solving a problem with tools
+class MakeObservations < ApplicationAgent
+  def prompt_text
+    %Q{# Solving a problem with tools
 While formulating an answer to the following question:
 
 #{question.indent(2)}
@@ -20,7 +19,9 @@ We have established the following observations:
 
 Based on this theory the following observations will get us closer to an answer:
     -}
-      prompt(prompt_text)
-    end
+  end
+
+  def run
+    prompt(prompt_text)
   end
 end
