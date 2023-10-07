@@ -11,6 +11,10 @@ class ApplicationAgent::Context < AutonomousAgent::Context
     Codebase.find(codebase_id)
   end
 
+  def codebase=(codebase)
+    @codebase_id = codebase.id
+  end
+
   def deep_dup
     super.tap do |context|
       context.agent_run = nil

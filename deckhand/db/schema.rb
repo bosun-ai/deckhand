@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_07_31_202144) do
+ActiveRecord::Schema[7.0].define(version: 2023_10_07_153827) do
   create_table "agent_run_events", force: :cascade do |t|
     t.string "event"
     t.integer "agent_run_id", null: false
@@ -30,6 +30,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_31_202144) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "parent_ids", default: "[]"
+    t.string "error"
     t.index ["parent_id"], name: "index_agent_runs_on_parent_id"
   end
 
@@ -60,6 +61,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_31_202144) do
     t.string "github_app_installation_id"
     t.string "github_app_issue_id"
     t.string "context"
+    t.string "description"
     t.index ["name_slug"], name: "index_codebases_on_name_slug", unique: true
   end
 

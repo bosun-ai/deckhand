@@ -10,11 +10,24 @@ class AgentRun < ApplicationRecord
   end
 
   def success?
-    !output.nil?
+    finished_at && error.blank?
   end
 
   def duration
     ActiveSupport::Duration.build(finished_at - created_at)
+  end
+
+  def error=(error)
+    error = {
+      class: error.class.name,
+      message: error.message,
+      backtrace: error.backtrace
+    }.to_json
+    super(error)
+  end
+
+  def error
+    JSON.parse(attributes['error']) if attributes['error']
   end
 
   def arguments

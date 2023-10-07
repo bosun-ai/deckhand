@@ -1,5 +1,5 @@
 <div id="<%= dom_id codebase %>" class="card bg-base-200 shadow-xl mt-4 mb-4">
-  <div class="card-body">
+  <div class="card-body relative">
     <h3 class="card-title">
       <%= codebase.name %>
       <div class="badge badge-accent badge-outline">
@@ -7,21 +7,35 @@
       </div>
     </h3>
 
+    <% if controller_name == "codebases" %>
+      <div class="absolute right-0 top-0 w-128">
+        <div tabindex="0" class="collapse focus:bg-secondary focus:text-secondary-content relative">
+          <div class="collapse-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="absolute right-5 top-5 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+            </svg>
+          </div>
+          <div class="collapse-content"> 
+            <%= link_to "Edit this codebase", edit_codebase_path(codebase), class: "btn btn-primary" %>
+            <%= button_to "Destroy this codebase", codebase_path(@codebase), method: :delete, class: "btn btn-error" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <div class="card-actions justify-end">
     <% if action_path != "codebases#show" %>
       <%= link_to "Show this codebase", codebase, class: "btn btn-primary" %>
     <% end %>
 
-    <% if controller_name == "codebases" %>
-      <%= link_to "Edit this codebase", edit_codebase_path(codebase), class: "btn btn-primary" %>
-      <%= button_to "Destroy this codebase", codebase_path(@codebase), method: :delete, class: "btn btn-error" %>
-    <% end %>
 
     <% if codebase.checked_out %>
-      <% if codebase.context.blank? %>
+      <% if true # codebase.context.blank? %>
         <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
       <% end %>
       <%= link_to "Visit github issue", codebase.main_issue_url, class: "btn btn-primary" %>
+    <% else %>
+      <%= link_to "Retry check-out", codebase.main_issue_url, class: "btn btn-primary" %>
     <% end %>
     </div>
   </div>

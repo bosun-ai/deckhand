@@ -21,6 +21,16 @@
       </div>
     <% end %>
 
+    <% if agent_run.error %>
+    <p class="my-5">
+      <strong class="block font-medium mb-1">Error: <%= agent_run.error['class'] %></strong>
+      <p><%= agent_run.error['message'] %></p>
+      <textarea class="textarea textarea-info w-full textarea-md" placeholder="">
+        <%= agent_run.error['backtrace'].join("\n") %>
+      </textarea>
+    </p>
+    <% end %>
+
     <% if agent_run.output %>
     <p class="my-5">
       <strong class="block font-medium mb-1">Output:</strong>

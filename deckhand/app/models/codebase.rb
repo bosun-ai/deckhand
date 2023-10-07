@@ -12,13 +12,19 @@ class Codebase < ApplicationRecord
   end
 
   def context
-    deserialized = attributes["context"] ? JSON.parse(attributes["context"]) : {}
+    attributes["context"] ? JSON.parse(attributes["context"]) : {}
   rescue JSON::ParserError
+    puts "Error while parsing context: #{attributes['context']}"
     {}
   end
 
+  def context=(context)
+    context = context.to_json
+    super(context)
+  end
+
   def agent_context(assignment)
-    ApplicationAgent::Context.new(assignment, codebase: self, history: context["history"] || [])
+    ApplicationAgent::Context.new(assignment, codebase: self, history: context&.dig("history") || [])
   end
 
   def run_agent(agent, assignment, *args, **kwargs)
@@ -151,10 +157,21 @@ class Codebase < ApplicationRecord
     end
   end
 
+  def update_project_description
+    self.description = describe_project_in_markdown
+    save!
+
+    describe_project_in_github_issue
+  end
+
   def describe_project_in_github_issue
-    markdown = run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge)
-    html = github_client.markdown(markdown, mode: "gfm", context: name)
+    return unless github_client
+    html = github_client.markdown(description, mode: "gfm", context: name)
     add_main_issue_comment(html)
+  end
+  
+  def describe_project_in_markdown
+    run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge)
   end
 
   def create_main_github_issue
@@ -222,10 +239,10 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
-    update!(context: context.to_json)
+    self.context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
+    save!
 
-    perform_later :describe_project_in_github_issue
+    perform_later :update_project_description
   end
 
   def add_documentation_to_undocumented_files(files)
