@@ -5,14 +5,12 @@
 
   <%= render @codebase %>
 
-
-
   <div id="agent_run_events_output" tabindex="0" class="collapse bg-accent ma-2 mb-4 text-accent-content ">
     <div class="collapse-title text-xl font-medium">
       <h2>Agent run events</h2>
     </div>
 
-    <% @codebase.agent_runs.each do |agent_run| %>
+    <% @codebase.agent_runs.reverse.each do |agent_run| %>
       <%= render agent_run %>
     <% end %>
   </div>

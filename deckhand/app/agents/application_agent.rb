@@ -23,6 +23,7 @@ class ApplicationAgent < AutonomousAgent
 
     result = block.call
   rescue => e
+    object.agent_run.update!(error: e) if object.agent_run
     puts "Caught error while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
   ensure
     if object.agent_run
