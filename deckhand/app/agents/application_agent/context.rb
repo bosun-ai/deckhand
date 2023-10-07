@@ -1,9 +1,8 @@
 class ApplicationAgent::Context < AutonomousAgent::Context
-  attr_accessor :agent_run
-  attr_accessor :codebase_id
+  attr_accessor :agent_run, :codebase
 
   def initialize(assignment, codebase: nil, **kwargs)
-    @codebase_id = codebase.id
+    @codebase = codebase
     super(assignment, **kwargs)
   end
 
