@@ -85,6 +85,8 @@ GEM
     addressable (2.8.5)
       public_suffix (>= 2.0.2, < 6.0)
     ansi-to-html (0.0.3)
+    appsignal (3.4.12)
+      rack
     async (2.6.3)
       console (~> 1.10)
       fiber-annotation
@@ -315,6 +317,7 @@ PLATFORMS
 DEPENDENCIES
   activegraph
   ansi-to-html
+  appsignal
   async-io
   async-process
   bootsnap
