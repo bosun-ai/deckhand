@@ -32,6 +32,8 @@ class ApplicationAgent < AutonomousAgent
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
       object.agent_run.update!(error: e) if object.agent_run
       puts "Caught error while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+      puts "Caught agent error (AgentRun##{object.agent_run.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+
     ensure
       if object.agent_run
         object.agent_run.update!(output: result&.to_json, context: context.to_json, finished_at: Time.now)
@@ -59,9 +61,10 @@ class ApplicationAgent < AutonomousAgent
 
   def call_function(prompt_response, **_kwargs)
     tool = tools.find { |t| t.name == prompt_response.function_call_name }
-    raise ToolError, "No tool found with name #{prompt_response.function_call_name}" unless tool
-
-    tool.run(prompt_response.function_call_args, context:)
+    raise ToolError.new("No tool found with name #{prompt_response.function_call_name}") unless tool
+    args = prompt_response.function_call_args
+    raise ToolError.new("Got invalid function call args object: #{prompt_response.function_call_args.inspect}") unless args.is_a?(Hash)
+    tool.run(**args, context:)
   end
 
   def context_prompt

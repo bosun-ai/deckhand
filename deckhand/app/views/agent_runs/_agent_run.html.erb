@@ -1,59 +1,70 @@
 <div id="<%= dom_id agent_run %>" class="card bg-neutral m-3 p-3 mb-5">
   <div class="card-body">
-    <h2 class="card-title"> <%= agent_run.name %> 
-    <% if agent_run.finished_at %>
-      <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
-        Finished: <%= agent_run.duration.inspect %>
-      </span></h2>
-    <% else %>
-      <span class="badge badge-outline badge-warning">running</span>
-    <% end %>
-    </h2>
+    <div class="collapse-title">
+      <h2 class="card-title"> <%= agent_run.name %> 
+      <% if agent_run.finished_at %>
+        <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
+          Finished: <%= agent_run.duration.inspect %>
+        </span></h2>
+      <% else %>
+        <span class="badge badge-outline badge-warning">running</span>
+      <% end %>
+      </h2>
 
-    <% agent_run.arguments.each do |argument, value| %>
-      <div class="form-control w-full max-w-xs">
-        <label class="label">
-          <span class="label-text"><%= argument.capitalize %></span>
-        </label>
-        <input type="text" class="input input-bordered w-full max-w-xs" disabled
-          value="<%= value %>"
-        />
+      <% agent_run.arguments.each do |argument, value| %>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text"><%= argument.capitalize %></span>
+          </label>
+          <input type="text" class="input input-bordered " disabled
+            value="<%= value %>"
+          />
+        </div>
+      <% end %>
+    </div>
+
+    <div class="">
+      <% if agent_run.error %>
+      <p class="my-5">
+        <strong class="block font-medium mb-1">Error: <%= agent_run.error['class'] %></strong>
+        <p><%= agent_run.error['message'] %></p>
+        <textarea class="textarea textarea-info w-full textarea-md" placeholder="">
+          <%= agent_run.error['backtrace'].join("\n") %>
+        </textarea>
+      </p>
+      <% end %>
+
+      <% if agent_run.output %>
+      <p class="my-5">
+        <strong class="block font-medium mb-1">Output:</strong>
+        <% [*agent_run.output].each do |output| %>
+          <% output = output.to_s %>
+          <textarea class="textarea textarea-info w-full textarea-md" rows="<%= output.lines.count %>" placeholder=""><%= script_to_html output %></textarea>
+        <% end %>
+      </p>
+      <% end %>
+
+      <div class="my-5">
+        <strong class="block font-medium mb-1">Context:</strong>
+        <% json = JSON.pretty_generate(agent_run.context) %>
+        <textarea class="textarea textarea-info w-full textarea-md" rows="<%= json.lines.count %>" placeholder=""><%= script_to_html json %></textarea>
       </div>
-    <% end %>
 
-    <% if agent_run.error %>
-    <p class="my-5">
-      <strong class="block font-medium mb-1">Error: <%= agent_run.error['class'] %></strong>
-      <p><%= agent_run.error['message'] %></p>
-      <textarea class="textarea textarea-info w-full textarea-md" placeholder="">
-        <%= agent_run.error['backtrace'].join("\n") %>
-      </textarea>
-    </p>
-    <% end %>
+      <ul class="steps steps-vertical">
+        <% agent_run.children.each do |child| %>
+          <li class="step step-secondary"><%= link_to child.name, child, class: '' %></li> 
+        <% end %>
+      </ul>
 
-    <% if agent_run.output %>
-    <p class="my-5">
-      <strong class="block font-medium mb-1">Output:</strong>
-      <% [*agent_run.output].each do |output| %>
-        <textarea class="textarea textarea-info w-full textarea-md" placeholder=""><%= output %></textarea>
+      <%= render partial: 'agent_runs/tree_view', locals: { agent_run: agent_run } %>
+
+      <div class="card-actions justify-end">
+      <% if action_name != "show" %>
+        <%= link_to "More details", agent_run, class: "btn btn-secondary" %>
+      <% else %>
+        <%= button_to 'Destroy this agent_run', agent_run_path(agent_run), method: :delete, class: "btn btn-error" %>
       <% end %>
-    </p>
-    <% end %>
-
-    <ul class="steps steps-vertical">
-      <% agent_run.children.each do |child| %>
-        <li class="step step-secondary"><%= link_to child.name, child, class: '' %></li> 
-      <% end %>
-    </ul>
-
-    <%= render partial: 'agent_runs/tree_view', locals: { agent_run: agent_run } %>
-
-    <div class="card-actions justify-end">
-    <% if action_name != "show" %>
-      <%= link_to "More details", agent_run, class: "btn btn-secondary" %>
-    <% else %>
-      <%= button_to 'Destroy this agent_run', agent_run_path(agent_run), method: :delete, class: "btn btn-error" %>
-    <% end %>
+      </div>
     </div>
   </div>
 </div>

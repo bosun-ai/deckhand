@@ -25,7 +25,7 @@ class CodebasesController < ApplicationController
       @codebase.discover_testing_infrastructure
     end
 
-    redirect_to main_deck_url, notice: "Discovering testing infrastructure for codebase."
+    redirect_to codebase_url(@codebase), notice: "Discovering testing infrastructure for codebase."
   end
 
   # POST /codebases or /codebases.json
