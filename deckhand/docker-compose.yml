@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  app:
+    dns: ["8.8.8.8"] # Homeautomation dns has issues
+    stdin_open: true
+    command: bin/dev
+    build:
+      context: .
+      args:
+        RAILS_ENV: development
+      network: host
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+      - "3036:3036"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - RAILS_ENV=development
+      - RAILS_LOG_TO_STDOUT=true
+      - VITE_RUBY_HOST="0.0.0.0"
+      - PORT=3000
+
+  redis:
+    image: redis:latest
+
+volumes:
+  bundle_cache:
