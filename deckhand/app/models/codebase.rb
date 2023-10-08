@@ -19,7 +19,7 @@ class Codebase < ApplicationRecord
   end
 
   def context=(context)
-    context = context.to_json
+    context = context.to_json if context
     super(context)
   end
 

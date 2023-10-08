@@ -1,7 +1,7 @@
-class TryRefuteTheoryAnswerAgent < ApplicationAgent
+class TryRefuteTheoryAgent < ApplicationAgent
   arguments :question, :theory, :answer
-
-  attr_accessor :correct, :incorrect
+  
+  attr_accessor :resolution, :correct
 
   def prompt_text
     <<~PROMPT_TEXT
@@ -32,15 +32,15 @@ class TryRefuteTheoryAnswerAgent < ApplicationAgent
   def run
     resolution = prompt(prompt_text).full_response.strip
     if resolution =~ /Correct:/
-      {
-        correct: resolution.split("Correct:", 2).last.strip
-      }
+      self.correct = true
+      self.resolution = resolution.split("Correct:", 2).last.strip
     elsif resolution =~ /Incorrect:/
-      {
-        incorrect: resolution.split("Incorrect:", 2).last.strip
-      }
+      self.correct = false
+      self.resolution = resolution.split("Incorrect:", 2).last.strip
     else
       raise "Invalid resolution: #{resolution}"
     end
+
+    self
   end
 end
