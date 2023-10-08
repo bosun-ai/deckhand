@@ -25,30 +25,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_07_153827) do
     t.string "arguments"
     t.string "context"
     t.string "output"
-    t.datetime "finished_at", precision: nil
+    t.datetime "finished_at"
     t.integer "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "parent_ids", default: "[]"
     t.string "error"
     t.index ["parent_id"], name: "index_agent_runs_on_parent_id"
-  end
-
-  create_table "autonomous_assignment_events", force: :cascade do |t|
-    t.integer "autonomous_assignment_id", null: false
-    t.string "event"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["autonomous_assignment_id"], name: "index_autonomous_assignment_events_on_autonomous_assignment_id"
-  end
-
-  create_table "autonomous_assignments", force: :cascade do |t|
-    t.string "name"
-    t.string "arguments"
-    t.integer "codebase_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["codebase_id"], name: "index_autonomous_assignments_on_codebase_id"
   end
 
   create_table "codebases", force: :cascade do |t|
@@ -76,8 +59,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_07_153827) do
   create_table "shell_tasks", force: :cascade do |t|
     t.string "description"
     t.string "script"
-    t.datetime "started_at", precision: nil
-    t.datetime "finished_at", precision: nil
+    t.datetime "started_at"
+    t.datetime "finished_at"
     t.integer "exit_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -85,7 +68,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_07_153827) do
 
   add_foreign_key "agent_run_events", "agent_runs"
   add_foreign_key "agent_runs", "agent_runs", column: "parent_id"
-  add_foreign_key "autonomous_assignment_events", "autonomous_assignments"
-  add_foreign_key "autonomous_assignments", "codebases"
   add_foreign_key "github_access_tokens", "codebases"
 end
