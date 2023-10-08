@@ -2,7 +2,7 @@
   WINDOW_SIZE = 200
   WINDOW_OVERLAP = 5
 
-  arguments :file_path, :question
+  arguments file_path: nil, question: nil
 
   def self.name
     "analyze_file"
@@ -27,9 +27,13 @@
         file_path: {
           type: :string,
           description: "The path to the file to analyze"
+        },
+        question: {
+          type: :string,
+          description: "The question this file might hold the answer to"
         }
       },
-      required: ["file_path"]
+      required: ["file_path", "question"]
     }
   end
 
@@ -60,6 +64,7 @@
   def run
     # read the file and then pass it into a LLM together with the question
     raise Error.new("Must give a specific file name") if file_path.blank?
+    raise Error.new("Must give a question") if question.blank?
 
     full_file_path = File.join(path_prefix, file_path)
 
@@ -80,7 +85,7 @@
 
         ## Context
 
-        You are reading the file `#{@file_path}`. You are looking at the file in chunks, this is chunk number #{i} and
+        You are reading the file `#{file_path}`. You are looking at the file in chunks, this is chunk number #{i} and
         there are #{remaining_chunks} chunks left. #{observations.any? ? "You have made the following observations so far:" : ""}
 
         #{observations.join("\n")}
@@ -101,7 +106,7 @@
         ```
 
         ## Question
-        #{@question}
+        #{question}
 
         ## Answer
       ANALYZE_PROMPT

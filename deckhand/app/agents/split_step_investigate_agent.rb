@@ -37,12 +37,8 @@ class SplitStepInvestigateAgent < ApplicationAgent
           # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.
           refutation = run(TryRefuteTheoryAgent, question, theory, resolution.answer, context: context, tools: tools)
 
-          if refutation.correct
-            conclusion = resolution.answer
-          elsif refutation.incorrect
-            conclusion = false
-            # TODO try refuting the incorrectness assertion?
-          end
+          conclusion = refutation.correct && resolution.answer
+          # TODO try refuting the incorrectness assertion?
 
           # 5b. If we can't immediately answer or all our answers are invalid continue to 6.
         elsif resolution.need_information && information_tries < 2
