@@ -34,18 +34,23 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     context.add_observation(answer)
 
-    has_tests = JSON.parse(run(
-      ReformatAnswerAgent,
-      "Does the codebase have tests?",
-      answer,
-      "json",
-      example: { "has_tests": true }.to_json,
-      context: context.deep_dup
-    ))["has_tests"]
+    tests_response = run(
+        ReformatAnswerAgent,
+        "Does the codebase have tests?",
+        answer,
+        "json",
+        example: { "has_tests": true }.to_json,
+        context: context.deep_dup
+      )
+
+    has_tests = false
+    begin
+      has_tests = JSON.parse(tests_response.full_response)["has_tests"]
+    rescue => e
+      raise "Could not extract 'has_tests' from object: #{tests_response.full_response.inspect}"
+    end
 
     if !has_tests
-      puts answer
-      puts "The codebase does not have tests. Context: #{context.summarize_knowledge}"
       return context
     end
 

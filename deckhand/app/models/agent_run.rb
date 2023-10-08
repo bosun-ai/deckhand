@@ -34,6 +34,6 @@ class AgentRun < ApplicationRecord
 
   def ensure_parent_ids
     return if !parent_id || !parent_ids.blank?
-    self.parent_ids = JSON.dump(parent.parent_ids + [parent_id])
+    self.parent_ids = parent.parent_ids + [parent_id]
   end
 end

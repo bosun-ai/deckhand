@@ -31,7 +31,7 @@ class ApplicationAgent < AutonomousAgent
       current_span.record_exception(e)
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
       object.agent_run.update!(error: e) if object.agent_run
-      puts "Caught agent error (AgentRun##{object.agent_run.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+      puts "Caught agent error (AgentRun##{object&.agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
     ensure
       if object.agent_run
         object.agent_run.update!(output: result&.to_json, context: context.to_json, finished_at: Time.now)
