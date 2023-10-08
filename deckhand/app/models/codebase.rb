@@ -12,11 +12,7 @@ class Codebase < ApplicationRecord
   end
 
   def context
-<<<<<<< HEAD
     attributes["context"] ? JSON.parse(attributes["context"]) : {}
-=======
-    JSON.parse(attributes['context']) || {}
->>>>>>> 518356f (chore(Procfile.dev): comment out redis process in Procfile.dev to disable it temporarily)
   rescue JSON::ParserError
     puts "Error while parsing context: #{attributes['context']}"
     {}
@@ -28,11 +24,7 @@ class Codebase < ApplicationRecord
   end
 
   def agent_context(assignment)
-<<<<<<< HEAD
     ApplicationAgent::Context.new(assignment, codebase: self, history: context&.dig("history") || [])
-=======
-    ApplicationAgent::Context.new(assignment, codebase: self, history: context['history'] || [])
->>>>>>> 518356f (chore(Procfile.dev): comment out redis process in Procfile.dev to disable it temporarily)
   end
 
   def run_agent(agent, assignment, *args, **kwargs)
@@ -40,12 +32,12 @@ class Codebase < ApplicationRecord
   end
 
   CODEBASE_DIR = if Rails.env.production?
-                   '/data/code'
-                 else
-                   Rails.root.join('tmp', 'code')
-                 end
+      "/data/code"
+    else
+      Rails.root.join("tmp", "code")
+    end
 
-  ADD_DOCUMENTATION_HEADER = '## Undocumented files'
+  ADD_DOCUMENTATION_HEADER = "## Undocumented files"
 
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
@@ -69,25 +61,25 @@ class Codebase < ApplicationRecord
   end
 
   def github_client
-    return unless github_app_installation_id
-
-    @github_client ||= GithubApp.client(github_app_installation_id)
+    if github_app_installation_id
+      @github_client ||= GithubApp.client(github_app_installation_id)
+    end
   end
 
   def github_repo
-    return unless client = github_client
-
-    @github_repo ||= client.repository(name)
+    if client = github_client
+      @github_repo ||= client.repository(name)
+    end
   end
 
   def git_url
     if repo = github_repo
       repo_uri = URI.parse(repo.clone_url)
-      repo_uri.user = 'x-access-token'
+      repo_uri.user = "x-access-token"
       repo_uri.password = github_client.access_token
       repo_uri.to_s
     else
-      url
+      self.url
     end
   end
 
@@ -108,31 +100,29 @@ class Codebase < ApplicationRecord
   end
 
   def default_branch
-    github_repo&.default_branch || 'main'
+    github_repo&.default_branch || "main"
   end
 
-  # TODO: instead of just checking out a new branch, we should clone the whole repo and create the new branch there
+  # TODO instead of just checking out a new branch, we should clone the whole repo and create the new branch there
   # so we don't run into conflicts when doing multiple shell_tasks at the same time for the same repo.
   def new_branch(branch_name, &block)
-    ShellTask.run!(description: "Creating branch #{branch_name} for #{name}",
-                   script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
-      if (status = message[:status]) && block
-        block.call(status)
+    ShellTask.run!(description: "Creating branch #{branch_name} for #{name}", script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
+      if status = message[:status]
+        block.call(status) if block
       end
     end
   end
 
   def commit(message)
-    system(%(git config --global user.email "139715209+bosun-deckhand[bot]@users.noreply.github.com"))
-    system(%(git config --global user.name "bosun-deckhand[bot]"))
-    system(%(cd #{path} && git remote set-url origin "#{git_url}" && git add . && git commit -m '#{message}'))
+    system(%Q{git config --global user.email "139715209+bosun-deckhand[bot]@users.noreply.github.com"})
+    system(%Q{git config --global user.name "bosun-deckhand[bot]"})
+    system(%Q{cd #{path} && git remote set-url origin "#{git_url}" && git add . && git commit -m '#{message}'})
   end
 
   def git_push(branch_name, &block)
-    ShellTask.run!(description: "Pushing for #{name}",
-                   script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
-      if (status = message[:status]) && block
-        block.call(status)
+    ShellTask.run!(description: "Pushing for #{name}", script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
+      if status = message[:status]
+        block.call(status) if block
       end
     end
   end
@@ -157,16 +147,14 @@ class Codebase < ApplicationRecord
   end
 
   def discover_undocumented_files
-    files = run_agent(::FileAnalysis::UndocumentedFilesAgent, 'Finding undocumented files')
-    return if files.blank?
-
-    markdown = %(#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map do |f|
-                                                                                       "* #{f}"
-                                                                                     end.join("\n")}
-\n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n)
-    # html = github_client.markdown(markdown, mode: "gfm", context: name)
-    # add_main_issue_comment(html)
-    add_main_issue_comment(markdown)
+    files = run_agent(::FileAnalysis::UndocumentedFilesAgent, "Finding undocumented files")
+    if !files.blank?
+      markdown = %Q{#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
+\n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n}
+      # html = github_client.markdown(markdown, mode: "gfm", context: name)
+      # add_main_issue_comment(html)
+      add_main_issue_comment(markdown)
+    end
   end
 
   def update_project_description
@@ -177,13 +165,8 @@ class Codebase < ApplicationRecord
   end
 
   def describe_project_in_github_issue
-<<<<<<< HEAD
     return unless github_client
     html = github_client.markdown(description, mode: "gfm", context: name)
-=======
-    markdown = run_agent(RewriteInMarkdownAgent, 'Describing project', agent_context('Project').summarize_knowledge)
-    html = github_client.markdown(markdown, mode: 'gfm', context: name)
->>>>>>> 518356f (chore(Procfile.dev): comment out redis process in Procfile.dev to disable it temporarily)
     add_main_issue_comment(html)
   end
   
@@ -192,23 +175,22 @@ class Codebase < ApplicationRecord
   end
 
   def create_main_github_issue
-    return unless github_client
-
-    issue = github_client.create_issue(name, 'Bosun AI autonomous shell_tasks',
-                                       'This issue is used to track autonomous shell_tasks for this repository.')
-    update!(github_app_issue_id: issue.number)
+    if github_client
+      issue = github_client.create_issue(name, "Bosun AI autonomous shell_tasks", "This issue is used to track autonomous shell_tasks for this repository.")
+      update!(github_app_issue_id: issue.number)
+    end
   end
 
   def add_main_issue_comment(comment)
-    return unless github_client && github_app_issue_id
-
-    github_client.add_comment(name, github_app_issue_id, comment)
+    if github_client && github_app_issue_id
+      github_client.add_comment(name, github_app_issue_id, comment)
+    end
   end
 
   def main_issue_url
-    return unless github_client && github_app_issue_id
-
-    github_client.issue(name, github_app_issue_id).url
+    if github_client && github_app_issue_id
+      github_client.issue(name, github_app_issue_id).url
+    end
   end
 
   def process_event(event)
@@ -216,26 +198,26 @@ class Codebase < ApplicationRecord
 
     Rails.logger.info "Received event: #{issue_id.inspect}"
 
-    return unless issue_id == github_app_issue_id
-
-    process_main_issue_event(event)
+    if issue_id == github_app_issue_id
+      process_main_issue_event(event)
+    end
   end
 
   def process_main_issue_event(event)
     Rails.logger.info "Received main issue event: #{event.dig(:comment, :user, :login).inspect}"
-    return unless event.dig(:comment, :user, :login) == 'bosun-deckhand[bot]'
-
-    process_bot_action_event(event)
+    if event.dig(:comment, :user, :login) == "bosun-deckhand[bot]"
+      process_bot_action_event(event)
+    end
   end
 
   def process_bot_action_event(event)
     comment = event.dig(:comment, :body)
 
     puts "Received process_bot_action_event: #{comment.inspect}"
-    return unless comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
-
-    files = comment.split('*')[1..-2].map(&:strip)
-    add_documentation_to_undocumented_files(files)
+    if comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
+      files = comment.split("*")[1..-2].map(&:strip)
+      add_documentation_to_undocumented_files(files)
+    end
   end
 
   # discover basic facts is going to establish a list of basic facts about the codebase
@@ -257,18 +239,13 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-<<<<<<< HEAD
     self.context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
     save!
-=======
-    context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, 'Discovering testing infrastructure')
-    update!(context: context.to_json)
->>>>>>> 518356f (chore(Procfile.dev): comment out redis process in Procfile.dev to disable it temporarily)
 
     perform_later :update_project_description
   end
 
   def add_documentation_to_undocumented_files(files)
-    Codebase::Maintenance::AddDocumentation.run(self, files:)
+    Codebase::Maintenance::AddDocumentation.run(self, files: files)
   end
 end
