@@ -22,32 +22,12 @@ class AgentRun < ApplicationRecord
       class: error.class.name,
       message: error.message,
       backtrace: error.backtrace
-    }.to_json
+    }.as_json
     super(error)
-  end
-
-  def error
-    JSON.parse(attributes['error']) if attributes['error']
-  end
-
-  def arguments
-    JSON.parse(attributes['arguments'])
-  end
-
-  def context
-    JSON.parse(attributes['context'])
-  end
-
-  def output
-    JSON.parse(attributes['output']) if attributes['output']
   end
 
   def feed
     children.sort_by(&:created_at).reverse
-  end
-
-  def parent_ids
-    JSON.parse(attributes['parent_ids'] || '[]')
   end
 
   private

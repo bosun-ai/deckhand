@@ -8,19 +8,7 @@ class Codebase < ApplicationRecord
   has_many :github_access_tokens, dependent: :destroy
 
   def agent_runs
-    AgentRun.root.where("context->>'codebase_id' = ?", id)
-  end
-
-  def context
-    attributes["context"] ? JSON.parse(attributes["context"]) : {}
-  rescue JSON::ParserError
-    puts "Error while parsing context: #{attributes['context']}"
-    {}
-  end
-
-  def context=(context)
-    context = context.to_json if context
-    super(context)
+    AgentRun.root.where("context->>'codebase_id' = ?", id.to_s)
   end
 
   def agent_context(assignment)

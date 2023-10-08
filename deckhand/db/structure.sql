@@ -19,9 +19,9 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.agent_run_events (
     id bigint NOT NULL,
-    event character varying,
+    event jsonb,
     agent_run_id bigint NOT NULL,
-    agent_run_ids character varying DEFAULT '[]'::character varying,
+    agent_run_ids jsonb DEFAULT '[]'::jsonb,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -53,15 +53,15 @@ ALTER SEQUENCE public.agent_run_events_id_seq OWNED BY public.agent_run_events.i
 CREATE TABLE public.agent_runs (
     id bigint NOT NULL,
     name character varying,
-    arguments character varying,
-    context character varying,
+    arguments jsonb,
+    context jsonb,
     output character varying,
     finished_at timestamp without time zone,
     parent_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    parent_ids character varying DEFAULT '[]'::character varying,
-    error character varying
+    parent_ids jsonb DEFAULT '[]'::jsonb,
+    error jsonb
 );
 
 
@@ -110,7 +110,7 @@ CREATE TABLE public.codebases (
     name_slug character varying,
     github_app_installation_id character varying,
     github_app_issue_id character varying,
-    context character varying,
+    context jsonb,
     description character varying
 );
 
@@ -372,6 +372,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230731201757'),
 ('20230731202144'),
 ('20231007144346'),
-('20231007153827');
+('20231007153827'),
+('20231008192508');
 
 
