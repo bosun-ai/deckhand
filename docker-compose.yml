@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  deckhand:
+    stdin_open: true
+    command: bin/dev
+    build:
+      context: deckhand/
+      args:
+        RAILS_ENV: development
+      network: host
+    volumes:
+      - deckhand/:/app
+      - deckhand_bundle_cache:/bundle
+    ports:
+      - "3000:3000"
+      - "3036:3036"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - RAILS_ENV=development
+      - RAILS_LOG_TO_STDOUT="1"
+      - PORT=3000
+      - BUNDLE_PATH=/bundle
+      - OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
+      - OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=9RxFmtVYWUsAI9nvcnUXhC"
+      - OTEL_SERVICE_NAME="deckhand"
+
+  ruby_agents:
+    stdin_open: true
+    command: exe/ruby_agents
+    build:
+      context: .
+      args:
+        RAILS_ENV: development
+      network: host
+    volumes:
+      - ruby_agents/:/app
+      - ruby_agents_bundle_cache:/bundle
+      - code:/app/tmp/code
+    depends_on:
+      - redis
+    environment:
+      - BUNDLE_PATH=/bundle
+      - OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
+      - OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=9RxFmtVYWUsAI9nvcnUXhC"
+      - OTEL_SERVICE_NAME="ruby_agents"
+
+  redis:
+    image: redis:latest
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  deckhand_bundle_cache:
+  ruby_agents_bundle_cache:
+  code:
