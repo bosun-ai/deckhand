@@ -46,12 +46,8 @@ class ApplicationAgent < AutonomousAgent
 
     result = block.call
     if object.agent_run
-      object.agent_run.events.create!(
-        event_hash: {
-          type: 'prompt',
-          content: { prompt: result.prompt, response: result.full_response }.to_json
-        }
-      )
+      # TODO: should be pushed to amqp instead
+      AmqpConnection.instance.publish_on_channel('agents.events', type: 'prompt', content: { prompt: result.prompt, response: result.full_response }.to_json)
     end
   ensure
     result

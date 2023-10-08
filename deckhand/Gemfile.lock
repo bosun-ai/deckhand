@@ -84,6 +84,7 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.5)
       public_suffix (>= 2.0.2, < 6.0)
+    amq-protocol (2.3.2)
     ansi-to-html (0.0.3)
     appsignal (3.4.12)
       rack
@@ -101,6 +102,9 @@ GEM
     bootsnap (1.16.0)
       msgpack (~> 1.2)
     builder (3.2.4)
+    bunny (2.22.0)
+      amq-protocol (~> 2.3, >= 2.3.1)
+      sorted_set (~> 1, >= 1.0.2)
     capybara (3.39.2)
       addressable
       matrix
@@ -517,6 +521,7 @@ DEPENDENCIES
   async-io
   async-process
   bootsnap
+  bunny (~> 2.22)
   capybara
   debug
   dotenv-rails

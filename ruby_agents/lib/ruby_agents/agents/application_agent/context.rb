@@ -1,6 +1,5 @@
 class ApplicationAgent::Context < AutonomousAgent::Context
-  attr_accessor :agent_run
-  attr_accessor :codebase_id
+  attr_accessor :agent_run, :codebase_id
 
   def initialize(assignment, codebase: nil, **kwargs)
     @codebase_id = codebase.id
@@ -8,7 +7,7 @@ class ApplicationAgent::Context < AutonomousAgent::Context
   end
 
   def codebase
-    Codebase.find(codebase_id)
+    raise "finding codebase not allowed"
   end
 
   def codebase=(codebase)
@@ -23,7 +22,9 @@ class ApplicationAgent::Context < AutonomousAgent::Context
   end
 
   set_callback :add_history, :after do |context|
-    context.agent_run.update!(context: context.to_json)
-    context.agent_run.events.create!(event_hash: context.history.last)
+    # TODO: should post agent run updates to amqp instead
+    AmqpConnection.instance.publish_on_channel("agents.update", context.agent_run.as_json)
+    AmqpConnection.instance.publish_on_channel("agents.event", context.agent_run.events.last.as_json)
   end
 end
+
