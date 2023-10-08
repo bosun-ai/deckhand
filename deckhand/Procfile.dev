@@ -1,4 +1,4 @@
-web: bin/rails s -p 3000
+web: bundle exec puma -C config/puma.rb
 css: bin/rails tailwindcss:watch
 vite: bin/vite dev
 #redis: bin/redis
