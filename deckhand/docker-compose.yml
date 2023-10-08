@@ -2,7 +2,6 @@ version: "3.8"
 
 services:
   app:
-    dns: ["8.8.8.8"] # Homeautomation dns has issues
     stdin_open: true
     command: bin/dev
     build:
@@ -12,6 +11,8 @@ services:
       network: host
     volumes:
       - .:/app
+      - bundle_cache:/bundle
+      - code:/app/tmp/code
     ports:
       - "3000:3000"
       - "3036:3036"
@@ -20,12 +21,16 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379/0
       - RAILS_ENV=development
-      - RAILS_LOG_TO_STDOUT=true
-      - VITE_RUBY_HOST="0.0.0.0"
+      - RAILS_LOG_TO_STDOUT="1"
       - PORT=3000
+      - BUNDLE_PATH=/bundle
+      - OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
+      - OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=9RxFmtVYWUsAI9nvcnUXhC"
+      - OTEL_SERVICE_NAME="deckhand"
 
   redis:
     image: redis:latest
 
 volumes:
   bundle_cache:
+  code:

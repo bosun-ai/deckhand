@@ -1,71 +1,76 @@
 module Deckhand::Lm
   MODELS = {
-    code: "code-davinci-002",
-    very_cheap: "text-babbage-001", # $0.0005 / 1K tokens
-    cheap: "gpt-3.5-turbo", # $0.002 / 1K tokens
-    instruct: "text-davinci-003", # $0.02 / 1K tokens
-    default: "gpt-4", # $0.03 / 1K tokens
-    very_large: "gpt-3.5-turbo-16k", #
+    code: 'code-davinci-002',
+    very_cheap: 'text-babbage-001', # $0.0005 / 1K tokens
+    cheap: 'gpt-3.5-turbo', # $0.002 / 1K tokens
+    instruct: 'text-davinci-003', # $0.02 / 1K tokens
+    default: 'gpt-4', # $0.03 / 1K tokens
+    very_large: 'gpt-3.5-turbo-16k' #
   }
 
   def self.embedding(text)
     response = OpenAIClient.embeddings(
       parameters: {
-        model: "text-embedding-ada-002", input: text,
-      },
+        model: 'text-embedding-ada-002', input: text
+      }
     )
-    response["data"].first["embedding"]
+    response['data'].first['embedding']
   end
 
   def self.cached_embedding(text)
     text_hash = Digest::SHA256.hexdigest(text)
-    if embedding = RClient.json_get("embeddings_cache:#{text_hash}", "$.v")
+    if embedding = RClient.json_get("embeddings_cache:#{text_hash}", '$.v')
       embedding.first
     else
       embedding = self.embedding(text)
-      RClient.json_set("embeddings_cache:#{text_hash}", "$", { v: embedding })
+      RClient.json_set("embeddings_cache:#{text_hash}", '$', { v: embedding })
       embedding
     end
   end
 
-  DEFAULT_SYSTEM = "You are a helpful assistant that provides information without formalities."
+  DEFAULT_SYSTEM = 'You are a helpful assistant that provides information without formalities.'
 
   def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
-    model = MODELS[mode]
-    parameters = {
-      model: model,
-      messages: [
-        { role: "system", 'content': system },
-        { role: "user", 'content': prompt_text },
-      ],
-      max_tokens: max_tokens,
-    }
+    DeckhandTracer.in_span('PROMPT') do
+      current_span = OpenTelemetry::Trace.current_span
+      current_span.add_event('prompt',
+                             attributes: { prompt: prompt_text, system:, max_tokens:, mode: mode.to_s }.stringify_keys)
 
-    parameters[:functions] = functions if functions.present?
-    
-    tries = 0
-    response = nil
-    begin
-      response = OpenAIClient.chat(parameters: parameters)
-      choices = response["choices"]
-      if choices.nil?
-        raise "Invalid OpenAI response: #{response.inspect}"
-      elsif choices.count > 1
-        raise "Got response with multiple choices: #{choices.inspect}"
-      end
+      model = MODELS[mode]
+      parameters = {
+        model:,
+        messages: [
+          { role: 'system', 'content': system },
+          { role: 'user', 'content': prompt_text }
+        ],
+        max_tokens:
+      }
 
-    rescue => e
-      tries += 1
-      if tries < 3
-        puts "Retrying..."
+      parameters[:functions] = functions if functions.present?
+
+      tries = 0
+      response = nil
+      begin
+        response = OpenAIClient.chat(parameters:)
+        choices = response['choices']
+        if choices.nil?
+          raise "Invalid OpenAI response: #{response.inspect}"
+        elsif choices.count > 1
+          raise "Got response with multiple choices: #{choices.inspect}"
+        end
+      rescue StandardError => e
+        tries += 1
+        raise e unless tries < 3
+
+        puts 'Retrying...'
         sleep 5
         retry
-      else
-        raise e
       end
+      current_span.add_event('prompt_response',
+                             attributes: { response: response.dig('choices', 0, 'message').to_s }.stringify_keys)
+      # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
+      PromptResponse.new(response, prompt: prompt_text, options: parameters)
     end
-    # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
-    PromptResponse.new(response, prompt: prompt_text, options: parameters)
   end
 
   class PromptResponse
@@ -77,11 +82,11 @@ module Deckhand::Lm
       @options = options
     end
 
-    def as_json(*args)
+    def as_json(*_args)
       {
-        prompt: prompt,
-        options: options,
-        response: raw_response,
+        prompt:,
+        options:,
+        response: raw_response
       }
     end
 
@@ -93,38 +98,40 @@ module Deckhand::Lm
       if is_function_call?
         "function_call #{function_call_name} #{function_call_args.inspect}"
       else
-        message["content"]
+        message['content']
       end
     end
 
     def message
-      raw_response.dig("choices", 0, "message")
+      raw_response.dig('choices', 0, 'message')
     end
 
     def is_function_call?
-      message && message["role"] == "assistant" && message["function_call"]
+      message && message['role'] == 'assistant' && message['function_call']
     end
 
     def function_call_name
       return nil unless is_function_call?
-      function_name = message.dig("function_call", "name")
+
+      function_name = message.dig('function_call', 'name')
     end
 
     def function_call_args
       return nil unless is_function_call?
+
       JSON.parse(
-        message.dig("function_call", "arguments"),
-        { symbolize_names: true },
+        message.dig('function_call', 'arguments'),
+        { symbolize_names: true }
       )
     end
   end
 
   def prompt(prompt_text, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
-    Deckhand::Lm.prompt(prompt_text, system: system, max_tokens: max_tokens, mode: mode)
+    Deckhand::Lm.prompt(prompt_text, system:, max_tokens:, mode:)
   end
 
   def self.all_tools
-    # HACK next line is needed to load all tools in development mode
+    # HACK: next line is needed to load all tools in development mode
     Deckhand::Tools.constants.map { |c| Deckhand::Tools.const_get(c) }
     Deckhand::Tools::Tool.descendants
   end
