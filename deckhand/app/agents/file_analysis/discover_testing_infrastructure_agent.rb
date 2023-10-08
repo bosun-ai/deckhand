@@ -45,9 +45,9 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     has_tests = false
     begin
-      has_tests = JSON.parse(tests_response.full_response)["has_tests"]
+      has_tests = JSON.parse(tests_response)["has_tests"]
     rescue => e
-      raise "Could not extract 'has_tests' from object: #{tests_response.full_response.inspect}"
+      raise "Could not extract 'has_tests' from object: #{tests_response.inspect}"
     end
 
     if !has_tests
