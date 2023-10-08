@@ -31,6 +31,7 @@ ENV RAILS_LOG_TO_STDOUT="1" \
   BUNDLE_JOBS=${nproc} \
   BUNDLE_RETRY=3 \
   RAILS_SERVE_STATIC_FILES="true"
+  BUNDLE_PATH=/bundle
 
 # Copy package.json and package-lock.json for node dependencies
 COPY package.json package-lock.json ./
