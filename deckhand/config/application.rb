@@ -1,15 +1,13 @@
-require_relative "boot"
+require_relative 'boot'
 
-require "rails/all"
+require 'rails/all'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
 # Load dotenv only in development or test environment
-if ["development", "test"].include? ENV["RAILS_ENV"]
-  Dotenv::Railtie.load
-end
+Dotenv::Railtie.load if %w[development test].include? ENV['RAILS_ENV']
 
 module Deckhand
   class Application < Rails::Application
@@ -20,11 +18,12 @@ module Deckhand
     #
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
-    #
+    config.active_record.schema_format = :sql
+
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
-    config.autoload_paths += Dir[Rails.root / "lib"]
-    config.autoload_paths += Dir[Rails.root / "app" / "agents"]
-    config.autoload_paths += Dir[Rails.root / "app" / "agents" / "tools"]
+    config.autoload_paths += Dir[Rails.root / 'lib']
+    config.autoload_paths += Dir[Rails.root / 'app' / 'agents']
+    config.autoload_paths += Dir[Rails.root / 'app' / 'agents' / 'tools']
   end
 end

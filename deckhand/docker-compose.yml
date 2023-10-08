@@ -21,6 +21,7 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379/0
       - RAILS_ENV=development
+      - DATABASE_URL=postgres://postgres:password@db:5432/deckhand_development
       - RAILS_LOG_TO_STDOUT="1"
       - PORT=3000
       - BUNDLE_PATH=/bundle
@@ -31,6 +32,18 @@ services:
   redis:
     image: redis:latest
 
+  db:
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=deckhand_development
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
 volumes:
   bundle_cache:
   code:
+  pgdata:
