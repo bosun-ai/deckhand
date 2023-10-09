@@ -1,5 +1,5 @@
 class ApplicationAgent::Context < AutonomousAgent::Context
-  attr_accessor :agent_run
+  attr_accessor :agent_run_id
   attr_accessor :codebase_id
 
   def initialize(assignment, codebase: nil, **kwargs)
@@ -12,7 +12,15 @@ class ApplicationAgent::Context < AutonomousAgent::Context
   end
 
   def codebase=(codebase)
-    @codebase_id = codebase.id
+    @codebase_id = codebase&.id
+  end
+
+  def agent_run
+    AgentRun.find(agent_run_id)
+  end
+
+  def agent_run=(agent_run)
+    @agent_run_id = agent_run&.id
   end
 
   def deep_dup
@@ -23,7 +31,7 @@ class ApplicationAgent::Context < AutonomousAgent::Context
   end
 
   set_callback :add_history, :after do |context|
-    context.agent_run.update!(context: context.to_json)
+    context.agent_run.update!(context: context)
     context.agent_run.events.create!(event_hash: context.history.last)
   end
 end

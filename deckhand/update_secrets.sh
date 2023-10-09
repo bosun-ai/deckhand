@@ -1,1 +1,1 @@
-cat .env| fly secrets import
+cat .env.prod| fly secrets import

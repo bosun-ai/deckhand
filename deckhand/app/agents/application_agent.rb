@@ -10,13 +10,13 @@ class ApplicationAgent < AutonomousAgent
 
       attrs = {
         name: self.class.name,
-        arguments: object.arguments.to_json(except: %i[context parent]),
-        context: context.to_json,
+        arguments: object.arguments.except(:context, :parent),
+        context: context.as_json,
         parent: object.parent&.agent_run
       }
       agent_run = AgentRun.create!(**attrs)
       current_span = OpenTelemetry::Trace.current_span
-      current_span.add_attributes(attrs.except(:parent).stringify_keys)
+      current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
 
       object.agent_run = agent_run
       object.context.agent_run = agent_run
@@ -30,12 +30,10 @@ class ApplicationAgent < AutonomousAgent
       current_span = OpenTelemetry::Trace.current_span
       current_span.record_exception(e)
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
-      object.agent_run.update!(error: e) if object.agent_run
+      object.agent_run&.update!(error: e)
       puts "Caught agent error (AgentRun##{object&.agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
     ensure
-      if object.agent_run
-        object.agent_run.update!(output: result&.to_json, context: context.to_json, finished_at: Time.now)
-      end
+      object.agent_run&.update!(output: result, context: context, finished_at: Time.now)
       result
     end
   end
@@ -49,7 +47,7 @@ class ApplicationAgent < AutonomousAgent
       object.agent_run.events.create!(
         event_hash: {
           type: 'prompt',
-          content: { prompt: result.prompt, response: result.full_response }.to_json
+          content: { prompt: result.prompt, response: result.full_response }
         }
       )
     end

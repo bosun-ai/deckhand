@@ -5,7 +5,7 @@
       <% if agent_run.finished_at %>
         <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
           Finished: <%= agent_run.duration.inspect %>
-        </span></h2>
+        </span>
       <% else %>
         <span class="badge badge-outline badge-warning">running</span>
       <% end %>
@@ -52,7 +52,18 @@
 
       <ul class="steps steps-vertical">
         <% agent_run.children.each do |child| %>
-          <li class="step step-secondary"><%= link_to child.name, child, class: '' %></li> 
+          <li class="step step-secondary">
+            <span>
+              <%= link_to child.name, child, class: '' %>
+              <% if child.finished_at %>
+                <span class="badge badge-outline badge-<%= child.success? ? "success" : "error" %>">
+                  Finished: <%= child.duration.inspect %>
+                </span>
+              <% else %>
+                <span class="badge badge-outline badge-warning">running</span>
+              <% end %>
+            </span>
+          </li> 
         <% end %>
       </ul>
 
