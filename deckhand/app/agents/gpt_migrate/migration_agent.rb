@@ -44,7 +44,7 @@ class GptMigrate::MigrationAgent < ApplicationAgent
       :hierarchy, :guidelines, :write_code, :write_migration, :singlefile,
       locals: globals.to_h.merge(
       {
-        target_lang_function_signatures: convert_sigs_to_string(sigs),
+        target_lang_function_signatures: convert_sigs_to_string(signatures),
         sourcefile: sourcefile,
         sourcefile_content: sourcefile_content,
         external_deps: ','.join(external_deps_list),

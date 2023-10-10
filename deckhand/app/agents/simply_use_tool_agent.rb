@@ -45,7 +45,7 @@ class SimplyUseToolAgent < ApplicationAgent
   end
 
   def prompt_text
-    <<~PROMPT_TEXT
+    text = <<~PROMPT_TEXT
       # Using functions
 
       #{question}
@@ -59,11 +59,26 @@ class SimplyUseToolAgent < ApplicationAgent
 
       Make sure you give the functions exact parameters, not examples.
     PROMPT_TEXT
+
+    if @tries.any?
+      text += "\n\nYou have tried before but failed with the following messages:\n\n#{@tries.join("\n").indent(2)}\n"
+    end
+
+    text
   end
 
   def run
-    result = prompt(prompt_text, functions: tools.map(&:openai_signature))
-    result.full_response
+    @tries = []
+    begin
+      result = prompt(prompt_text, functions: tools.map(&:openai_signature))
+      result.full_response
+    rescue ApplicationTool::Error => e
+      @tries << e.message
+      retry if @tries.length < 4
+      logger.error "Tried 4 times but could not recover from tool use error in SimplyUseToolAgent: #{e.message}. #{@tries.inspect}"
+    
+      nil
+    end
   end
 
   def non_function_run
@@ -79,12 +94,12 @@ class SimplyUseToolAgent < ApplicationAgent
       tool = tools.find { |t| tool_name.match?(/#{t.name}/i) }
 
       if tool
-        puts "Using tool #{tool_name} with arguments #{arguments}"
+        logger.info "Using tool #{tool_name} with arguments #{arguments}"
         tool.run(arguments, context: context)
       else
         # puts "Prompt was: #{prompt_text}"
-        puts "Tools were: #{tools.map(&:name).join(", ")}"
-        puts "Tried to use unknown tool #{tool_name} with arguments: #{arguments}"
+        logger.error "Tools were: #{tools.map(&:name).join(", ")}"
+        logger.error "Tried to use unknown tool #{tool_name} with arguments: #{arguments}"
         raise ApplicationTool::Error.new("Must use a tool from the list of tools")
       end
     rescue ApplicationTool::Error => e
@@ -94,6 +109,10 @@ class SimplyUseToolAgent < ApplicationAgent
         error: e.message,
       }
       retry if tries.length < 3
+      logger.error "Tried 3 times but could not recover from tool use error in SimplyUseToolAgent: #{e.message}. #{@tries.inspect}"
+      nil
+    rescue => e
+      logger.error "Unchecked tool eeror: #{e.class}: #{e.message} in SimplyUseToolAgent."
       nil
     end
   end

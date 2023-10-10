@@ -68,7 +68,7 @@
 
     full_file_path = File.join(path_prefix, file_path)
 
-    raise Error.new("Path `#{file_path}` does not exist") if !File.exist?(full_file_path)
+    raise Error.new("Path `#{file_path}` does not exist (#{full_file_path})") if !File.exist?(full_file_path)
     raise Error.new("Path `#{file_path}` is a directory") if File.directory?(full_file_path)
 
     file = File.read(full_file_path)

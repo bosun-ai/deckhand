@@ -88,6 +88,10 @@ class ApplicationAgent < AutonomousAgent
     template.render!(locals.with_indifferent_access, { strict_variables: true, strict_filters: true })
   end
 
+  def logger
+    Rails.logger
+  end
+
   private
 
   def read_template_file(template_name)

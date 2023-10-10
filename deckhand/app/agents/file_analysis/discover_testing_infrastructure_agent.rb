@@ -21,18 +21,18 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
     question = "What languages and frameworks are used in the codebase?"
 
     answer = run SplitStepInvestigateAgent, question, context: context.deep_dup
-    context.add_observation(answer)
+    context.add_observation("Question: #{question} Answer: #{answer}")
 
     question = "What is the purpose of the project?"
     answer = run SplitStepInvestigateAgent, question, context: context.deep_dup
-    context.add_observation(answer)
+    context.add_observation("Question: #{question} Answer: #{answer}")
 
     # Second we need to find out if the codebase has any test framework at all.
     question = "If the codebase has tests, what test framework is used?"
 
     answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup) || "No"
 
-    context.add_observation(answer)
+    context.add_observation("Question: #{question} Answer: #{answer}")
 
     tests_response = run(
         ReformatAnswerAgent,
@@ -60,7 +60,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup) || "No"
 
-    context.add_observation(answer)
+    context.add_observation("Question: #{question} Answer: #{answer}")
 
     has_test_coverage = JSON.parse(run(
       ReformatAnswerAgent,
@@ -76,8 +76,6 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
       puts "The codebase does not have test coverage. Context: #{context.summarize_knowledge}"
       return context
     end
-
-    puts "The codebase has test coverage. Context: #{context.summarize_knowledge}"
 
     context
 
