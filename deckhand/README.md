@@ -22,6 +22,10 @@ Then
   ./bin/dev
 ```
 
+## Github App
+
+Is located here: https://github.com/apps/bosun-deckhand
+
 ### Tasks:
 
   - Control git repositories

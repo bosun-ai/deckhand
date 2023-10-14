@@ -1,4 +1,6 @@
-class WriteDocumentation < ApplicationAgent
+class WriteDocumentationAgent < ApplicationAgent
+  arguments :question
+  
   def run
     instruction_prompt = <<~PROMPT
       Given the following context:\n\n#{context.summarize_knowledge}\n
@@ -13,7 +15,7 @@ class WriteDocumentation < ApplicationAgent
       concise.
     SYSTEM
 
-    instruction = prompt(instruction_prompt, system: instruction_system, max_tokens: 256)["message"]["content"].strip
+    instruction = prompt(instruction_prompt, system: instruction_system, max_tokens: 256).full_response.strip
 
     documenter_prompt = <<~PROMPT
       Given the following context:\n\n#{context.summarize_knowledge}\n\n#{instruction}
@@ -32,7 +34,7 @@ class WriteDocumentation < ApplicationAgent
       system: documenter_system,
       max_tokens: 8000,
       mode: :very_large,
-    )["message"]["content"].strip.split(/```.*\n/, 2).last.strip.delete_suffix("```").strip
+    ).full_response.strip.split(/```.*\n/, 2).last.strip.delete_suffix("```").strip
 
     result
   end

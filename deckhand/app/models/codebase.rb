@@ -120,12 +120,13 @@ class Codebase < ApplicationRecord
   end
 
   def check_out_finished!(status)
-    success = status == 0
-    update!(checked_out: success)
+    return if checked_out
+    self.checked_out = status == 0
+    save!
 
     Rails.logger.info "Checked out #{name} with status #{status}"
 
-    return unless success
+    return unless checked_out
 
     perform_later :create_main_github_issue
 
@@ -156,6 +157,8 @@ class Codebase < ApplicationRecord
     return unless github_client
     html = github_client.markdown(description, mode: "gfm", context: name)
     add_main_issue_comment(html)
+
+    perform_later :discover_undocumented_files
   end
   
   def describe_project_in_markdown
@@ -164,7 +167,7 @@ class Codebase < ApplicationRecord
 
   def create_main_github_issue
     if github_client
-      issue = github_client.create_issue(name, "Bosun AI autonomous shell_tasks", "This issue is used to track autonomous shell_tasks for this repository.")
+      issue = github_client.create_issue(name, "Bosun AI Agents", "This issue is created to control Bosun AI Agents.")
       update!(github_app_issue_id: issue.number)
     end
   end
@@ -223,7 +226,7 @@ class Codebase < ApplicationRecord
   # - Where are dependencies defined? What external services are required?
   # - What operating system dependencies are required?
   def discover_basic_facts
-    Codebase::FileAnalysis::FilesystemFacts.run(self)
+    # Codebase::FileAnalysis::FilesystemFacts.run(self)
   end
 
   def discover_testing_infrastructure
