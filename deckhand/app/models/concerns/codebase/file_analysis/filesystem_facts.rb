@@ -1,4 +1,7 @@
-class Codebase::FileAnalysis::FilesystemFacts < Struct.new(:codebase, :root_path, keyword_init: true)
+class Codebase::FileAnalysis::FilesystemFacts < T::Struct
+  prop :codebase, Codebase
+  prop :root_path, String
+
   # Strategy:
   # - Recursively for each directory:
   # - Based on the files in that directory and the context of the parent directories construct a shallow context for
