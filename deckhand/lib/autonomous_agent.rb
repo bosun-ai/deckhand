@@ -1,3 +1,4 @@
+# typed: true
 class AutonomousAgent
   include ActiveSupport::Callbacks
   define_callbacks :run, :prompt, :call_function
@@ -5,13 +6,26 @@ class AutonomousAgent
   class << self
     def get_pos_arguments
       @pos_arguments ||= begin
-        superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
+        s = superclass
+        T.reveal_type(s)
+        if s && s < AutonomousAgent
+          T.reveal_type(s)
+          s.get_pos_arguments.dup
+        else
+          []
+        end
       end
     end
 
     def get_kwargs
       @arguments ||= begin
-        superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
+        s = superclass
+        T.reveal_type(s)
+        if s && s < AutonomousAgent
+          s.get_kwargs.dup
+        else
+          {}
+        end
       end
     end
 
@@ -34,7 +48,8 @@ class AutonomousAgent
     end
 
     def run(*args, **kwargs)
-      new(*args, **kwargs).run()
+      # unsafe until Sorbet supports splats
+      T.unsafe(self).new(*args, **kwargs).run()
     end
   end
 
@@ -44,7 +59,8 @@ class AutonomousAgent
     def run(*args, **kwargs)
       klass = args.first
       if klass.is_a?(Class) && klass < AutonomousAgent
-        return klass.run(*args[1..], **kwargs.merge(parent: self))
+        # Unsafe until Sorbet supports splats
+        return T.unsafe(klass).run(*args[1..], **kwargs.merge(parent: self))
       end
 
       run_callbacks :run do
