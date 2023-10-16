@@ -61,7 +61,9 @@ class Deckhand::Process
         begin
           buffer = out_read.read_nonblock(1024 * 16)
           file.write(buffer) if file
-          callback.call(Hash[channel, buffer])
+          Rails.application.executor.wrap do
+            callback.call(Hash[channel, buffer])
+          end
         rescue IO::WaitReadable
           break if stopping
           IO.select([out_read], [], [], 0.2)
@@ -77,12 +79,14 @@ class Deckhand::Process
       @run_thread.join
       file.close if file
       out_read.close
-      callback.call(
-        {
-          status: @status || -1,
-          channel: channel,
-        }
-      )
+      Rails.application.executor.wrap do
+        callback.call(
+          {
+            status: @status || -1,
+            channel: channel,
+          }
+        )
+      end
     end
   end
 end
