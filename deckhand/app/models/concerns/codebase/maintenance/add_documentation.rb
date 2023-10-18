@@ -34,7 +34,7 @@ class Codebase::Maintenance::AddDocumentation < ApplicationAgent
   def add_documentation_to_file(file)
     file_content = File.read(File.join(codebase.path, file))
 
-    prediction = run(WriteDocumentationAgent, file_content)
+    prediction = run(WriteDocumentationAgent, file_content, context: context)
 
     if prediction.blank?
       return

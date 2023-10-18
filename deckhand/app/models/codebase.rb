@@ -237,6 +237,6 @@ class Codebase < ApplicationRecord
   end
 
   def add_documentation_to_undocumented_files(files)
-    Codebase::Maintenance::AddDocumentation.run(self, files: files)
+    run_agent(Codebase::Maintenance::AddDocumentation, "Adding documentation to files", files)
   end
 end
