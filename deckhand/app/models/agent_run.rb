@@ -5,6 +5,10 @@ class AgentRun < ApplicationRecord
 
   before_validation :ensure_parent_ids
 
+  def self.for_codebase(codebase)
+   where("context->>'codebase_id' = ?", codebase.id.to_s)
+  end
+
   def self.root
     where(parent: nil)
   end

@@ -8,7 +8,14 @@ class Codebase < ApplicationRecord
   has_many :github_access_tokens, dependent: :destroy
 
   def agent_runs
-    AgentRun.root.where("context->>'codebase_id' = ?", id.to_s)
+    AgentRun.root.for_codebase(self)
+  end
+  
+  def current_agent_run
+    agent_run = AgentRun.for_codebase(self).last
+    if agent_run && !agent_run.finished_at
+      agent_run  
+    end
   end
 
   def agent_context(assignment)
