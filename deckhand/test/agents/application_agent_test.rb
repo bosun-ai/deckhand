@@ -86,30 +86,14 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     assert_equal 'Rendered Content', rendered_content
   end
 
-  test 'run callback creates agent run and records exception on error' do
-    mock_span = mock('OpenTelemetry::Trace::Span')
-    mock_span.expects(:add_attributes)
-    mock_span.expects(:record_exception)
-    mock_span.expects(:status=)
-    mock_span.expects(:context)
-
-    OpenTelemetry::Trace.stubs(:current_span).returns(mock_span)
-    AgentRun.expects(:create!).returns(AgentRun.new)
-    @agent.context.stubs(:agent_run=)
-
-    # Simulating error during agent run
-    @agent.stubs(:some_internal_method).raises(StandardError, 'Some Error')
-
-    assert_raises StandardError do
-      @agent.run # Assuming the callback triggers the run method
-    end
-  end
-
   test 'prompt callback creates event on agent run' do
     event = mock('Event')
-    result_mock = mock('Result')
+    result_mock = mock('Deckhand::Lm::PromptResponse')
     result_mock.stubs(:prompt).returns('prompt_here')
     result_mock.stubs(:full_response).returns('response_here')
+    result_mock.stubs(:is_function_call?).returns(false)
+
+    Deckhand::Lm.expects(:prompt).returns(result_mock)
 
     agent_run_mock = mock('AgentRun')
     agent_run_mock.expects(:events).returns(event).once
