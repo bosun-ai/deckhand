@@ -13,6 +13,21 @@ class AgentRun < ApplicationRecord
     where(parent: nil)
   end
 
+  def state
+    states.entries.last&.tap do |checkpoint, state|
+      state.with_indifferent_access.merge(checkpoint: checkpoint)
+    end
+  end
+
+  def transition_to(checkpoint, state)
+    states[checkpoint] = state
+  end
+
+  def retry(checkpoint)
+    checkpoint = checkpoint.to_s
+    self.states = states.entries.take_while {|c,_| c != checkpoint}.to_h
+  end
+
   def success?
     finished_at && error.blank?
   end
