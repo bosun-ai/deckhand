@@ -1,8 +1,15 @@
 require 'test_helper'
 
+class DummyAgent < ApplicationAgent
+  def run
+  end
+end
+
 class ApplicationAgentTest < ActiveSupport::TestCase
   setup do
-    @agent = ApplicationAgent.new(context: 'some_context', tools: [AnalyzeFileTool, ListFilesTool])
+    @codebase = Codebase.new
+    @context = ApplicationAgent::Context.new("testing", codebase: @codebase)
+    @agent = DummyAgent.new(context: @context, tools: [AnalyzeFileTool, ListFilesTool])
 
     dummy_logger = mock('Logger')
     dummy_logger.stubs(:anything).returns(nil)
@@ -150,22 +157,22 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   end
 
   test 'run callback updates agent_run with parent' do
-    mock_span = mock('OpenTelemetry::Trace::Span')
-    mock_span.expects(:add_attributes).at_least_once
+    parent_agent_run = AgentRun.new()
+    parent_agent = DummyAgent.new()
+    parent_agent.agent_run = parent_agent_run
+    @agent.parent = parent_agent
 
-    OpenTelemetry::Trace.stubs(:current_span).returns(mock_span)
+    assert_equal(@agent.parent.agent_run, parent_agent_run)
 
-    parent_run = mock('AgentRun')
-    event = mock('Event')
-    parent_run.expects(:events).returns(event).once
-    event.expects(:create!).with(event_hash: { type: 'run_agent', content: instance_of(Numeric) }).once
+    AgentRun.stubs(:create!).with do |name:, arguments:, context:, parent:|
+      assert_equal(parent, parent_agent_run)
+    end.returns(AgentRun.new(parent: parent_agent_run))
 
-    agent_run_mock = mock('AgentRun')
-    AgentRun.expects(:create!).returns(agent_run_mock)
-    agent_run_mock.stubs(:parent).returns(parent_run)
+    events = mock('Events[]')
+    parent_agent_run.expects(:events).returns(events)
 
-    @agent.stubs(:parent).returns(OpenStruct.new(agent_run: parent_run))
+    events.expects(:create!).once
 
-    @agent.send(:run) { 'success' }
+    @agent.run
   end
 end
