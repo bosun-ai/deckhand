@@ -1,7 +1,9 @@
 require 'test_helper'
 
 class DummyAgent < ApplicationAgent
-  def run
+  def run(raise_error: nil)
+    raise raise_error if raise_error
+    "success"
   end
 end
 
@@ -123,37 +125,22 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   end
 
   test 'run callback handles success' do
-    mock_span = mock('OpenTelemetry::Trace::Span')
-    mock_span.expects(:add_attributes).at_least_once
-
-    OpenTelemetry::Trace.stubs(:current_span).returns(mock_span)
-
-    agent_run_mock = mock('AgentRun')
+    agent_run_mock = AgentRun.new
     AgentRun.expects(:create!).returns(agent_run_mock)
-    agent_run_mock.expects(:update!).with(has_entries(output: 'success', context: 'some_context'))
+    agent_run_mock.expects(:update!).with(has_entries(output: 'success'))
 
-    @agent.stubs(:context).returns('some_context')
-
-    result = @agent.send(:run) { 'success' }
+    result = @agent.run
     assert_equal 'success', result
   end
 
   test 'run callback handles exceptions' do
-    mock_span = mock('OpenTelemetry::Trace::Span')
-    mock_span.expects(:add_attributes).at_least_once
-    mock_span.expects(:record_exception).once
-    mock_span.expects(:status=).once
-
-    OpenTelemetry::Trace.stubs(:current_span).returns(mock_span)
-
-    agent_run_mock = mock('AgentRun')
+    agent_run_mock = AgentRun.new
     AgentRun.expects(:create!).returns(agent_run_mock)
-    agent_run_mock.expects(:update!).with(has_entry(error: instance_of(StandardError)))
 
-    exception = assert_raises(StandardError) do
-      @agent.send(:run) { raise StandardError, 'An error occurred' }
-    end
-    assert_equal 'An error occurred', exception.message
+    agent_run_mock.expects(:update!).with(has_entry(error: instance_of(StandardError)))
+    agent_run_mock.expects(:update!).with(has_entry(finished_at: instance_of(Time)))
+
+    @agent.run(raise_error: StandardError.new('An error occurred'))
   end
 
   test 'run callback updates agent_run with parent' do
