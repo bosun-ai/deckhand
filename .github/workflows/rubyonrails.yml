@@ -37,6 +37,8 @@ jobs:
           working-directory: './deckhand'
       - name: Set up database schema
         run: bin/rails db:schema:load
+      - name: link tailwind
+        run: npm link tailwindcss
       - name: Run tests
         run: bin/rake test
 
