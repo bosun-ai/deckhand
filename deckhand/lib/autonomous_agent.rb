@@ -1,6 +1,6 @@
 class AutonomousAgent
   include ActiveSupport::Callbacks
-  define_callbacks :run, :prompt, :call_function
+  define_callbacks :run, :run_agent, :prompt, :call_function
 
   class << self
     def get_pos_arguments
@@ -42,10 +42,14 @@ class AutonomousAgent
 
   module RunAgent
     def run(*args, **kwargs)
+      # HACK: this is a bit of a silly hack, maybe we should just remove it
+      # The idea of this hack is that we can run agents with the `run`
+      # method.
       klass = args.first
       if klass.is_a?(Class) && klass < AutonomousAgent
-        return klass.run(*args[1..], **kwargs.merge(parent: self))
+        return run_agent(klass, *args[1..], **kwargs)
       end
+      # End of hack
 
       run_callbacks :run do
         super
@@ -93,6 +97,12 @@ class AutonomousAgent
 
   def run(*args, **kwargs)
     raise NotImplementedError.new("You forgot to implement the run method on #{self.class.name}.")
+  end
+
+  def run_agent(agent_class, *args, **kwargs)
+    run_callbacks :run_agent do
+      agent_class.run(*args, **kwargs.merge(parent: self))
+    end
   end
 
   def call_function(prompt_result, **kwargs)
