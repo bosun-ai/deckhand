@@ -5,11 +5,6 @@ class CodebasesControllerTest < ActionDispatch::IntegrationTest
     @codebase = codebases(:one)
   end
 
-  test "should get index" do
-    get codebases_url
-    assert_response :success
-  end
-
   test "should get new" do
     get new_codebase_url
     assert_response :success

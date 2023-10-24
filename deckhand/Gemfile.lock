@@ -188,6 +188,8 @@ GEM
     matrix (0.4.2)
     mini_mime (1.1.5)
     minitest (5.20.0)
+    mocha (2.1.0)
+      ruby2_keywords (>= 0.0.5)
     msgpack (1.7.2)
     multipart-post (2.3.0)
     mutex_m (0.1.2)
@@ -554,6 +556,7 @@ DEPENDENCIES
   kramdown-parser-gfm
   kramdown-syntax-coderay
   liquid
+  mocha
   octokit
   opentelemetry-exporter-otlp (~> 0.26.1)
   opentelemetry-instrumentation-all (~> 0.50.1)
