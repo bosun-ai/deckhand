@@ -23,6 +23,11 @@ class AgentRun < ApplicationRecord
     states[checkpoint] = state
   end
 
+  def transition_to!(checkpoint, state)
+    transition_to(checkpoint, state)
+    save!
+  end
+
   def retry(checkpoint)
     checkpoint = checkpoint.to_s
     self.states = states.entries.take_while {|c,_| c != checkpoint}.to_h

@@ -3,8 +3,11 @@ class ApplicationAgent < AutonomousAgent
   arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
   attr_accessor :agent_run
+  attr_accessor :checkpoint_index
 
   set_callback :run, :around do |object, block|
+    self.checkpoint_index = 0
+
     DeckhandTracer.in_span("#{self.class.name}#run") do
       result = nil
 
@@ -55,6 +58,15 @@ class ApplicationAgent < AutonomousAgent
     result
   end
 
+  set_callback :run_agent, :around do |object, block|
+    next_checkpoint
+    checkpoint_name = "#{checkpoint_index}-#{run_agent}"
+    return agent_run.states[checkpoint_name] if agent_run.states.has_key? checkpoint_name
+    result = block.call
+    agent_run.transition_to!(checkpoint_name, result)
+    result
+  end
+
   def call_function(prompt_response, **_kwargs)
     tool = tools.find { |t| t.name == prompt_response.function_call_name }
     raise ApplicationTool::Error, "No tool found with name #{prompt_response.function_call_name}" unless tool
@@ -98,6 +110,10 @@ class ApplicationAgent < AutonomousAgent
   end
 
   private
+
+  def next_checkpoint
+    self.checkpoint_index += 1
+  end
 
   def read_template_file(template_name)
     template = Liquid::Template.new
