@@ -1,19 +1,19 @@
 require 'test_helper'
 
-class DummyAgent < AutonomousAgent
-  set_callback :run, :after, :dummy_callback
-  set_callback :run_agent, :after, :dummy_callback
-
-  def run(raise_error: nil)
-    raise raise_error if raise_error
-    "success"
-  end
-
-  def dummy_callback
-  end
-end
-
 class AutonomousAgentTest < ActiveSupport::TestCase
+  class DummyAgent < AutonomousAgent
+    set_callback :run, :after, :dummy_callback
+    set_callback :run_agent, :after, :dummy_callback
+
+    def run(raise_error: nil)
+      raise raise_error if raise_error
+      "success"
+    end
+
+    def dummy_callback
+    end
+  end
+
   setup do
     @agent = DummyAgent.new()
   end

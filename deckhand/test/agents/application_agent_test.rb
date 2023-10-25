@@ -1,13 +1,13 @@
 require 'test_helper'
 
-class DummyAgent < ApplicationAgent
-  def run(raise_error: nil)
-    raise raise_error if raise_error
-    "success"
-  end
-end
-
 class ApplicationAgentTest < ActiveSupport::TestCase
+  class DummyAgent < ApplicationAgent
+    def run(raise_error: nil)
+      raise raise_error if raise_error
+      "success"
+    end
+  end
+
   setup do
     @codebase = Codebase.new
     @context = ApplicationAgent::Context.new("testing", codebase: @codebase)
@@ -124,7 +124,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     agent_run_mock.expects(:update!).with(has_entry(error: instance_of(StandardError)))
     agent_run_mock.expects(:update!).with(has_entry(finished_at: instance_of(Time)))
 
-    @agent.run(raise_error: StandardError.new('An error occurred'))
+    @agent.run(raise_error: StandardError.new('A dummy error occurred'))
   end
 
   test 'run callback updates agent_run with parent' do
@@ -146,4 +146,26 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
     @agent.run
   end
+
+  test 'run_agent callback increments checkpoint_index and records result in state' do
+    @agent.checkpoint_index = 0
+    @agent.agent_run = AgentRun.new
+    result = @agent.run_agent(DummyAgent)
+    assert_equal result, 'success'
+
+    assert_equal 1, @agent.checkpoint_index  
+
+    assert_equal({ 'checkpoint' => '1-run_agent', 'value' => 'success' }, @agent.agent_run.state)
+  end
+
+  test 'run_agent callback only runs agent if there its not been run yet' do
+    @agent.run
+    assert_equal(0, @agent.checkpoint_index)
+    @agent.agent_run = AgentRun.new(states: { '1-run_agent' => 'success' })
+    result = @agent.run_agent(DummyAgent)
+    assert_equal result, 'success'
+    assert_equal(1, @agent.checkpoint_index)
+    assert_equal({ 'checkpoint' => '1-run_agent', 'value' => 'success' }, @agent.agent_run.state)
+  end
+
 end

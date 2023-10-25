@@ -14,8 +14,8 @@ class AgentRun < ApplicationRecord
   end
 
   def state
-    states.entries.last&.tap do |checkpoint, state|
-      state.with_indifferent_access.merge(checkpoint: checkpoint)
+    states.entries.last&.yield_self do |checkpoint, value|
+      { checkpoint:, value: }.with_indifferent_access
     end
   end
 

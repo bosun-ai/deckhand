@@ -22,7 +22,7 @@ class ApplicationAgent < AutonomousAgent
       current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
 
       object.agent_run = agent_run
-      object.context.agent_run = agent_run
+      object.context&.agent_run = agent_run
 
       if agent_run.parent
         agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: object.agent_run.id })
@@ -35,6 +35,7 @@ class ApplicationAgent < AutonomousAgent
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
       object.agent_run&.update!(error: e)
       Rails.logger.error "Caught agent error (AgentRun##{object&.agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+      result = e
     ensure
       object.agent_run&.update!(output: result, context:, finished_at: Time.now)
       result
@@ -60,11 +61,19 @@ class ApplicationAgent < AutonomousAgent
 
   set_callback :run_agent, :around do |object, block|
     next_checkpoint
-    checkpoint_name = "#{checkpoint_index}-#{run_agent}"
-    return agent_run.states[checkpoint_name] if agent_run.states.has_key? checkpoint_name
-    result = block.call
-    agent_run.transition_to!(checkpoint_name, result)
-    result
+    checkpoint_name = "#{checkpoint_index}-run_agent"
+    if agent_run.states.has_key? checkpoint_name
+      old_result = agent_run.states[checkpoint_name]
+      # TODO: we can't actually skip the block.call here, because this callback system
+      # doesn't support actually overriding the return value. So we need to switch to
+      # a real aspect-oriented programming style system.
+      result = block.call
+      old_result
+    else
+      result = block.call
+      agent_run.transition_to!(checkpoint_name, result)
+      result
+    end
   end
 
   def call_function(prompt_response, **_kwargs)
