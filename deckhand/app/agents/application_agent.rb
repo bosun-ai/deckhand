@@ -5,70 +5,62 @@ class ApplicationAgent < AutonomousAgent
   attr_accessor :agent_run
   attr_accessor :checkpoint_index
 
-  set_callback :run, :around do |object, block|
+  def around_run(*args, **kwargs, &block)
     self.checkpoint_index = 0
-
+    
     DeckhandTracer.in_span("#{self.class.name}#run") do
       result = nil
 
       attrs = {
         name: self.class.name,
-        arguments: object.arguments.except(:context, :parent),
+        arguments: arguments.except(:context, :parent),
         context: context.as_json,
-        parent: object.parent&.agent_run
+        parent: parent&.agent_run
       }
       agent_run = AgentRun.create!(**attrs)
       current_span = OpenTelemetry::Trace.current_span
       current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
 
-      object.agent_run = agent_run
-      object.context&.agent_run = agent_run
+      self.agent_run = agent_run
+      context&.agent_run = agent_run
 
       if agent_run.parent
-        agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: object.agent_run.id })
+        agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: agent_run.id })
       end
 
-      result = block.call
+      result = block.call(*args, **kwargs)
     rescue StandardError => e
       current_span = OpenTelemetry::Trace.current_span
       current_span.record_exception(e)
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
-      object.agent_run&.update!(error: e)
-      Rails.logger.error "Caught agent error (AgentRun##{object&.agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+      agent_run&.update!(error: e)
+      Rails.logger.error "Caught agent error (AgentRun##{agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
       result = e
     ensure
-      object.agent_run&.update!(output: result, context:, finished_at: Time.now)
+      agent_run&.update!(output: result, context:, finished_at: Time.now)
       result
     end
   end
 
-  set_callback :prompt, :around do |object, block|
-    # binding.irb
+  def around_prompt(*args, **kwargs, &block)
     result = nil
 
-    result = block.call
-    if object.agent_run
-      object.agent_run.events.create!(
-        event_hash: {
-          type: 'prompt',
-          content: { prompt: result.prompt, response: result.full_response }
-        }
-      )
-    end
+    result = block.call(*args, *kwargs)
+    agent_run && agent_run.events.create!(
+      event_hash: {
+        type: 'prompt',
+        content: { prompt: result.prompt, response: result.full_response }
+      }
+    )
   ensure
     result
   end
 
-  set_callback :run_agent, :around do |object, block|
+  def around_run_agent(*args, **kwargs, &block)
     next_checkpoint
     checkpoint_name = "#{checkpoint_index}-run_agent"
     if agent_run.states.has_key? checkpoint_name
-      old_result = agent_run.states[checkpoint_name]
-      # TODO: we can't actually skip the block.call here, because this callback system
-      # doesn't support actually overriding the return value. So we need to switch to
-      # a real aspect-oriented programming style system.
-      result = block.call
-      old_result
+      agent_run.states[checkpoint_name]
     else
       result = block.call
       agent_run.transition_to!(checkpoint_name, result)

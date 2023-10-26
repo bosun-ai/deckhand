@@ -2,8 +2,15 @@ require 'test_helper'
 
 class AutonomousAgentTest < ActiveSupport::TestCase
   class DummyAgent < AutonomousAgent
-    set_callback :run, :after, :dummy_callback
-    set_callback :run_agent, :after, :dummy_callback
+    def around_run(&block)
+      block.call
+      dummy_callback
+    end
+      
+    def around_run_agent(*args, **kwargs, &block)
+      block.call(*args, **kwargs)
+      dummy_callback
+    end
 
     def run(raise_error: nil)
       raise raise_error if raise_error

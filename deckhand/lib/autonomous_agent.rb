@@ -1,6 +1,10 @@
 class AutonomousAgent
-  include ActiveSupport::Callbacks
-  define_callbacks :run, :run_agent, :prompt, :call_function
+  # ppor man's cross cutting methods
+  [:run, :run_agent, :prompt, :call_function].each do |callback|
+    define_method("around_#{callback}") do |*args, **kwargs, &block|
+      block.call(*args, **kwargs)
+    end
+  end
 
   class << self
     def get_pos_arguments
@@ -51,16 +55,16 @@ class AutonomousAgent
       end
       # End of hack
 
-      run_callbacks :run do
-        super
+      around_run(*args, **kwargs) do |*args, **kwargs|
+        super(*args, **kwargs)
       end
     end
   end
 
   module FunctionCallingAgent
     def call_function(prompt_result, **kwargs)
-      run_callbacks :call_function do
-        super
+      around_call_function(prompt_result, **kwargs) do |*args, **kwargs|
+        super(*args, **kwargs)
       end
     end
   end
@@ -100,7 +104,7 @@ class AutonomousAgent
   end
 
   def run_agent(agent_class, *args, **kwargs)
-    run_callbacks :run_agent do
+    around_run_agent(*args, **kwargs) do |*args, **kwargs|
       agent_class.run(*args, **kwargs.merge(parent: self))
     end
   end
