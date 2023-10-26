@@ -4,9 +4,14 @@ class ApplicationAgent < AutonomousAgent
 
   attr_accessor :agent_run
   attr_accessor :checkpoint_index
+  attr_accessor :checkpoint_name
+
+  def initialize(*args, **kwargs)
+    @checkpoint_index = 0
+    super
+  end
 
   def around_run(*args, **kwargs, &block)
-    self.checkpoint_index = 0
     
     DeckhandTracer.in_span("#{self.class.name}#run") do
       result = nil
@@ -43,47 +48,45 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_prompt(*args, **kwargs, &block)
-    result = nil
-
-    result = block.call(*args, *kwargs)
-    agent_run && agent_run.events.create!(
-      event_hash: {
-        type: 'prompt',
-        content: { prompt: result.prompt, response: result.full_response }
-      }
-    )
-  ensure
-    result
+    next_checkpoint("prompt") do
+      begin
+        result = block.call(*args, *kwargs)
+        agent_run && agent_run.events.create!(
+          event_hash: {
+            type: 'prompt',
+            content: { prompt: result.prompt, response: result.full_response }
+          }
+        )
+      ensure
+        result
+      end
+    end
   end
 
   def around_run_agent(*args, **kwargs, &block)
-    next_checkpoint
-    checkpoint_name = "#{checkpoint_index}-run_agent"
-    if agent_run.states.has_key? checkpoint_name
-      agent_run.states[checkpoint_name]
-    else
-      result = block.call
-      agent_run.transition_to!(checkpoint_name, result)
-      result
+    next_checkpoint("run_agent") do
+      block.call
     end
   end
 
   def call_function(prompt_response, **_kwargs)
-    tool = tools.find { |t| t.name == prompt_response.function_call_name }
-    raise ApplicationTool::Error, "No tool found with name #{prompt_response.function_call_name}" unless tool
+    next_checkpoint("call_function") do
+      tool = tools.find { |t| t.name == prompt_response.function_call_name }
+      raise ApplicationTool::Error, "No tool found with name #{prompt_response.function_call_name}" unless tool
 
-    args = prompt_response.function_call_args
-    unless args.is_a?(Hash)
-      raise ApplicationTool::Error,
-            "Got invalid function call args object: #{prompt_response.function_call_args.inspect}"
-    end
+      args = prompt_response.function_call_args
+      unless args.is_a?(Hash)
+        raise ApplicationTool::Error,
+              "Got invalid function call args object: #{prompt_response.function_call_args.inspect}"
+      end
 
-    begin
-      tool.run(**args, context:)
-    rescue StandardError => e
-      err = ApplicationTool::Error.new("Failed to run tool #{tool} with arguments: #{args}: #{e.message}")
-      err.set_backtrace(e.backtrace)
-      raise err
+      begin
+        tool.run(**args, context:)
+      rescue StandardError => e
+        err = ApplicationTool::Error.new("Failed to run tool #{tool} with arguments: #{args}: #{e.message}")
+        err.set_backtrace(e.backtrace)
+        raise err
+      end
     end
   end
 
@@ -110,11 +113,20 @@ class ApplicationAgent < AutonomousAgent
     Rails.logger
   end
 
-  private
-
-  def next_checkpoint
+  def next_checkpoint(name, &block)
     self.checkpoint_index += 1
+    self.checkpoint_name = "#{checkpoint_index}-#{name}"
+
+    if agent_run && agent_run.states.has_key?(checkpoint_name)
+      agent_run.states[checkpoint_name]
+    else
+      result = block.call
+      agent_run&.transition_to!(checkpoint_name, result)
+      result
+    end
   end
+
+  private
 
   def read_template_file(template_name)
     template = Liquid::Template.new

@@ -97,6 +97,8 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
     agent_run_mock = mock('AgentRun')
     agent_run_mock.expects(:events).returns(event).once
+    agent_run_mock.expects(:states).returns({})
+    agent_run_mock.expects(:transition_to!)
     event.expects(:create!).with(event_hash: {
                                    type: 'prompt',
                                    content: { prompt: 'prompt_here', response: 'response_here' }
