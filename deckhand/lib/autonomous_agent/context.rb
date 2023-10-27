@@ -15,8 +15,8 @@ class AutonomousAgent::Context
 
   def add_history(type:, content:)
     run_callbacks :add_history do
-      event = { type: type, content: content }
-      history << { type: type, content: content }
+      event = { type:, content: }
+      history << { type:, content: }
       history
     end
   end
@@ -39,14 +39,14 @@ class AutonomousAgent::Context
 
   def knowledge
     history
-      .filter { |h| [:observation, :information, :conclusion].include? h[:type] }
+      .filter { |h| %i[observation information conclusion].include? h[:type] }
   end
 
   def summarize_knowledge
     knowledge.map { |h| h[:content] }.join("\n\n")
   end
 
-  def as_json(*options)
+  def as_json(*_options)
     instance_variables.map do |name|
       [name[1..-1].to_sym, instance_variable_get(name)]
     end.to_h

@@ -1,5 +1,5 @@
 class CodebasesController < ApplicationController
-  before_action :set_codebase, only: %i[ show edit update destroy ]
+  before_action :set_codebase, only: %i[show edit update destroy]
 
   # GET /codebases or /codebases.json
   def index
@@ -7,8 +7,7 @@ class CodebasesController < ApplicationController
   end
 
   # GET /codebases/1 or /codebases/1.json
-  def show
-  end
+  def show; end
 
   # GET /codebases/new
   def new
@@ -16,8 +15,7 @@ class CodebasesController < ApplicationController
   end
 
   # GET /codebases/1/edit
-  def edit
-  end
+  def edit; end
 
   def discover_testing_infrastructure
     @codebase = Codebase.find(params[:codebase_id])
@@ -27,7 +25,7 @@ class CodebasesController < ApplicationController
       end
     end
 
-    redirect_to codebase_url(@codebase), notice: "Discovering testing infrastructure for codebase."
+    redirect_to codebase_url(@codebase), notice: 'Discovering testing infrastructure for codebase.'
   end
 
   # POST /codebases or /codebases.json
@@ -37,7 +35,7 @@ class CodebasesController < ApplicationController
     respond_to do |format|
       if @codebase.save
         # format.html { redirect_to codebase_url(@codebase), notice: "Codebase was successfully created." }
-        format.html { redirect_to main_deck_url, notice: "Codebase was successfully created." }
+        format.html { redirect_to main_deck_url, notice: 'Codebase was successfully created.' }
         format.json { render :show, status: :created, location: @codebase }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -50,7 +48,7 @@ class CodebasesController < ApplicationController
   def update
     respond_to do |format|
       if @codebase.update(codebase_params)
-        format.html { redirect_to codebase_url(@codebase), notice: "Codebase was successfully updated." }
+        format.html { redirect_to codebase_url(@codebase), notice: 'Codebase was successfully updated.' }
         format.json { render :show, status: :ok, location: @codebase }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -64,7 +62,7 @@ class CodebasesController < ApplicationController
     @codebase.destroy
 
     respond_to do |format|
-      format.html { redirect_to codebases_url, notice: "Codebase was successfully destroyed." }
+      format.html { redirect_to codebases_url, notice: 'Codebase was successfully destroyed.' }
       format.json { head :no_content }
     end
   end

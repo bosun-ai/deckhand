@@ -8,13 +8,13 @@ module GptMigrate::Utils
     'Dockerfile',
 
     # Python
-    'requirements.txt', 
+    'requirements.txt',
     '__pycache__/',
 
     # JS
-    'package.json', 
-    'package-lock.json', 
-    'yarn.lock', 
+    'package.json',
+    'package-lock.json',
+    'yarn.lock',
     'node_modules/',
 
     # Rust
@@ -25,22 +25,21 @@ module GptMigrate::Utils
 
   # Living list of file extensions that should be copied over
   INCLUDED_EXTENSIONS = [
-      '.env', 
-      '.txt', 
-      '.json',
-      '.csv',
-      '.rdb',
-      '.db'
+    '.env',
+    '.txt',
+    '.json',
+    '.csv',
+    '.rdb',
+    '.db'
 
-      # TODO: add more
+    # TODO: add more
   ]
 
-  INSTRUCTIONS_PREFIX = "INSTRUCTIONS:"
-
+  INSTRUCTIONS_PREFIX = 'INSTRUCTIONS:'
 
   def prompt_constructor(*templates, locals: {})
     templates.map do |template|
-      render template, locals: locals
+      render template, locals:
     end.join("\n")
   end
 
@@ -65,10 +64,10 @@ module GptMigrate::Utils
 
   def write_code(prompt_text)
     response = prompt(prompt_text).full_response
-    
+
     if response.start_with?(INSTRUCTIONS_PREFIX)
-      _, rest = response.split(INSTRUCTIONS_PREFIX, 2) 
-      [INSTRUCTIONS_PREFIX, "", rest.strip]
+      _, rest = response.split(INSTRUCTIONS_PREFIX, 2)
+      [INSTRUCTIONS_PREFIX, '', rest.strip]
     else
       parse_code_string(response)
     end
@@ -83,7 +82,7 @@ module GptMigrate::Utils
       match = pattern.match(section)
       if match
         filename, language, code = match.captures
-        code_triples.append([section.split("\n```")[0], language.strip(), code.strip()])
+        code_triples.append([section.split("\n```")[0], language.strip, code.strip])
       end
     end
     code_triples
@@ -92,9 +91,7 @@ module GptMigrate::Utils
   def llm_write_file(prompt_text, target_dir, target_path)
     file_name, language, file_content = write_code(prompt_text)[0]
 
-    if file_name == INSTRUCTIONS_PREFIX
-      return INSTRUCTIONS_PREFIX, "", file_content
-    end
+    return INSTRUCTIONS_PREFIX, '', file_content if file_name == INSTRUCTIONS_PREFIX
 
     if target_path
       File.write(File.join(target_dir, target_path), file_content)
@@ -113,17 +110,17 @@ module GptMigrate::Utils
   def construct_globals
     codebase = context.codebase
     source_directory_structure = generate_directory_structure
-    entry_point = files_prompt(source_directory_structure, "What file contains the entry point of this project?")
-    source_language = files_prompt(source_directory_structure, "What is the main programming language of this project?")
+    entry_point = files_prompt(source_directory_structure, 'What file contains the entry point of this project?')
+    source_language = files_prompt(source_directory_structure, 'What is the main programming language of this project?')
 
     GptMigrate::Globals.new(
       source_dir: context.codebase.path,
       target_dir: context.codebase.path + "_#{target_language}",
       source_lang: source_language,
       target_lang: target_language,
-      entry_point: entry_point,
-      source_directory_structure: source_directory_structure,
-      operating_system: "linux",
+      entry_point:,
+      source_directory_structure:,
+      operating_system: 'linux',
       testfiles: [],
       source_port: nil,
       target_port: nil,
@@ -133,18 +130,18 @@ module GptMigrate::Utils
   end
 
   def list_all_files(path)
-    `cd #{path} && git ls-files`.lines.map(&:strip).map {|p| Pathname(p)}
+    `cd #{path} && git ls-files`.lines.map(&:strip).map { |p| Pathname(p) }
   end
 
-  def copy_files(source_dir, target_dir, excluded_files=[])
+  def copy_files(source_dir, target_dir, excluded_files = [])
     entries = list_all_files(source_dir)
 
     entries.each do |item|
       item_s = item.to_s
 
-      # TODO more complete logic
-      next if excluded_files.any? {|excluded_file| item_s.include?(excluded_file)}
-      next unless INCLUDED_EXTENSIONS.any? {|extension| item_s.end_with?(extension)}
+      # TODO: more complete logic
+      next if excluded_files.any? { |excluded_file| item_s.include?(excluded_file) }
+      next unless INCLUDED_EXTENSIONS.any? { |extension| item_s.end_with?(extension) }
 
       source_file = File.expand_path(item, source_dir)
       target_file = File.expand_path(item, target_dir)

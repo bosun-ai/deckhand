@@ -1,6 +1,6 @@
 class WriteDocumentationAgent < ApplicationAgent
   arguments :question
-  
+
   def run
     instruction_prompt = <<~PROMPT
       Given the following context:\n\n#{context.summarize_knowledge}\n
@@ -20,7 +20,7 @@ class WriteDocumentationAgent < ApplicationAgent
     documenter_prompt = <<~PROMPT
       Given the following context:\n\n#{context.summarize_knowledge}\n\n#{instruction}
 
-      
+
       This is the code that should be documented:\n\n```#{question}```\n\n
     PROMPT
 
@@ -29,13 +29,11 @@ class WriteDocumentationAgent < ApplicationAgent
         documentation inserted at the correct locations. Follow the instructions carefully.
     SYSTEM
 
-    result = prompt(
+    prompt(
       documenter_prompt,
       system: documenter_system,
       max_tokens: 8000,
-      mode: :very_large,
-    ).full_response.strip.split(/```.*\n/, 2).last.strip.delete_suffix("```").strip
-
-    result
+      mode: :very_large
+    ).full_response.strip.split(/```.*\n/, 2).last.strip.delete_suffix('```').strip
   end
 end

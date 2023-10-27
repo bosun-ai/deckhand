@@ -9,8 +9,8 @@ class Deckhand::Process
   # out: a path to a file to write the process's output to
   # done: a callback to call when the process is finished
   def self.spawn(*args, out: nil, err: nil, &done)
-    p = Deckhand::Process.new()
-    p.spawn(*args, out: out, err: err, &done)
+    p = Deckhand::Process.new
+    p.spawn(*args, out:, err:, &done)
   end
 
   def spawn(*args, out: nil, err: nil, &callback)
@@ -27,20 +27,18 @@ class Deckhand::Process
       ::Process.wait(@pid)
       @status = ::Process.last_status&.exitstatus
     rescue Errno::ECHILD
-      puts "Warning: ECHILD"
+      puts 'Warning: ECHILD'
     ensure
-      begin
-        [
-          input_read, @input_write,
-        ].compact.each(&:close)
-      end
+      [
+        input_read, @input_write
+      ].compact.each(&:close)
     end
     self
   end
 
   def alive?
     !@status
-  rescue => e
+  rescue StandardError => e
     false
   end
 
@@ -55,25 +53,24 @@ class Deckhand::Process
 
   def tail(out_read, out_path, channel = :out, &callback)
     Thread.new do
-      file = File.open(out_path, "w") if out_path
+      file = File.open(out_path, 'w') if out_path
       stopping = false
       loop do
-        begin
-          buffer = out_read.read_nonblock(1024 * 16)
-          file.write(buffer) if file
-          Rails.application.executor.wrap do
-            callback.call(Hash[channel, buffer])
-          end
-        rescue IO::WaitReadable
-          break if stopping
-          IO.select([out_read], [], [], 0.2)
-          stopping = !alive? # we read one more time after the process is done
-        rescue => e
-          Rails.logger.error "Stopping #{channel} tail due to error: #{e.message}"
-          break
+        buffer = out_read.read_nonblock(1024 * 16)
+        file.write(buffer) if file
+        Rails.application.executor.wrap do
+          callback.call(Hash[channel, buffer])
         end
+      rescue IO::WaitReadable
+        break if stopping
+
+        IO.select([out_read], [], [], 0.2)
+        stopping = !alive? # we read one more time after the process is done
+      rescue StandardError => e
+        Rails.logger.error "Stopping #{channel} tail due to error: #{e.message}"
+        break
       end
-    rescue => e
+    rescue StandardError => e
       puts "Stopping #{channel} tail due to error: #{e.message}"
     ensure
       @run_thread.join
@@ -83,7 +80,7 @@ class Deckhand::Process
         callback.call(
           {
             status: @status || -1,
-            channel: channel,
+            channel:
           }
         )
       end

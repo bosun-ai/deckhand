@@ -14,15 +14,16 @@ class AgentRunEvent < ApplicationRecord
   end
 
   def type
-    deserialized_event["type"]
+    deserialized_event['type']
   end
 
   def content
-    deserialized_event["content"]
+    deserialized_event['content']
   end
 
   def new_agent
-    return unless type == "run_agent"
+    return unless type == 'run_agent'
+
     AgentRun.find(content)
   end
 

@@ -1,19 +1,17 @@
-require "test_helper"
+require 'test_helper'
 
-require "deckhand/process"
+require 'deckhand/process'
 
 class DeckhandProcessTest < ActiveSupport::TestCase
   test "tail should call the callback with what's up" do
-    lines = ["line1", "line2", "line3"]
-    args = ["echo", lines.join("\n")]
-    out_path = "/tmp/test_output#{rand(10000)}"
-    err_path = "/tmp/test_error#{rand(10000)}"
+    lines = %w[line1 line2 line3]
+    args = ['echo', lines.join("\n")]
+    out_path = "/tmp/test_output#{rand(10_000)}"
+    err_path = "/tmp/test_error#{rand(10_000)}"
 
-    buffer = ""
+    buffer = ''
     process = Deckhand::Process.spawn(*args, out: out_path) do |output|
-      if output[:out]
-        buffer += output[:out]
-      end
+      buffer += output[:out] if output[:out]
     end
     process.wait
     assert_equal lines, buffer.lines.map(&:strip)

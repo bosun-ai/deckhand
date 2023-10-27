@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "base64"
+require 'base64'
 
 # This script is used to set the GitHub App key in the .env file
 
@@ -9,7 +9,7 @@ require "base64"
 path = ARGV[0]
 
 if path.nil? || path.empty?
-  puts "No path given for GitHub App key"
+  puts 'No path given for GitHub App key'
   exit 1
 end
 
@@ -22,18 +22,18 @@ end
 
 # Remove existing key from .env file
 
-env_path = File.join(File.dirname(__FILE__), "..", ".env")
+env_path = File.join(File.dirname(__FILE__), '..', '.env')
 
 if File.exist?(env_path)
   env = File.read(env_path)
-  env.gsub!(/^GITHUB_APP_KEY=.*$/, "")
+  env.gsub!(/^GITHUB_APP_KEY=.*$/, '')
   File.write(env_path, env)
 end
 
 # Add new key to .env file
 
-File.open(env_path, "a") do |f|
+File.open(env_path, 'a') do |f|
   f.puts "GITHUB_APP_KEY=#{Base64.strict_encode64(key)}"
 end
 
-puts "Use `cat .env| fly secrets import` to set the GitHub App key in fly.io"
+puts 'Use `cat .env| fly secrets import` to set the GitHub App key in fly.io'

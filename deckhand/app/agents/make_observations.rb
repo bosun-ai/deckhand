@@ -1,6 +1,6 @@
 class MakeObservations < ApplicationAgent
   def prompt_text
-    %Q{# Solving a problem with tools
+    %(# Solving a problem with tools
 While formulating an answer to the following question:
 
 #{question.indent(2)}
@@ -18,7 +18,7 @@ We have established the following observations:
 #{observations.map { |o| "  - #{o}" }.join("\n")}
 
 Based on this theory the following observations will get us closer to an answer:
-    -}
+    -)
   end
 
   def run

@@ -12,23 +12,23 @@ module Deckhand::Tasks
 
     def context_prompt
       if context.blank?
-        ""
+        ''
       else
-        %Q{You are given the following context to the question:
-          
+        %(You are given the following context to the question:
+
 #{context.summarize_knowledge.indent(2)}
-  
-}
+
+)
       end
     end
 
     def self.run(question, context: nil, tools: Deckhand::Lm.all_tools)
-      task = new(question, context: context, tools: tools)
-      task.run()
+      task = new(question, context:, tools:)
+      task.run
     end
 
     def run
-      raise "Not implemented"
+      raise 'Not implemented'
     end
   end
 end

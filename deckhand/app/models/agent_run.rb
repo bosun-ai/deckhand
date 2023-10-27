@@ -1,12 +1,12 @@
 class AgentRun < ApplicationRecord
   belongs_to :parent, optional: true, class_name: 'AgentRun'
   has_many :children, class_name: 'AgentRun', foreign_key: 'parent_id', dependent: :destroy
-  has_many :events, class_name: "AgentRunEvent", dependent: :destroy
+  has_many :events, class_name: 'AgentRunEvent', dependent: :destroy
 
   before_validation :ensure_parent_ids
 
   def self.for_codebase(codebase)
-   where("context->>'codebase_id' = ?", codebase.id.to_s)
+    where("context->>'codebase_id' = ?", codebase.id.to_s)
   end
 
   def self.root
@@ -38,6 +38,7 @@ class AgentRun < ApplicationRecord
 
   def ensure_parent_ids
     return if !parent_id || !parent_ids.blank?
+
     self.parent_ids = parent.parent_ids + [parent_id]
   end
 end

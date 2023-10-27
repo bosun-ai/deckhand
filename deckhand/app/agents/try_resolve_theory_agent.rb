@@ -7,11 +7,11 @@ class TryResolveTheoryAgent < ApplicationAgent
     <<~PROMPT_TEXT
       # Resolving a theory
       We are trying to answer the following question:
-        
+      #{'  '}
       #{question.indent(2)}
-        
-      #{context_prompt}  
-        
+      #{'  '}
+      #{context_prompt}#{'  '}
+      #{'  '}
       To bring us closer to answer the question, we have the following theory:
 
       #{theory.indent(2)}
@@ -29,11 +29,11 @@ class TryResolveTheoryAgent < ApplicationAgent
   def run
     resolution = prompt(prompt_text).full_response.strip
     if resolution =~ /Conclusion:/
-      self.answer = resolution.split("Conclusion:", 2).last.strip
+      self.answer = resolution.split('Conclusion:', 2).last.strip
     elsif resolution =~ /Missing:/
-      self.need_information = resolution.split("Missing:", 2).last.strip
+      self.need_information = resolution.split('Missing:', 2).last.strip
     elsif resolution =~ /Incorrect:/
-      self.incorrect = resolution.split("Incorrect:", 2).last.strip
+      self.incorrect = resolution.split('Incorrect:', 2).last.strip
     else
       raise "Invalid resolution: #{resolution}"
     end

@@ -4,15 +4,11 @@ class AutonomousAgent
 
   class << self
     def get_pos_arguments
-      @pos_arguments ||= begin
-        superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
-      end
+      @pos_arguments ||= superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
     end
 
     def get_kwargs
-      @arguments ||= begin
-        superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
-      end
+      @arguments ||= superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
     end
 
     def arguments(*args, **kwargs)
@@ -28,13 +24,13 @@ class AutonomousAgent
         attr_accessor arg
       end
 
-      kwargs.each do |arg, default|
+      kwargs.each do |arg, _default|
         attr_accessor arg
       end
     end
 
     def run(*args, **kwargs)
-      new(*args, **kwargs).run()
+      new(*args, **kwargs).run
     end
   end
 
@@ -43,9 +39,7 @@ class AutonomousAgent
   module RunAgent
     def run(*args, **kwargs)
       klass = args.first
-      if klass.is_a?(Class) && klass < AutonomousAgent
-        return klass.run(*args[1..], **kwargs.merge(parent: self))
-      end
+      return klass.run(*args[1..], **kwargs.merge(parent: self)) if klass.is_a?(Class) && klass < AutonomousAgent
 
       run_callbacks :run do
         super
@@ -72,6 +66,7 @@ class AutonomousAgent
       if arg_name.nil?
         raise "Too many arguments passed to #{self.class.name}: expected #{self.class.get_pos_arguments.inspect} but got #{args.inspect}.}"
       end
+
       instance_variable_set("@#{arg_name}", arg)
     end
 
@@ -91,11 +86,11 @@ class AutonomousAgent
     )
   end
 
-  def run(*args, **kwargs)
-    raise NotImplementedError.new("You forgot to implement the run method on #{self.class.name}.")
+  def run(*_args, **_kwargs)
+    raise NotImplementedError, "You forgot to implement the run method on #{self.class.name}."
   end
 
-  def call_function(prompt_result, **kwargs)
-    raise NotImplementedError.new("You forgot to implement the call_function method on #{self.class.name}.")
+  def call_function(_prompt_result, **_kwargs)
+    raise NotImplementedError, "You forgot to implement the call_function method on #{self.class.name}."
   end
 end

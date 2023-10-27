@@ -1,6 +1,6 @@
-require "redis"
-require "rejson"
-require "active_graph/core/query"
+require 'redis'
+require 'rejson'
+require 'active_graph/core/query'
 
 # RClient = Redis.new(host: "localhost", port: 36379, db: 0)
 
@@ -19,21 +19,21 @@ class RedisStack
                                 REDIS_GRAPH_VALUE_NODE = 8,
                                 REDIS_GRAPH_VALUE_PATH = 9,
                                 REDIS_GRAPH_VALUE_MAP = 10,
-    REDIS_GRAPH_VALUE_POINT = 11
+                                REDIS_GRAPH_VALUE_POINT = 11
 
     REDIS_GRAPH_VALUE_TYPES = {
-      REDIS_GRAPH_VALUE_UNKNOWN => "UNKNOWN",
-      REDIS_GRAPH_VALUE_NULL => "NULL",
-      REDIS_GRAPH_VALUE_STRING => "STRING",
-      REDIS_GRAPH_VALUE_INTEGER => "INTEGER",
-      REDIS_GRAPH_VALUE_BOOLEAN => "BOOLEAN",
-      REDIS_GRAPH_VALUE_DOUBLE => "DOUBLE",
-      REDIS_GRAPH_VALUE_ARRAY => "ARRAY",
-      REDIS_GRAPH_VALUE_EDGE => "EDGE",
-      REDIS_GRAPH_VALUE_NODE => "NODE",
-      REDIS_GRAPH_VALUE_PATH => "PATH",
-      REDIS_GRAPH_VALUE_MAP => "MAP",
-      REDIS_GRAPH_VALUE_POINT => "POINT",
+      REDIS_GRAPH_VALUE_UNKNOWN => 'UNKNOWN',
+      REDIS_GRAPH_VALUE_NULL => 'NULL',
+      REDIS_GRAPH_VALUE_STRING => 'STRING',
+      REDIS_GRAPH_VALUE_INTEGER => 'INTEGER',
+      REDIS_GRAPH_VALUE_BOOLEAN => 'BOOLEAN',
+      REDIS_GRAPH_VALUE_DOUBLE => 'DOUBLE',
+      REDIS_GRAPH_VALUE_ARRAY => 'ARRAY',
+      REDIS_GRAPH_VALUE_EDGE => 'EDGE',
+      REDIS_GRAPH_VALUE_NODE => 'NODE',
+      REDIS_GRAPH_VALUE_PATH => 'PATH',
+      REDIS_GRAPH_VALUE_MAP => 'MAP',
+      REDIS_GRAPH_VALUE_POINT => 'POINT'
     }
 
     def graph_cache(graph_id)
@@ -41,33 +41,33 @@ class RedisStack
       @graph_cache[graph_id] ||= {
         properties: [],
         labels: [],
-        relationship_types: [],
+        relationship_types: []
       }
     end
 
     def serialize_graph_node(node)
       return nil if node.nil?
 
-      serialized = "("
+      serialized = '('
       serialized << node[:id] if node[:id]
       if (labels = node[:labels]) && labels.any?
-        serialized << ":"
-        serialized << labels.map { |label| label }.join(":")
+        serialized << ':'
+        serialized << labels.map { |label| label }.join(':')
       end
 
       if (properties = node[:properties]) && properties.any?
-        serialized << " {"
-        serialized << properties.map { |key, value| "#{key}: #{serialize_value(value)}" }.join(", ")
-        serialized << "}"
+        serialized << ' {'
+        serialized << properties.map { |key, value| "#{key}: #{serialize_value(value)}" }.join(', ')
+        serialized << '}'
       end
 
-      serialized << ")"
+      serialized << ')'
       serialized
     end
 
     # escapes a string for use in a redis command
     def escape_string_for_redis(value)
-      value.gsub(/"/, "\\\"")
+      value.gsub(/"/, '\"')
     end
 
     # serializes a ruby value into a redis literal
@@ -80,13 +80,13 @@ class RedisStack
       when Float
         value.to_s
       when TrueClass
-        "true"
+        'true'
       when FalseClass
-        "false"
+        'false'
       when Array
-        "[#{value.map { |v| serialize_value(v) }.join(", ")}]"
+        "[#{value.map { |v| serialize_value(v) }.join(', ')}]"
       when Hash
-        "{#{value.map { |k, v| "#{k}: #{serialize_value(v)}" }.join(", ")}}"
+        "{#{value.map { |k, v| "#{k}: #{serialize_value(v)}" }.join(', ')}}"
       else
         raise "Unsupported value type #{value.class}"
       end
@@ -95,15 +95,15 @@ class RedisStack
     def serialize_graph_edge(edge)
       return nil if edge.nil?
 
-      serialized = "-["
+      serialized = '-['
       serialized << edge[:id] if edge[:id]
       serialized << ":#{edge[:label]}" if edge[:label]
       if (properties = edge[:properties]) && properties.any?
-        serialized << " {"
-        serialized << properties.map { |key, value| "#{key}: #{serialize_value(value)}" }.join(", ")
-        serialized << "}"
+        serialized << ' {'
+        serialized << properties.map { |key, value| "#{key}: #{serialize_value(value)}" }.join(', ')
+        serialized << '}'
       end
-      serialized << "]->"
+      serialized << ']->'
     end
 
     def graph_insert(graph_id, relationship)
@@ -122,14 +122,14 @@ class RedisStack
 
     def graph_attach_new(graph_id, target, edge, node)
       match = {
-        id: "target",
-        labels: target[:labels],
+        id: 'target',
+        labels: target[:labels]
       }
 
       query = "MATCH #{serialize_graph_node(match)}"
       if (properties = target[:properties]) && properties.any?
-        query << " WHERE "
-        query << properties.map { |key, value| "target.#{key} = #{serialize_value(value)}" }.join(" AND ")
+        query << ' WHERE '
+        query << properties.map { |key, value| "target.#{key} = #{serialize_value(value)}" }.join(' AND ')
       end
 
       query << "CREATE (target)#{serialize_graph_edge(edge)}#{serialize_graph_node(node)}"
@@ -148,7 +148,7 @@ class RedisStack
       result = graph_cache(graph_id)[:properties][property_id]
       return result unless result.nil?
 
-      cache = graph_query(graph_id, "CALL db.propertyKeys()")
+      cache = graph_query(graph_id, 'CALL db.propertyKeys()')
       header = cache.shift
       statistics = cache.pop
       cache = cache.first.map(&:first).map(&:second)
@@ -161,7 +161,7 @@ class RedisStack
       result = graph_cache(graph_id)[:labels][label_id]
       return result unless result.nil?
 
-      cache = graph_query(graph_id, "CALL db.labels()")
+      cache = graph_query(graph_id, 'CALL db.labels()')
       header = cache.shift
       statistics = cache.pop
       cache = cache.first.map(&:first).map(&:second)
@@ -174,7 +174,7 @@ class RedisStack
       result = graph_cache(graph_id)[:relationship_types][relationship_type_id]
       return result unless result.nil?
 
-      cache = graph_query(graph_id, "CALL db.relationshipTypes()")
+      cache = graph_query(graph_id, 'CALL db.relationshipTypes()')
       header = cache.shift
       statistics = cache.pop
       cache = cache.first.map(&:first).map(&:second)
@@ -198,7 +198,7 @@ class RedisStack
           id: value[0],
           labels: value[1].map { |label_id| get_label_cache(graph_id, label_id) },
           properties: parse_redis_graph_properties(graph_id, value[2]),
-          type: "NODE",
+          type: 'NODE'
         }
       when REDIS_GRAPH_VALUE_EDGE
         {
@@ -207,34 +207,31 @@ class RedisStack
           source: value[2],
           destination: value[3],
           properties: parse_redis_graph_properties(graph_id, value[4]),
-          type: "EDGE",
+          type: 'EDGE'
         }
       when REDIS_GRAPH_VALUE_STRING
         value
       when REDIS_GRAPH_VALUE_INTEGER
         value.to_i
       else
-        if REDIS_GRAPH_VALUE_TYPES[type]
-          raise "Unsupported type #{REDIS_GRAPH_VALUE_TYPES[type]}"
-        else
-          raise "Unknown type #{type}"
-        end
+        raise "Unsupported type #{REDIS_GRAPH_VALUE_TYPES[type]}" if REDIS_GRAPH_VALUE_TYPES[type]
+
+        raise "Unknown type #{type}"
+
       end
     end
 
     def delete_graph(graph_id)
-      client.call("GRAPH.DELETE", graph_id)
+      client.call('GRAPH.DELETE', graph_id)
       true
     rescue Redis::CommandError => e
-      if e.message =~ /empty key/
-        false
-      else
-        raise e
-      end
+      raise e unless e.message =~ /empty key/
+
+      false
     end
 
     def graph_query(graph_id, query)
-      client.call("GRAPH.QUERY", graph_id, query, "--compact")
+      client.call('GRAPH.QUERY', graph_id, query, '--compact')
     end
 
     def graph_match(graph_id, query)
@@ -256,31 +253,31 @@ class RedisStack
       index_name,
       field_selector: nil,
       dimensions: nil,
-      vector_field_name: "vector_field"
+      vector_field_name: 'vector_field'
     )
       # An index is created by executing a command with the following syntax:
       # FT.CREATE ... SCHEMA ... {field_name} VECTOR {algorithm} {count} [{attribute_name} {attribute_value} ...]
       client.call(
-        "FT.CREATE", index_name,
-        "ON", "JSON",
-        "SCHEMA", field_selector, "as", vector_field_name,
-        "VECTOR",
-        "HNSW", "6",
-        "TYPE", "FLOAT32",
-        "DIM", dimensions.to_s,
-        "DISTANCE_METRIC", "L2"
+        'FT.CREATE', index_name,
+        'ON', 'JSON',
+        'SCHEMA', field_selector, 'as', vector_field_name,
+        'VECTOR',
+        'HNSW', '6',
+        'TYPE', 'FLOAT32',
+        'DIM', dimensions.to_s,
+        'DISTANCE_METRIC', 'L2'
       )
     end
 
-    def vector_similarity_search(index, vector, limit: 10, vector_field_name: "vector_field")
-      vector_blob = vector.pack("f*")
+    def vector_similarity_search(index, vector, limit: 10, vector_field_name: 'vector_field')
+      vector_blob = vector.pack('f*')
       results = RClient.call(
-        "FT.SEARCH", index,
+        'FT.SEARCH', index,
         "*=>[KNN #{limit} @#{vector_field_name} $BLOB]",
-        "PARAMS", "2",
-        "BLOB", vector_blob,
-        "SORTBY", "__#{vector_field_name}_score",
-        "DIALECT", "2",
+        'PARAMS', '2',
+        'BLOB', vector_blob,
+        'SORTBY', "__#{vector_field_name}_score",
+        'DIALECT', '2'
       )
 
       results_count = results.first
@@ -293,9 +290,9 @@ class RedisStack
         index += 1
 
         VectorSimilaritySearchResult.new(
-          id: id,
+          id:,
           score: result[1].to_f,
-          object: JSON.parse(result[3]),
+          object: JSON.parse(result[3])
         )
       end
     end

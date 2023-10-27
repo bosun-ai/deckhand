@@ -3,14 +3,15 @@ require 'test_helper'
 class DummyAgent < ApplicationAgent
   def run(raise_error: nil)
     raise raise_error if raise_error
-    "success"
+
+    'success'
   end
 end
 
 class ApplicationAgentTest < ActiveSupport::TestCase
   setup do
     @codebase = Codebase.new
-    @context = ApplicationAgent::Context.new("testing", codebase: @codebase)
+    @context = ApplicationAgent::Context.new('testing', codebase: @codebase)
     @agent = DummyAgent.new(context: @context, tools: [AnalyzeFileTool, ListFilesTool])
 
     dummy_logger = mock('Logger')
@@ -128,8 +129,8 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   end
 
   test 'run callback updates agent_run with parent' do
-    parent_agent_run = AgentRun.new()
-    parent_agent = DummyAgent.new()
+    parent_agent_run = AgentRun.new
+    parent_agent = DummyAgent.new
     parent_agent.agent_run = parent_agent_run
     @agent.parent = parent_agent
 

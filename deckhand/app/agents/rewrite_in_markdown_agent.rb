@@ -4,9 +4,9 @@ class RewriteInMarkdownAgent < ApplicationAgent
   def prompt_text
     <<~PROMPT_TEXT
       Structure the following observations into a descriptive text in GFM:
-      
+
         #{question.indent(2)}
-        
+      #{'  '}
       ```markdown
       Result
       ====
@@ -22,6 +22,6 @@ class RewriteInMarkdownAgent < ApplicationAgent
   end
 
   def run
-    prompt(prompt_text, system: system_text).full_response.strip.delete_suffix("```").strip
+    prompt(prompt_text, system: system_text).full_response.strip.delete_suffix('```').strip
   end
 end
