@@ -78,6 +78,8 @@ group :development, :test do
   gem 'bundle-audit', '~> 0.1.0', require: false
   gem 'rubocop', '~> 1.57', require: false
   gem 'rubocop-rails', '~> 2.22', require: false
+  gem "rubocop-performance", "~> 1.19", require: false
+  gem "rubocop-rake", "~> 0.6.0", require: false
 end
 
 group :development do
