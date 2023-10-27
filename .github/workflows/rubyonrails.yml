@@ -53,8 +53,6 @@ jobs:
     defaults:
       run:
         working-directory: "./deckhand"
-    env:
-      REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -67,7 +65,7 @@ jobs:
       - name: Security audit dependencies
         run: bundle exec bundle-audit --update
       - name: rubocop
-        uses: reviewdog/action-rubocop@v1
+        uses: reviewdog/action-rubocop@v2
         with:
           rubocop_version: gemfile
           rubocop_extensions: rubocop-rails:gemfile rubocop-performance:gemfile rubocop-rake:gemfile
@@ -76,7 +74,7 @@ jobs:
           skip_install: true
           use_bundler: true
       - name: brakeman
-        uses: reviewdog/action-brakeman@v1
+        uses: reviewdog/action-brakeman@v2
         with:
           brakeman_version: gemfile
           workdir: ./deckhand
