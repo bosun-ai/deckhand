@@ -494,6 +494,10 @@ GEM
       unicode-display_width (>= 2.4.0, < 3.0)
     rubocop-ast (1.30.0)
       parser (>= 3.2.1.0)
+    rubocop-rails (2.22.0)
+      activesupport (>= 4.2.0)
+      rack (>= 1.1)
+      rubocop (>= 1.33.0, < 2.0)
     ruby-openai (5.1.0)
       faraday (>= 1)
       faraday-multipart (>= 1)
@@ -597,6 +601,7 @@ DEPENDENCIES
   redis (~> 5.0)
   rejson-rb!
   rubocop (~> 1.57)
+  rubocop-rails (~> 2.22)
   ruby-openai
   rufo
   selenium-webdriver
