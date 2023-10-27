@@ -1,9 +1,7 @@
 class Codebase::Maintenance::AddDocumentation < ApplicationAgent
   arguments :files
 
-  def codebase
-    context.codebase
-  end
+  delegate :codebase, to: :context
 
   def run
     branch_name = "add-documentation-#{SecureRandom.hex(8)}"

@@ -77,12 +77,12 @@ class AutonomousAgent
   end
 
   def arguments
-    self.class.get_pos_arguments.map do |arg|
-      [arg, instance_variable_get("@#{arg}")]
-    end.to_h.merge(
-      self.class.get_kwargs.keys.map do |arg|
-        [arg, instance_variable_get("@#{arg}")]
-      end.to_h
+    self.class.get_pos_arguments.index_with do |arg|
+      instance_variable_get("@#{arg}")
+    end.merge(
+      self.class.get_kwargs.keys.index_with do |arg|
+        instance_variable_get("@#{arg}")
+      end
     )
   end
 

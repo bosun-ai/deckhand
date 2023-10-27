@@ -37,7 +37,7 @@ class AgentRun < ApplicationRecord
   private
 
   def ensure_parent_ids
-    return if !parent_id || !parent_ids.blank?
+    return if !parent_id || parent_ids.present?
 
     self.parent_ids = parent.parent_ids + [parent_id]
   end

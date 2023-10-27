@@ -2,8 +2,8 @@ class Codebase < ApplicationRecord
   after_create :create_repository
 
   before_validation :ensure_name_slug, unless: -> { name_slug.present? }
-  validates_presence_of :name, on: :create, message: "can't be blank"
-  validates_presence_of :url, on: :create, message: "can't be blank"
+  validates :name, presence: { on: :create, message: "can't be blank" }
+  validates :url, presence: { on: :create, message: "can't be blank" }
 
   has_many :github_access_tokens, dependent: :destroy
 
@@ -29,7 +29,7 @@ class Codebase < ApplicationRecord
   CODEBASE_DIR = if Rails.env.production?
                    '/data/code'
                  else
-                   Rails.root.join('tmp', 'code')
+                   Rails.root.join('tmp/code')
                  end
 
   ADD_DOCUMENTATION_HEADER = '## Undocumented files'

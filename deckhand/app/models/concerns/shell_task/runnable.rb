@@ -7,7 +7,7 @@ module ShellTask::Runnable
   TASKS_DIR = if Rails.env.production?
                 '/data/shell_tasks'
               else
-                Rails.root.join('tmp', 'shell_tasks')
+                Rails.root.join('tmp/shell_tasks')
               end
   STANDARD_TIMEOUT = 3 * 60 # seconds
 

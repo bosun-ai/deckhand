@@ -12,8 +12,8 @@ class ApplicationModel
   end
 
   def attributes
-    self.class.attributes.each_with_object({}) do |attribute, hash|
-      hash[attribute] = send(attribute)
+    self.class.attributes.index_with do |attribute|
+      send(attribute)
     end
   end
 
