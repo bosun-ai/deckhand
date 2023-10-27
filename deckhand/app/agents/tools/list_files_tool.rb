@@ -2,11 +2,11 @@ class ListFilesTool < ApplicationTool
   arguments file_path: :nil
 
   def self.name
-    "list_files"
+    'list_files'
   end
 
   def self.description
-    "List entries in a directory on the filesystem"
+    'List entries in a directory on the filesystem'
   end
 
   def self.usage
@@ -18,7 +18,7 @@ class ListFilesTool < ApplicationTool
   end
 
   def self.arguments_shape
-    { "file_path" => "some_path" }
+    { 'file_path' => 'some_path' }
   end
 
   def self.parameters
@@ -27,22 +27,22 @@ class ListFilesTool < ApplicationTool
       properties: {
         file_path: {
           type: :string,
-          description: "The path of which to list the entries",
-        },
+          description: 'The path of which to list the entries'
+        }
       },
-      required: ["file_path"],
+      required: ['file_path']
     }
   end
 
   def run
-    relative_path = file_path || "."
+    relative_path = file_path || '.'
     self.file_path = File.join(path_prefix, relative_path)
 
     if File.directory?(file_path)
-      directories, files = Dir.glob(File.join(@file_path, "*"))
-        .map { |f| "- #{Pathname.new(f).relative_path_from(path_prefix)}" }
-        .sort
-        .partition { |f| File.directory?(File.join(path_prefix, f)) }
+      directories, files = Dir.glob(File.join(@file_path, '*'))
+                              .map { |f| "- #{Pathname.new(f).relative_path_from(path_prefix)}" }
+                              .sort
+                              .partition { |f| File.directory?(File.join(path_prefix, f)) }
       <<~FILES
         Files in #{relative_path}:
           #{files.join("\n").indent(2)}
@@ -51,11 +51,10 @@ class ListFilesTool < ApplicationTool
           #{directories.join("\n").indent(2)}
       FILES
     else
-      if File.exist?(file_path)
-        raise ToolError.new("The path `#{relative_path}` is not a directory")
-      else
-        raise ToolError.new("The path `#{relative_path}` does not exist")
-      end
+      raise ToolError, "The path `#{relative_path}` is not a directory" if File.exist?(file_path)
+
+      raise ToolError, "The path `#{relative_path}` does not exist"
+
     end
   end
 end

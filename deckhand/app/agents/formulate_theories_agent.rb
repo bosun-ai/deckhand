@@ -11,12 +11,12 @@ class FormulateTheoriesAgent < ApplicationAgent
       #{context_prompt}
 
       Based on this information, we can formulate the following theories that might help us answer the question:
-      
+
         -
     PROMPT_TEXT
   end
 
   def run
-    prompt(prompt_text).full_response.split(" - ").map(&:strip)
+    prompt(prompt_text).full_response.split(' - ').map(&:strip)
   end
 end

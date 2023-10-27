@@ -40,7 +40,7 @@ class ApplicationTool < AutonomousAgent::Tool
     {
       type: :object,
       properties: {},
-      required: [],
+      required: []
     }
   end
 
@@ -54,29 +54,28 @@ class ApplicationTool < AutonomousAgent::Tool
 
   def self.openai_signature
     {
-      name: name,
-      description: description,
-      parameters: parameters,
+      name:,
+      description:,
+      parameters:
     }
   end
 
   def infer_arguments
     reformatted = run(ReformatAnswerAgent,
-      "You are using tool #{self.class.name}`, what arguments will you give it?",
-      arguments,
-      "json",
-      example: { tool_name: self.class.name, arguments: self.class.arguments_shape }.to_json,
-    )
+                      "You are using tool #{self.class.name}`, what arguments will you give it?",
+                      arguments,
+                      'json',
+                      example: { tool_name: self.class.name, arguments: self.class.arguments_shape }.to_json)
 
     begin
-      @arguments = JSON.parse(reformatted)["arguments"]
-    rescue => e
-      raise Error.new("The arguments you gave for tool #{self.class.name} are not in the correct format.")
+      @arguments = JSON.parse(reformatted)['arguments']
+    rescue StandardError => e
+      raise Error, "The arguments you gave for tool #{self.class.name} are not in the correct format."
     end
 
-    if @arguments.class != self.class.arguments_shape.class
-      raise Error.new("The arguments you gave for tool #{self.class.name} are not in the correct format.")
-    end
+    return unless @arguments.class != self.class.arguments_shape.class
+
+    raise Error, "The arguments you gave for tool #{self.class.name} are not in the correct format."
   end
 
   def path_prefix
