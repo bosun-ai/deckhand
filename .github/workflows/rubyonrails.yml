@@ -63,8 +63,24 @@ jobs:
           working-directory: "./deckhand"
       # Add or replace any other lints here
       - name: Security audit dependencies
-        run: bin/bundler-audit --update
+        run: bundle-audit --update
       - name: Security audit application code
         run: bin/brakeman -q -w2
       - name: Lint Ruby files
         run: bin/rubocop --parallel
+      - name: rubocop
+        uses: reviewdog/action-rubocop@v1
+        with:
+          rubocop_version: gemfile
+          rubocop_extensions: rubocop-rails:gemfile
+          rubocop-flags: --parallel
+      - name: brakeman
+        uses: reviewdog/action-brakeman@v1
+        with:
+          brakeman_version: gemfile
+      # reek is very opinionated, I'm partial
+      # - name: reek
+      #   uses: reviewdog/action-reek@v1
+      #   with:
+      #     reek_version: gemfile
+      - uses: reviewdog/action-setup@v1
