@@ -18,7 +18,7 @@ class GithubAppController < ApplicationController
 
     if installation.present?
       codebase = Codebase.find_by(github_app_installation_id: installation[:id], name: repo_name)
-      codebase&.process_event(params)
+      codebase.process_event(params) if codebase
     end
 
     render json: { status: :ok }

@@ -28,12 +28,11 @@ class TryResolveTheoryAgent < ApplicationAgent
 
   def run
     resolution = prompt(prompt_text).full_response.strip
-    case resolution
-    when /Conclusion:/
+    if resolution =~ /Conclusion:/
       self.answer = resolution.split('Conclusion:', 2).last.strip
-    when /Missing:/
+    elsif resolution =~ /Missing:/
       self.need_information = resolution.split('Missing:', 2).last.strip
-    when /Incorrect:/
+    elsif resolution =~ /Incorrect:/
       self.incorrect = resolution.split('Incorrect:', 2).last.strip
     else
       raise "Invalid resolution: #{resolution}"

@@ -8,6 +8,7 @@ module Deckhand
     end
 
     def add_history(type:, content:)
+      event = { type:, content: }
       history << { type:, content: }
       history
     end

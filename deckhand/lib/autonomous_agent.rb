@@ -4,11 +4,11 @@ class AutonomousAgent
 
   class << self
     def get_pos_arguments
-      @get_pos_arguments ||= superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
+      @pos_arguments ||= superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
     end
 
     def get_kwargs
-      @get_kwargs ||= superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
+      @arguments ||= superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
     end
 
     def arguments(*args, **kwargs)

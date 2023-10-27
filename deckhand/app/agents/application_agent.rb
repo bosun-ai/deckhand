@@ -21,7 +21,9 @@ class ApplicationAgent < AutonomousAgent
       object.agent_run = agent_run
       object.context.agent_run = agent_run
 
-      agent_run.parent&.events&.create!(event_hash: { type: 'run_agent', content: object.agent_run.id })
+      if agent_run.parent
+        agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: object.agent_run.id })
+      end
 
       result = block.call
     rescue StandardError => e
@@ -31,7 +33,7 @@ class ApplicationAgent < AutonomousAgent
       object.agent_run&.update!(error: e)
       Rails.logger.error "Caught agent error (AgentRun##{object&.agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
     ensure
-      object.agent_run&.update!(output: result, context:, finished_at: Time.zone.now)
+      object.agent_run&.update!(output: result, context:, finished_at: Time.now)
       result
     end
   end
@@ -41,12 +43,14 @@ class ApplicationAgent < AutonomousAgent
     result = nil
 
     result = block.call
-    object.agent_run&.events&.create!(
-      event_hash: {
-        type: 'prompt',
-        content: { prompt: result.prompt, response: result.full_response }
-      }
-    )
+    if object.agent_run
+      object.agent_run.events.create!(
+        event_hash: {
+          type: 'prompt',
+          content: { prompt: result.prompt, response: result.full_response }
+        }
+      )
+    end
   ensure
     result
   end
@@ -103,7 +107,7 @@ class ApplicationAgent < AutonomousAgent
     file_system = Liquid::LocalFileSystem.new(dir)
     template.registers[:file_system] = file_system
 
-    file_path = dir / "#{template_name}.liquid"
+    file_path = dir / (template_name.to_s + '.liquid')
     raise "Could not find agent template file: #{file_path}" unless file_path.exist?
 
     template.parse(file_path.read, error_mode: :strict)

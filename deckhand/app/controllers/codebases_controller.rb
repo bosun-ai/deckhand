@@ -19,7 +19,7 @@ class CodebasesController < ApplicationController
 
   def discover_testing_infrastructure
     @codebase = Codebase.find(params[:codebase_id])
-    Thread.new do
+    thread = Thread.new do
       Rails.application.executor.wrap do
         @codebase.discover_testing_infrastructure
       end

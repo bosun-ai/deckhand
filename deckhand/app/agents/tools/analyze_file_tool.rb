@@ -52,7 +52,7 @@ class AnalyzeFileTool < ApplicationTool
       iteration += 1
       remaining_chunks = (total_chunks - iteration - 1).clamp(0, total_chunks)
       window = (lines[position..window_size] || []).join("\n")
-      break yield '', remaining_chunks if window.blank?
+      break yield '', remaining_chunks if window.nil? || window.empty?
 
       response = yield window, remaining_chunks
       break response if response
@@ -77,7 +77,7 @@ class AnalyzeFileTool < ApplicationTool
 
     observations = []
 
-    scan_text(file, window_size: WINDOW_SIZE, window_overlap: WINDOW_OVERLAP) do |window, remaining_chunks|
+    answer = scan_text(file, window_size: WINDOW_SIZE, window_overlap: WINDOW_OVERLAP) do |window, remaining_chunks|
       i += 1
       prompt = <<~ANALYZE_PROMPT
         # Text analysis

@@ -31,7 +31,7 @@ class GithubApp
       @private_key ||= begin
         private_pem_b64 = ENV['GITHUB_APP_KEY']
         private_pem = Base64.decode64(private_pem_b64)
-        OpenSSL::PKey::RSA.new(private_pem)
+        private_key = OpenSSL::PKey::RSA.new(private_pem)
       end
     end
 

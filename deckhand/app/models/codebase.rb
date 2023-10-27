@@ -32,11 +32,11 @@ class Codebase < ApplicationRecord
                    Rails.root.join('tmp/code')
                  end
 
-  ADD_DOCUMENTATION_HEADER = '## Undocumented files'.freeze
+  ADD_DOCUMENTATION_HEADER = '## Undocumented files'
 
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
-    client.list_app_installation_repositories.repositories.map do |repo|
+    repositories = client.list_app_installation_repositories.repositories.map do |repo|
       repo_uri = URI.parse(repo.clone_url)
       repo_uri.user = client.access_token
       Codebase.find_or_create_by!(name: repo.full_name, url: repo.ssh_url, github_app_installation_id: installation_id)
@@ -62,13 +62,13 @@ class Codebase < ApplicationRecord
   end
 
   def github_repo
-    return unless (client = github_client)
+    return unless client = github_client
 
     @github_repo ||= client.repository(name)
   end
 
   def git_url
-    if (repo = github_repo)
+    if repo = github_repo
       repo_uri = URI.parse(repo.clone_url)
       repo_uri.user = 'x-access-token'
       repo_uri.password = github_client.access_token
@@ -88,7 +88,7 @@ class Codebase < ApplicationRecord
 
   def create_repository
     ShellTask.run!(description: "Creating repository for #{name}", script: "git clone #{git_url} #{path}") do |message|
-      if (status = message[:status])
+      if status = message[:status]
         check_out_finished!(status)
       end
     end
@@ -131,7 +131,7 @@ class Codebase < ApplicationRecord
   def check_out_finished!(status)
     return if checked_out
 
-    self.checked_out = status.zero?
+    self.checked_out = status == 0
     save!
 
     Rails.logger.info "Checked out #{name} with status #{status}"
@@ -217,7 +217,7 @@ class Codebase < ApplicationRecord
   def process_bot_action_event(event)
     comment = event.dig(:comment, :body)
 
-    Rails.logger.debug "Received process_bot_action_event: #{comment.inspect}"
+    puts "Received process_bot_action_event: #{comment.inspect}"
     return unless comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
 
     files = comment.split('*')[1..-2].map(&:strip)

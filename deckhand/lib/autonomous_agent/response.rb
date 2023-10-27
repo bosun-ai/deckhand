@@ -1,9 +1,7 @@
-module AutonomousAgent
-  class Response
-    attr_accessor :full_response
+class AutonomousAgent::Response
+  attr_accessor :full_response
 
-    def initialize(full_response)
-      @full_response = full_response
-    end
+  def initialize(full_response)
+    @full_response = full_response
   end
 end

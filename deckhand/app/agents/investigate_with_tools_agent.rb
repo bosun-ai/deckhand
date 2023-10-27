@@ -22,36 +22,35 @@ class InvestigateWithToolsAgent < ApplicationAgent
       responses = prompt(prompt_text)['message']['content'].lines.reject(&:blank?).map(&:strip)
       responses.each do |response|
         # puts "Response from LLM:\n----\n#{response}\n----\n"
-        case response
-        when /O:/
+        if response =~ /O:/
           context << response
-          Rails.logger.debug "Made observation: #{context.last}"
-        when /T:/
+          puts "Made observation: #{context.last}"
+        elsif response =~ /T:/
           context << response
-          Rails.logger.debug "Formulated theory: #{context.last}"
-        when /A:/
-          Rails.logger.debug "Gave answer: #{response}"
+          puts "Formulated theory: #{context.last}"
+        elsif response =~ /A:/
+          puts "Gave answer: #{response}"
           return response
-        when /\?(.*)/
+        elsif response =~ /\?(.*)/
           tool_name, arguments = ::Regexp.last_match(1).split(' ', 2)
 
           tool = tools.find { |t| t.name == tool_name }
 
           if tool
-            Rails.logger.debug "Using tool #{tool_name} with arguments #{arguments}"
+            puts "Using tool #{tool_name} with arguments #{arguments}"
             tool_response = tool.run(*arguments, context:)
             context << "> #{tool_response}"
             # puts "Got response from tool: #{tool_response}"
           else
-            Rails.logger.debug "Unknown tool: #{tool_name}"
+            puts "Unknown tool: #{tool_name}"
             return response
           end
         else
-          Rails.logger.debug "Unknown response: #{response}"
+          puts "Unknown response: #{response}"
 
-          Rails.logger.debug "\n\ncontext: #{context.inspect}\n\n"
-          Rails.logger.debug "\n\nPrompt: #{prompt_text}\n\n"
-          Rails.logger.debug "\n\nResponses: #{responses.inspect}\n\n"
+          puts "\n\ncontext: #{context.inspect}\n\n"
+          puts "\n\nPrompt: #{prompt_text}\n\n"
+          puts "\n\nResponses: #{responses.inspect}\n\n"
 
           raise "Unknown response: #{response}"
 

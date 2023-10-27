@@ -1,5 +1,3 @@
-module AutonomousAgent
-  class Tool < AutonomousAgent
-    arguments context: nil
-  end
+class AutonomousAgent::Tool < AutonomousAgent
+  arguments context: nil
 end
