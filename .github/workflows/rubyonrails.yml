@@ -69,15 +69,15 @@ jobs:
         with:
           rubocop_version: gemfile
           rubocop_extensions: rubocop-rails:gemfile rubocop-performance:gemfile rubocop-rake:gemfile
-          rubocop-flags: --parallel
+          rubocop_flags: --parallel
           workdir: ./deckhand
+          skip_install: true
           use_bundler: true
       - name: brakeman
         uses: reviewdog/action-brakeman@v1
         with:
           brakeman_version: gemfile
           workdir: ./deckhand
-          use_bundler: true
       # reek is very opinionated, I'm partial
       # - name: reek
       #   uses: reviewdog/action-reek@v1
