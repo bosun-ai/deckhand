@@ -63,7 +63,7 @@ jobs:
           working-directory: "./deckhand"
       # Add or replace any other lints here
       - name: Security audit dependencies
-        run: bundle-audit --update
+        run: bundle exec bundle-audit --update
       - name: Security audit application code
         run: bin/brakeman -q -w2
       - name: Lint Ruby files
