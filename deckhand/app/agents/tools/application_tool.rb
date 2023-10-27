@@ -69,7 +69,7 @@ class ApplicationTool < AutonomousAgent::Tool
 
     begin
       @arguments = JSON.parse(reformatted)['arguments']
-    rescue StandardError => e
+    rescue StandardError
       raise Error, "The arguments you gave for tool #{self.class.name} are not in the correct format."
     end
 

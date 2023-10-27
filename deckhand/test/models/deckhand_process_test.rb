@@ -7,7 +7,6 @@ class DeckhandProcessTest < ActiveSupport::TestCase
     lines = %w[line1 line2 line3]
     args = ['echo', lines.join("\n")]
     out_path = "/tmp/test_output#{rand(10_000)}"
-    err_path = "/tmp/test_error#{rand(10_000)}"
 
     buffer = ''
     process = Deckhand::Process.spawn(*args, out: out_path) do |output|

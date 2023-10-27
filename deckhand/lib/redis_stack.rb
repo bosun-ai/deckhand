@@ -8,18 +8,18 @@ class RedisStack
   GraphQuery = ActiveGraph::Core::Query
 
   class << self
-    REDIS_GRAPH_VALUE_UNKNOWN = 0,
-                                REDIS_GRAPH_VALUE_NULL = 1,
-                                REDIS_GRAPH_VALUE_STRING = 2,
-                                REDIS_GRAPH_VALUE_INTEGER = 3,
-                                REDIS_GRAPH_VALUE_BOOLEAN = 4,
-                                REDIS_GRAPH_VALUE_DOUBLE = 5,
-                                REDIS_GRAPH_VALUE_ARRAY = 6,
-                                REDIS_GRAPH_VALUE_EDGE = 7,
-                                REDIS_GRAPH_VALUE_NODE = 8,
-                                REDIS_GRAPH_VALUE_PATH = 9,
-                                REDIS_GRAPH_VALUE_MAP = 10,
-                                REDIS_GRAPH_VALUE_POINT = 11
+    REDIS_GRAPH_VALUE_UNKNOWN = [0,
+                                 REDIS_GRAPH_VALUE_NULL = 1,
+                                 REDIS_GRAPH_VALUE_STRING = 2,
+                                 REDIS_GRAPH_VALUE_INTEGER = 3,
+                                 REDIS_GRAPH_VALUE_BOOLEAN = 4,
+                                 REDIS_GRAPH_VALUE_DOUBLE = 5,
+                                 REDIS_GRAPH_VALUE_ARRAY = 6,
+                                 REDIS_GRAPH_VALUE_EDGE = 7,
+                                 REDIS_GRAPH_VALUE_NODE = 8,
+                                 REDIS_GRAPH_VALUE_PATH = 9,
+                                 REDIS_GRAPH_VALUE_MAP = 10,
+                                 REDIS_GRAPH_VALUE_POINT = 11].freeze
 
     REDIS_GRAPH_VALUE_TYPES = {
       REDIS_GRAPH_VALUE_UNKNOWN => 'UNKNOWN',
@@ -34,7 +34,7 @@ class RedisStack
       REDIS_GRAPH_VALUE_PATH => 'PATH',
       REDIS_GRAPH_VALUE_MAP => 'MAP',
       REDIS_GRAPH_VALUE_POINT => 'POINT'
-    }
+    }.freeze
 
     def graph_cache(graph_id)
       @graph_cache ||= {}
@@ -149,8 +149,8 @@ class RedisStack
       return result unless result.nil?
 
       cache = graph_query(graph_id, 'CALL db.propertyKeys()')
-      header = cache.shift
-      statistics = cache.pop
+      cache.shift
+      cache.pop
       cache = cache.first.map(&:first).map(&:second)
       # puts "Got property cache: #{cache.inspect}"
       graph_cache(graph_id)[:properties] = cache
@@ -162,8 +162,8 @@ class RedisStack
       return result unless result.nil?
 
       cache = graph_query(graph_id, 'CALL db.labels()')
-      header = cache.shift
-      statistics = cache.pop
+      cache.shift
+      cache.pop
       cache = cache.first.map(&:first).map(&:second)
       # puts "Got label cache: #{cache.inspect}"
       graph_cache(graph_id)[:labels] = cache
@@ -175,8 +175,8 @@ class RedisStack
       return result unless result.nil?
 
       cache = graph_query(graph_id, 'CALL db.relationshipTypes()')
-      header = cache.shift
-      statistics = cache.pop
+      cache.shift
+      cache.pop
       cache = cache.first.map(&:first).map(&:second)
       # puts "Got relationship_type cache: #{cache.inspect}"
       graph_cache(graph_id)[:relationship_types] = cache
@@ -236,8 +236,8 @@ class RedisStack
 
     def graph_match(graph_id, query)
       results = graph_query(graph_id, "MATCH #{query}")
-      header = results.shift
-      statistics = results.pop
+      results.shift
+      results.pop
       results = results.first
       results.map do |result|
         result.map do |column|

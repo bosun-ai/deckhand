@@ -8,9 +8,9 @@ class SimplyUseToolAgent < ApplicationAgent
 
     text = "These were your prior answers that were incorrect:\n\n"
     tries.each do |try|
-      text += ("a. #{try[:tool_name]}\n" +
-                "b. #{try[:arguments]}\n" +
-                "Incorrect because: #{try[:error]}\n\n").indent(2)
+      text += "a. #{try[:tool_name]}\n" \
+                "b. #{try[:arguments]}\n" \
+                "Incorrect because: #{try[:error]}\n\n".indent(2)
     end
   end
 
@@ -83,14 +83,14 @@ class SimplyUseToolAgent < ApplicationAgent
   end
 
   def non_function_run
-    puts "Trying to use a tool to answer the following question: #{question}"
+    Rails.logger.debug "Trying to use a tool to answer the following question: #{question}"
     @tries = []
     begin
       tool_arguments = prompt(prompt_text).full_response
 
       tool_name, arguments = tool_arguments.split('b. ').map(&:strip)
 
-      puts "Trying to use tool #{tool_name} with arguments: #{arguments}"
+      Rails.logger.debug "Trying to use tool #{tool_name} with arguments: #{arguments}"
 
       tool = tools.find { |t| tool_name.match?(/#{t.name}/i) }
 
