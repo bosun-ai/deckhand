@@ -7,6 +7,10 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       "success"
     end
   end
+  
+  class MultiSateDummyAgent < ApplicationAgent
+    
+  end
 
   setup do
     @codebase = Codebase.new
@@ -170,4 +174,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     assert_equal({ 'checkpoint' => '1-run_agent', 'value' => 'success' }, @agent.agent_run.state)
   end
 
+  test 'an agent can be resumed from an intermediate state' do
+    
+  end
 end

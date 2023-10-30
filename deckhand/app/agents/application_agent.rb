@@ -2,17 +2,33 @@ class ApplicationAgent < AutonomousAgent
   # TODO: allow lambdas for default argument values
   arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
+  # agent_run is a persisted object that contains the state and unique identifier representing the execution of an
+  # agent.
   attr_accessor :agent_run
-  attr_accessor :checkpoint_index
+
+  # during the execution of an agent its state is stored whenever a potentially longer running task is performed
+  # whenever this happens it is marked as a checkpoint
+
+  # checkpoint_name holds the name of the checkpoint that is currently being run
   attr_accessor :checkpoint_name
+
+  # checkpoint_index holds the sequence number of the current checkpoint
+  attr_accessor :checkpoint_index
+
+  # checkpoints_executed_count holds the amount of checkpoints that have been executed instead of just retrieved
+  # from the agent_run state
+  attr_accessor :checkpoints_executed_count
+
+  # if the agent decides to not execute a checkpoint in the current job, it throws RunAgainLater
+  class RunAgainLater < StandardError; end
 
   def initialize(*args, **kwargs)
     @checkpoint_index = 0
+    @checkpoints_executed_count = 0
     super
   end
 
   def around_run(*args, **kwargs, &block)
-    
     DeckhandTracer.in_span("#{self.class.name}#run") do
       result = nil
 
@@ -34,16 +50,17 @@ class ApplicationAgent < AutonomousAgent
       end
 
       result = block.call(*args, **kwargs)
+      agent_run&.update!(output: result, context:, finished_at: Time.now)
+    rescue RunAgainLater => e
+      AgentRunJob.perform_later(agent_run)
     rescue StandardError => e
       current_span = OpenTelemetry::Trace.current_span
       current_span.record_exception(e)
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
-      agent_run&.update!(error: e)
+      agent_run&.update!(error: e, context:, finished_at: Time.now)
       Rails.logger.error "Caught agent error (AgentRun##{agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
-      result = e
     ensure
-      agent_run&.update!(output: result, context:, finished_at: Time.now)
-      result
+      agent_run
     end
   end
 
@@ -119,14 +136,24 @@ class ApplicationAgent < AutonomousAgent
 
     if agent_run && agent_run.states.has_key?(checkpoint_name)
       agent_run.states[checkpoint_name]
-    else
+      # what do we do if the state is a representation of an agent run? do we use in band signaling and
+      # check the output of the agent_run?
+    elsif should_execute_checkpoint?
+      @checkpoints_executed_count += 1
       result = block.call
       agent_run&.transition_to!(checkpoint_name, result)
       result
+    else
+      raise RunAgainLater
     end
   end
 
   private
+
+  def should_execute_checkpoint?
+    # TODO: we need a more sensible way of determining whether we should spawn a new task for an execution
+    checkpoints_executed_count < 1
+  end
 
   def read_template_file(template_name)
     template = Liquid::Template.new
