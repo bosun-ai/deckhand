@@ -29,6 +29,7 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_run(*args, **kwargs, &block)
+    agent_run = nil
     DeckhandTracer.in_span("#{self.class.name}#run") do
       result = nil
 
@@ -59,9 +60,8 @@ class ApplicationAgent < AutonomousAgent
       current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
       agent_run&.update!(error: e, context:, finished_at: Time.now)
       Rails.logger.error "Caught agent error (AgentRun##{agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
-    ensure
-      agent_run
     end
+    agent_run
   end
 
   def around_prompt(*args, **kwargs, &block)
@@ -81,8 +81,13 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_run_agent(*args, **kwargs, &block)
-    next_checkpoint("run_agent") do
+    result = next_checkpoint("run_agent") do
       block.call
+    end
+    if !result.is_a? AgentRun
+      AgentRun.new(**result)
+    else
+      result
     end
   end
 
@@ -130,15 +135,18 @@ class ApplicationAgent < AutonomousAgent
     Rails.logger
   end
 
+  # next_checkpoint will either run a block and return its result, fetch a previous result of the block
+  # and return that, or raise RunAgainLater to indicate that it should be ran again at some point
   def next_checkpoint(name, &block)
     self.checkpoint_index += 1
     self.checkpoint_name = "#{checkpoint_index}-#{name}"
 
-    if agent_run && agent_run.states.has_key?(checkpoint_name)
-      agent_run.states[checkpoint_name]
-      # what do we do if the state is a representation of an agent run? do we use in band signaling and
-      # check the output of the agent_run?
-    elsif should_execute_checkpoint?
+    has_checkpoint = agent_run && agent_run.states.has_key?(checkpoint_name)
+    checkpoint_state = agent_run&.states&.[](checkpoint_name)
+
+    if has_checkpoint && checkpoint_state.value_available?
+      checkpoint_state.value
+    elsif should_execute_checkpoint? && !has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?)
       @checkpoints_executed_count += 1
       result = block.call
       agent_run&.transition_to!(checkpoint_name, result)

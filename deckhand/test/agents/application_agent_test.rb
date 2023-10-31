@@ -157,11 +157,12 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     @agent.checkpoint_index = 0
     @agent.agent_run = AgentRun.new
     result = @agent.run_agent(DummyAgent)
-    assert_equal result, 'success'
+    assert_equal 'success', result.output
 
     assert_equal 1, @agent.checkpoint_index  
 
-    assert_equal({ 'checkpoint' => '1-run_agent', 'value' => 'success' }, @agent.agent_run.state)
+    assert_equal '1-run_agent', @agent.agent_run.state.checkpoint
+    assert_equal 'success', @agent.agent_run.state.value.output
   end
 
   test 'run_agent callback only runs agent if there its not been run yet' do
@@ -169,7 +170,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     assert_equal(0, @agent.checkpoint_index)
     @agent.agent_run = AgentRun.new(states: { '1-run_agent' => 'success' })
     result = @agent.run_agent(DummyAgent)
-    assert_equal result, 'success'
+    assert_equal 'success', result
     assert_equal(1, @agent.checkpoint_index)
     assert_equal({ 'checkpoint' => '1-run_agent', 'value' => 'success' }, @agent.agent_run.state)
   end

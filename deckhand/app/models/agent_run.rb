@@ -5,6 +5,24 @@ class AgentRun < ApplicationRecord
 
   before_validation :ensure_parent_ids
 
+  class State < Struct.new(
+    :checkpoint,
+    :value,
+    :async_status
+  )
+    def value_available?
+      !async?|| async_status.to_s == 'ready'
+    end
+
+    def queued?
+      async_status.to_s == 'queued'
+    end
+
+    def async?
+      async_status
+    end
+  end
+
   def self.for_codebase(codebase)
    where("context->>'codebase_id' = ?", codebase.id.to_s)
   end
@@ -14,17 +32,19 @@ class AgentRun < ApplicationRecord
   end
 
   def state
-    states.entries.last&.yield_self do |checkpoint, value|
-      { checkpoint:, value: }.with_indifferent_access
-    end
+    states.values.last&.yield_self {|s| State.new(**s) }
   end
 
-  def transition_to(checkpoint, state)
-    states[checkpoint] = state
+  def transition_to(checkpoint, value, async_status: nil)
+    states[checkpoint] = State.new(
+      checkpoint:,
+      value:,
+      async_status:,
+    ).as_json
   end
 
-  def transition_to!(checkpoint, state)
-    transition_to(checkpoint, state)
+  def transition_to!(checkpoint, value, async_status: nil)
+    transition_to(checkpoint, value, async_status:)
     save!
   end
 
