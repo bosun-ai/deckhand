@@ -128,19 +128,19 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
   test 'run callback handles success' do
     agent_run_mock = AgentRun.new
-    AgentRun.expects(:create!).returns(agent_run_mock)
+    @agent.agent_run = agent_run_mock
     agent_run_mock.expects(:update!).with(has_entries(output: 'success'))
+    agent_run_mock.output = 'success'
 
     result = @agent.run
-    assert_equal 'success', result
+    assert_equal 'success', result.output
   end
 
   test 'run callback handles exceptions' do
     agent_run_mock = AgentRun.new
-    AgentRun.expects(:create!).returns(agent_run_mock)
+    @agent.agent_run = agent_run_mock
 
-    agent_run_mock.expects(:update!).with(has_entry(error: instance_of(StandardError)))
-    agent_run_mock.expects(:update!).with(has_entry(finished_at: instance_of(Time)))
+    agent_run_mock.expects(:update!).with(has_entries(finished_at: instance_of(Time), error: instance_of(StandardError)))
 
     @agent.run(raise_error: StandardError.new('A dummy error occurred'))
   end
