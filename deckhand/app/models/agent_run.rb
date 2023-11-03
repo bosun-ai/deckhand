@@ -35,6 +35,14 @@ class AgentRun < ApplicationRecord
     states.values.last&.yield_self {|s| State.new(**s) }
   end
 
+  def has_state?(checkpoint_name)
+    states.has_key?(checkpoint_name)
+  end
+  
+  def get_state(checkpoint_name)
+    states[checkpoint_name]&.yield_self {|s| State.new(**s) }
+  end
+
   def transition_to(checkpoint, value, async_status: nil)
     states[checkpoint] = State.new(
       checkpoint:,
@@ -48,9 +56,17 @@ class AgentRun < ApplicationRecord
     save!
   end
 
-  def retry(checkpoint)
+  def retry!(checkpoint)
     checkpoint = checkpoint.to_s
-    self.states = states.entries.take_while {|c,_| c != checkpoint}.to_h
+    update! states: states.entries.take_while {|c,_| c != checkpoint}.to_h
+    resume
+  end
+
+  def resume
+    agents = ApplicationAgent.descendants
+    agent = agents.find {|a| a.name == name }.new(**arguments)
+    agent.agent_run = self
+    agent.run
   end
 
   def success?
@@ -66,7 +82,7 @@ class AgentRun < ApplicationRecord
       class: error.class.name,
       message: error.message,
       backtrace: error.backtrace
-    }.as_json
+    }.as_json if error
     super(error)
   end
 

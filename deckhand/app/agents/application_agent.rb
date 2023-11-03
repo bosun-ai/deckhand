@@ -29,7 +29,8 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_run(*args, **kwargs, &block)
-    agent_run = nil
+    @checkpoint_index = 0
+    @checkpoints_executed_count = 0
     DeckhandTracer.in_span("#{self.class.name}#run") do
       result = nil
 
@@ -39,11 +40,10 @@ class ApplicationAgent < AutonomousAgent
         context: context.as_json,
         parent: parent&.agent_run
       }
-      agent_run = AgentRun.create!(**attrs)
+      self.agent_run ||= AgentRun.create!(**attrs)
       current_span = OpenTelemetry::Trace.current_span
       current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
 
-      self.agent_run = agent_run
       context&.agent_run = agent_run
 
       if agent_run.parent
@@ -141,14 +141,15 @@ class ApplicationAgent < AutonomousAgent
     self.checkpoint_index += 1
     self.checkpoint_name = "#{checkpoint_index}-#{name}"
 
-    has_checkpoint = agent_run && agent_run.states.has_key?(checkpoint_name)
-    checkpoint_state = agent_run&.states&.[](checkpoint_name)
+    has_checkpoint = agent_run&.has_state?(checkpoint_name)
+    checkpoint_state = agent_run&.get_state(checkpoint_name)
 
     if has_checkpoint && checkpoint_state.value_available?
       checkpoint_state.value
-    elsif should_execute_checkpoint? && !has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?)
+    # we only want to run the checkpoint if we're 
+    elsif should_execute_checkpoint? && (!has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?))
       @checkpoints_executed_count += 1
-      result = block.call
+      result = block.call.as_json # TODO automatic deserialization so we can work with value classes
       agent_run&.transition_to!(checkpoint_name, result)
       result
     else

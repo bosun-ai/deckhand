@@ -8,19 +8,31 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     end
   end
   
-  class MultiSateDummyAgent < ApplicationAgent
-    
+  class RandomDummyAgent < ApplicationAgent
+    def run
+      "success-#{SecureRandom.hex(4)}"
+    end
+  end
+  
+  class RunAgentDummyAgent < ApplicationAgent
+    def run
+      run_agent(RandomDummyAgent)['output']
+    end
+  end
+
+  def make_dummy_agent(klass)
+    agent = klass.new(context: @context, tools: [AnalyzeFileTool, ListFilesTool])
+    agent.stubs(:logger).returns(@dummy_logger)
+    agent
   end
 
   setup do
     @codebase = Codebase.new
+    @dummy_logger = mock('Logger')
+    @dummy_logger.stubs(:anything).returns(nil)
+
     @context = ApplicationAgent::Context.new("testing", codebase: @codebase)
-    @agent = DummyAgent.new(context: @context, tools: [AnalyzeFileTool, ListFilesTool])
-
-    dummy_logger = mock('Logger')
-    dummy_logger.stubs(:anything).returns(nil)
-
-    @agent.stubs(:logger).returns(dummy_logger)
+    @agent = make_dummy_agent(DummyAgent)
   end
 
   test 'call_function raises error when tool not found' do
@@ -157,22 +169,28 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     @agent.checkpoint_index = 0
     @agent.agent_run = AgentRun.new
     result = @agent.run_agent(DummyAgent)
-    assert_equal 'success', result.output
 
     assert_equal 1, @agent.checkpoint_index  
 
     assert_equal '1-run_agent', @agent.agent_run.state.checkpoint
-    assert_equal 'success', @agent.agent_run.state.value.output
+    assert_equal 'success', @agent.agent_run.state.value['output']
   end
 
   test 'run_agent callback only runs agent if there its not been run yet' do
-    @agent.run
-    assert_equal(0, @agent.checkpoint_index)
-    @agent.agent_run = AgentRun.new(states: { '1-run_agent' => 'success' })
-    result = @agent.run_agent(DummyAgent)
-    assert_equal 'success', result
-    assert_equal(1, @agent.checkpoint_index)
-    assert_equal({ 'checkpoint' => '1-run_agent', 'value' => 'success' }, @agent.agent_run.state)
+    agent = make_dummy_agent(RunAgentDummyAgent)
+    first_result = agent.run
+    agent_run = agent.agent_run
+
+    assert_nil first_result.error
+
+    assert_equal(1, agent.checkpoint_index)
+    assert_equal 'success', first_result.output.split('-').first
+
+    second_result = agent_run.resume
+
+    assert_nil second_result.error
+    assert_equal 'success', second_result.output.split('-').first
+    assert_equal first_result.output, second_result.output
   end
 
   test 'an agent can be resumed from an intermediate state' do
