@@ -83,6 +83,13 @@ class AutonomousAgent
       instance_variable_set("@#{arg_name}", arg)
     end
 
+    # to support deserialization from AgentRun we also want to support getting the pos arguments from an arguments hash
+    self.class.get_pos_arguments.each do |arg_name|
+      if kwargs.has_key?(arg_name)
+        instance_variable_set("@#{arg_name}", kwargs[arg_name])
+      end
+    end
+
     self.class.get_kwargs.each do |arg, default|
       value = kwargs.fetch(arg, default)
       instance_variable_set("@#{arg}", value)

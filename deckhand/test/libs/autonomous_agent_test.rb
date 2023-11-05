@@ -44,4 +44,24 @@ class AutonomousAgentTest < ActiveSupport::TestCase
     @agent.expects(:dummy_callback).once
     @agent.run_agent(DummyAgent)
   end
+
+  class DummyArgumentAgent < AutonomousAgent
+    arguments :pos_1, :pos_2, kwarg_1: 'ok', kwarg2: 'ok2'
+  end
+
+  test 'allows positional arguments and keyword arguments to be set' do
+    agent = DummyArgumentAgent.new('pos_1', 'pos_2', kwarg_1: 'very ok')
+    assert_equal agent.pos_1, 'pos_1'
+    assert_equal agent.pos_2, 'pos_2'
+    assert_equal agent.kwarg_1, 'very ok'
+    assert_equal agent.kwarg2, 'ok2'
+  end
+
+  test 'allows all values to be set from arguments hash as well' do
+    agent = DummyArgumentAgent.new(pos_1: 'pos_1', pos_2: 'pos_2', kwarg_1: 'very ok')
+    assert_equal agent.pos_1, 'pos_1'
+    assert_equal agent.pos_2, 'pos_2'
+    assert_equal agent.kwarg_1, 'very ok'
+    assert_equal agent.kwarg2, 'ok2'
+  end
 end
