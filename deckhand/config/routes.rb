@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount GoodJob::Engine => 'good_job'
+
   resources :agent_runs
   resources :shell_tasks
 
