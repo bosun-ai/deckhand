@@ -26,7 +26,7 @@ class ImproveUndocumentedFilesAgent < ApplicationAgent
           SimpleFormattedQuestionAgent,
           FILE_EXTENSIONS_QUESTION,
           example: { "extensions": ["rb", "js"] }.to_json,
-        )
+        ).output
       )["extensions"]
 
       root_context.add_observation("The codebase uses the following file extensions: #{extensions.join(", ")}")

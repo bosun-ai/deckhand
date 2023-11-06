@@ -20,17 +20,17 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     question = "What languages and frameworks are used in the codebase?"
 
-    answer = run SplitStepInvestigateAgent, question, context: context.deep_dup
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output
     context.add_observation("Question: #{question} Answer: #{answer}")
 
     question = "What is the purpose of the project?"
-    answer = run SplitStepInvestigateAgent, question, context: context.deep_dup
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output
     context.add_observation("Question: #{question} Answer: #{answer}")
 
     # Second we need to find out if the codebase has any test framework at all.
     question = "If the codebase has tests, what test framework is used?"
 
-    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup) || "No"
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output || "No"
 
     context.add_observation("Question: #{question} Answer: #{answer}")
 
@@ -41,7 +41,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
         "json",
         example: { "has_tests": true }.to_json,
         context: context.deep_dup
-      )
+      ).output
 
     has_tests = false
     begin
@@ -58,7 +58,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     question = "If the codebase supports running the tests and generating a coverage report, what command should be used to do so?"
 
-    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup) || "No"
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output || "No"
 
     context.add_observation("Question: #{question} Answer: #{answer}")
 
@@ -69,7 +69,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
       "json",
       example: { "has_test_coverage": true }.to_json,
       context: context.deep_dup
-    ))["has_test_coverage"]
+    ).output)["has_test_coverage"]
 
     if !has_test_coverage
       puts answer

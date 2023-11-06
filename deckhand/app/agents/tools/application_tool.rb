@@ -66,7 +66,7 @@ class ApplicationTool < AutonomousAgent::Tool
       arguments,
       "json",
       example: { tool_name: self.class.name, arguments: self.class.arguments_shape }.to_json,
-    )
+    ).output
 
     begin
       @arguments = JSON.parse(reformatted)["arguments"]

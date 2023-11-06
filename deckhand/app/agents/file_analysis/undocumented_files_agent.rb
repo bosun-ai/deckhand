@@ -20,7 +20,7 @@ class FileAnalysis::UndocumentedFilesAgent < ApplicationAgent
         file_extensions_prompt,
         example: { "extensions": ["rb", "js"] }.to_json,
         context: context.deep_dup
-      )
+      ).output
       extensions = JSON.parse(extensions_result)["extensions"]
 
       context.add_observation("The codebase uses the following file extensions: #{extensions.join(", ")}")
