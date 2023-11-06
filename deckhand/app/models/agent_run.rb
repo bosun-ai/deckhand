@@ -62,11 +62,18 @@ class AgentRun < ApplicationRecord
     resume
   end
 
-  def resume
+  def deserialize_agent
     agents = ApplicationAgent.descendants
-    agent = agents.find {|a| a.name == name }.new(**arguments)
+    parent_agent = parent&.deserialize_agent
+    agent_context = ApplicationAgent::Context.from_json(context)
+    # TODO what type is context? it should be an ApplicationContext but it seems like it might not be
+    agent = agents.find {|a| a.name == name }.new(**arguments.merge(context: agent_context, parent: parent_agent))
     agent.agent_run = self
-    agent.run
+    agent
+  end
+
+  def resume
+    deserialize_agent.run
   end
 
   def success?

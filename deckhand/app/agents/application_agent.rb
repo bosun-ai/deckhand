@@ -65,18 +65,21 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_prompt(*args, **kwargs, &block)
-    next_checkpoint("prompt") do
-      begin
-        result = block.call(*args, *kwargs)
-        agent_run && agent_run.events.create!(
-          event_hash: {
-            type: 'prompt',
-            content: { prompt: result.prompt, response: result.full_response }
-          }
-        )
-      ensure
-        result
-      end
+    response = next_checkpoint("prompt") do
+      result = block.call(*args, *kwargs)
+      agent_run && agent_run.events.create!(
+        event_hash: {
+          type: 'prompt',
+          content: { prompt: result.prompt, response: result.full_response }
+        }
+      )
+      result
+    end
+
+    if !response.is_a? Deckhand::Lm::PromptResponse
+      Deckhand::Lm::PromptResponse.from_json(response)
+    else
+      response
     end
   end
 
@@ -149,7 +152,8 @@ class ApplicationAgent < AutonomousAgent
     # we only want to run the checkpoint if we're 
     elsif should_execute_checkpoint? && (!has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?))
       @checkpoints_executed_count += 1
-      result = block.call.as_json # TODO automatic deserialization so we can work with value classes
+      raw_result = block.call
+      result = raw_result.as_json # TODO automatic deserialization so we can work with value classes
       agent_run&.transition_to!(checkpoint_name, result)
       result
     else

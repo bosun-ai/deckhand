@@ -82,6 +82,11 @@ module Deckhand::Lm
       @options = options
     end
 
+    def self.from_json(response)
+      response = response.with_indifferent_access
+      new(response[:response], prompt: response[:prompt], options: response[:options])
+    end
+
     def as_json(*_args)
       {
         prompt:,
