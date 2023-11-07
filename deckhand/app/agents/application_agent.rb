@@ -85,7 +85,7 @@ class ApplicationAgent < AutonomousAgent
 
   def around_run_agent(*args, **kwargs, &block)
     result = next_checkpoint("run_agent") do
-      block.call
+      block.call(*args, **kwargs)
     end
     if !result.is_a? AgentRun
       AgentRun.new(**result)

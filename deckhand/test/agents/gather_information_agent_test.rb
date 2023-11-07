@@ -35,7 +35,9 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     assert_enqueued_jobs 1
 
     Deckhand::Lm.expects(:prompt).never
-    SimplyUseToolAgent.expects(:run).returns(AgentRun.new(output: 'It says good things about you'))
+    SimplyUseToolAgent.expects(:run)
+      .with {|q, **kwargs| q == 'What does the README say?'}
+      .returns(AgentRun.new(output: 'It says good things about you'))
     result = result.resume
     
     assert_nil result.error

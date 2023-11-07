@@ -89,7 +89,7 @@ class AgentRun < ApplicationRecord
       class: error.class.name,
       message: error.message,
       backtrace: error.backtrace
-    }.as_json if error
+    }.as_json if error && error.is_a?(Exception)
     super(error)
   end
 

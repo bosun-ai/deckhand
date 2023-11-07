@@ -75,6 +75,7 @@ class AutonomousAgent
   end
 
   def initialize(*args, **kwargs)
+    kwargs = kwargs.symbolize_keys
     args.each_with_index do |arg, i|
       arg_name = self.class.get_pos_arguments[i]
       if arg_name.nil?
