@@ -4,7 +4,7 @@ module Deckhand::Lm
     very_cheap: 'text-babbage-001', # $0.0005 / 1K tokens
     cheap: 'gpt-3.5-turbo-1106', # $0.002 / 1K tokens
     instruct: 'text-davinci-003', # $0.02 / 1K tokens
-    default: 'gpt-4-1106', # $0.03 / 1K tokens
+    default: 'gpt-4-1106-preview', # $0.03 / 1K tokens
     very_large: 'gpt-4-1106-preview' #
   }
 

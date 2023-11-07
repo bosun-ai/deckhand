@@ -9,6 +9,7 @@ class SplitStepInvestigateAgent < ApplicationAgent
     theories
   end
 
+  # TODO in the new system output is always a string so we need to parse it for these structured outputs
   def run
     # To come to a correct answer we want to make observations, formulate theories, and use tools to get more information.
 
@@ -16,7 +17,7 @@ class SplitStepInvestigateAgent < ApplicationAgent
     # 2. We gather more information about the context of the question by using tools and making observations.
     run(GatherInformationAgent, question, context: context, tools: tools).output
     # 3. We formulate theories based on the question and the observations.
-    theories = run(FormulateTheoriesAgent, question, context: context, tools: tools).output
+    theories = JSON.parse(run(FormulateTheoriesAgent, question, context: context, tools: tools).output)
 
     answer = nil
 

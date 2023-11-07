@@ -169,7 +169,7 @@ class Codebase < ApplicationRecord
   end
   
   def describe_project_in_markdown
-    run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge)
+    run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge).output
   end
 
   def create_main_github_issue

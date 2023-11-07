@@ -1,10 +1,6 @@
 class ListFilesTool < ApplicationTool
   arguments file_path: :nil
 
-  def self.name
-    "list_files"
-  end
-
   def self.description
     "List entries in a directory on the filesystem"
   end

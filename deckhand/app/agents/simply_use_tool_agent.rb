@@ -68,6 +68,13 @@ class SimplyUseToolAgent < ApplicationAgent
   end
 
   def run
+    tools = self.tools.map {|t|
+      if t.is_a? String
+        ApplicationTool.descendants.find {|d| d.name == t}
+      else
+        t
+      end
+    }
     @tries = []
     begin
       result = prompt(prompt_text, functions: tools.map(&:openai_signature))

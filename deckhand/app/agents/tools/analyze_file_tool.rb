@@ -4,10 +4,6 @@
 
   arguments file_path: nil, question: nil
 
-  def self.name
-    "analyze_file"
-  end
-
   def self.description
     "Ask a question about a single file"
   end
