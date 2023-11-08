@@ -11,6 +11,9 @@
 /db/*.sqlite3
 /db/*.sqlite3-*
 
+# Ignore PG database
+/db/pg_data
+
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*
