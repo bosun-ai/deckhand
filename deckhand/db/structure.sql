@@ -55,7 +55,7 @@ CREATE TABLE public.agent_runs (
     name character varying,
     arguments jsonb,
     context jsonb,
-    output character varying,
+    output jsonb,
     finished_at timestamp without time zone,
     parent_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
@@ -586,6 +586,7 @@ ALTER TABLE ONLY public.agent_runs
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20231109175107'),
 ('20231106194100'),
 ('20231021162129'),
 ('20231008192508'),

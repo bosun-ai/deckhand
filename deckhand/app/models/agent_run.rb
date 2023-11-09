@@ -62,12 +62,16 @@ class AgentRun < ApplicationRecord
     resume
   end
 
-  def deserialize_agent
+  def agent_class
     agents = ApplicationAgent.descendants
+    agents.find {|a| a.name == name }
+  end
+
+  def deserialize_agent
     parent_agent = parent&.deserialize_agent
     agent_context = ApplicationAgent::Context.from_json(context)
     # TODO what type is context? it should be an ApplicationContext but it seems like it might not be
-    agent = agents.find {|a| a.name == name }.new(**arguments.merge(context: agent_context, parent: parent_agent))
+    agent = agent_class.new(**arguments.merge(context: agent_context, parent: parent_agent))
     agent.agent_run = self
     agent
   end
@@ -95,6 +99,14 @@ class AgentRun < ApplicationRecord
 
   def feed
     children.sort_by(&:created_at).reverse
+  end
+
+  def output
+    if agent_class.respond_to? :parse_output
+      agent_class.parse_output(attributes['output'])
+    else
+      attributes['output']
+    end
   end
 
   private

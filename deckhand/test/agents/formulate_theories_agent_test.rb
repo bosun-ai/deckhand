@@ -7,7 +7,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     @codebase = Codebase.new
     @context = ApplicationAgent::Context.new('investigating project', codebase: @codebase)
     @context.add_observation('There is a file with the name `README.md`')
-    @agent = GatherInformationAgent.new('What is this project about?', context: @context)
+    @agent = FormulateTheoriesAgent.new('What is this project about?', context: @context)
   end
   
   test 'it makes a prompt and runs an agent' do
@@ -16,7 +16,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       "choices" => [
         {
           "message" => {
-            "content" => "What does the README say?",
+            "content" => "It is a good agent\n  - It is a bad agent",
             "role" => "assistant",
             "function_call" => nil
           },
@@ -30,17 +30,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
 
     assert_nil result.error
-    assert_nil result.finished_at
-
-    assert_enqueued_jobs 1
-
-    Deckhand::Lm.expects(:prompt).never
-    SimplyUseToolAgent.expects(:run)
-      .with {|q, **kwargs| q == 'What does the README say?'}
-      .returns(AgentRun.new(output: 'It says good things about you'))
-    result = result.resume
     
-    assert_nil result.error
-    assert_equal ["It says good things about you"], result.output
+    assert_equal ["It is a good agent", "It is a bad agent"], result.output
   end
 end
