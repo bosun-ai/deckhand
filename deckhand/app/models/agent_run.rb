@@ -82,7 +82,6 @@ class AgentRun < ApplicationRecord
   def deserialize_agent
     parent_agent = parent&.deserialize_agent
     agent_context = ApplicationAgent::Context.from_json(context)
-    agent_class = self.agent_class
     # TODO what type is context? it should be an ApplicationContext but it seems like it might not be
     agent = agent_class.new(**arguments.merge(context: agent_context, parent: parent_agent))
     agent.agent_run = self
@@ -116,9 +115,9 @@ class AgentRun < ApplicationRecord
 
   def output
     if agent_class.respond_to? :parse_output
-      agent_class.parse_output(attributes['output'])
+      agent_class.parse_output(super)
     else
-      attributes['output']
+      super
     end
   end
 

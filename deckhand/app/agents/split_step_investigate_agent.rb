@@ -16,7 +16,7 @@ class SplitStepInvestigateAgent < ApplicationAgent
     # 2. We gather more information about the context of the question by using tools and making observations.
     run(GatherInformationAgent, question, context: context, tools: tools).output
     # 3. We formulate theories based on the question and the observations.
-    theories = JSON.parse(run(FormulateTheoriesAgent, question, context: context, tools: tools).output)
+    theories = run(FormulateTheoriesAgent, question, context: context, tools: tools).output
 
     answer = nil
 

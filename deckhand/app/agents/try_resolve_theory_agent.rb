@@ -28,6 +28,7 @@ class TryResolveTheoryAgent < ApplicationAgent
 
   def run
     resolution = prompt(prompt_text).full_response.strip
+
     if resolution =~ /Conclusion:/
       self.answer = resolution.split("Conclusion:", 2).last.strip
     elsif resolution =~ /Missing:/
@@ -37,6 +38,11 @@ class TryResolveTheoryAgent < ApplicationAgent
     else
       raise "Invalid resolution: #{resolution}"
     end
-    self
+
+    {
+      answer: answer,
+      need_information: need_information,
+      incorrect: incorrect
+    }
   end
 end
