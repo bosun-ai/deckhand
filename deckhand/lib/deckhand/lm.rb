@@ -47,10 +47,7 @@ module Deckhand::Lm
       }
 
       if format == :json
-        puts "Prompting with json_object format"
         parameters[:response_format] = { 'type': 'json_object' }
-      else
-        puts "Not prompting with json_object format: #{format.inspect}"
       end
 
       parameters[:functions] = functions if functions.present?

@@ -16,7 +16,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       "choices" => [
         {
           "message" => {
-            "content" => "It is a good agent\n  - It is a bad agent",
+            "content" => { "theories" => ["It is a good agent", "It is a bad agent"] }.to_json,
             "role" => "assistant",
             "function_call" => nil
           },

@@ -83,7 +83,6 @@ class AgentRun < ApplicationRecord
     parent_agent = parent&.deserialize_agent
     agent_context = ApplicationAgent::Context.from_json(context)
     agent_class = self.agent_class
-    puts "agent_class: #{agent_class.inspect}"
     # TODO what type is context? it should be an ApplicationContext but it seems like it might not be
     agent = agent_class.new(**arguments.merge(context: agent_context, parent: parent_agent))
     agent.agent_run = self

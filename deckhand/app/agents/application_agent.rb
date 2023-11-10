@@ -1,5 +1,6 @@
 class ApplicationAgent < AutonomousAgent
   include ApplicationAgent::Helpers
+  include PromptHelpers
   
   # TODO: allow lambdas for default argument values
   arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
@@ -67,7 +68,6 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_prompt(*args, **kwargs, &block)
-    puts "prompting: #{kwargs.inspect}"
     response = next_checkpoint("prompt") do
       result = block.call(*args, **kwargs)
       agent_run && agent_run.events.create!(

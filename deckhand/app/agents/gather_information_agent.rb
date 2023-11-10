@@ -10,18 +10,18 @@ class GatherInformationAgent < ApplicationAgent
 
       #{context_prompt}
 
-      To have a better chance of solving the question we should get answers to the following question(s):
+      Give a list of the questions we should get answers to so that we have a good chance of answering the question.
 
-        -
+      #{return_json_array('questions')}
     PROMPT_TEXT
   end
 
   def run
-    information_questions = prompt(prompt_text).full_response
+    information_questions = parse_json_array(prompt(prompt_text).full_response)
 
-    context.add_information("Tried to answer question: #{information_questions}")
+    # context.add_information("Tried to answer question: #{information_questions}")
 
-    information_questions.split(" - ").map(&:strip).map do |question|
+    information_questions.map do |question|
       result = run(SimplyUseToolAgent, question, context: context.dup, tools: tools).output
       context.add_observation(result) if result
       result

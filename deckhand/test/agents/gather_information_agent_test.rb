@@ -16,7 +16,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       "choices" => [
         {
           "message" => {
-            "content" => "What does the README say?",
+            "content" => { questions: ["What does the README say?"]}.to_json,
             "role" => "assistant",
             "function_call" => nil
           },
