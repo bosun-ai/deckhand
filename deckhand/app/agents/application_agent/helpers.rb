@@ -20,6 +20,20 @@ module ApplicationAgent::Helpers
     JSON.parse(json.gsub(/^\s*```(json)?/, "").gsub(/```\s*$/, ""))
   end
 
+  def tool_classes
+    tools.map do |tool_or_tool_name|
+      if tool_or_tool_name.is_a? String
+        if Rails.env.development?
+          tool_or_tool_name.constantize
+        else
+          ApplicationTool.descendants.find {|d| d.name == tool_or_tool_name}
+        end
+      else
+        tool_or_tool_name
+      end
+    end
+  end
+
   private
 
   def read_template_file(template_name)

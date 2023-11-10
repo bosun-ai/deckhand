@@ -99,7 +99,7 @@ class ApplicationAgent < AutonomousAgent
 
   def call_function(prompt_response, **_kwargs)
     next_checkpoint("call_function") do
-      tool = tools.find { |t| t.name == prompt_response.function_call_name }
+      tool = tool_classes.find { |t| t.name == prompt_response.function_call_name }
       raise ApplicationTool::Error, "No tool found with name #{prompt_response.function_call_name}" unless tool
 
       args = prompt_response.function_call_args
