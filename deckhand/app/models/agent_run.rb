@@ -56,20 +56,34 @@ class AgentRun < ApplicationRecord
     save!
   end
 
-  def retry!(checkpoint)
-    checkpoint = checkpoint.to_s
-    update! states: states.entries.take_while {|c,_| c != checkpoint}.to_h
+  def retry!(checkpoint=nil)
+    self.states = if checkpoint
+      checkpoint = checkpoint.to_s
+      states.entries.take_while {|c,_| c != checkpoint}.to_h
+    else
+      {}
+    end
+    self.output = nil
+    self.error = nil
+    self.finished_at = nil
+    save!
     resume
   end
 
   def agent_class
-    agents = ApplicationAgent.descendants
-    agents.find {|a| a.name == name }
+    if Rails.env.development?
+      name.constantize
+    else
+      agents = ApplicationAgent.descendants
+      agents.find {|a| a.name == name }
+    end
   end
 
   def deserialize_agent
     parent_agent = parent&.deserialize_agent
     agent_context = ApplicationAgent::Context.from_json(context)
+    agent_class = self.agent_class
+    puts "agent_class: #{agent_class.inspect}"
     # TODO what type is context? it should be an ApplicationContext but it seems like it might not be
     agent = agent_class.new(**arguments.merge(context: agent_context, parent: parent_agent))
     agent.agent_run = self

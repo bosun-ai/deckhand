@@ -1,4 +1,6 @@
 class ApplicationAgent < AutonomousAgent
+  include ApplicationAgent::Helpers
+  
   # TODO: allow lambdas for default argument values
   arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
@@ -65,8 +67,9 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_prompt(*args, **kwargs, &block)
+    puts "prompting: #{kwargs.inspect}"
     response = next_checkpoint("prompt") do
-      result = block.call(*args, *kwargs)
+      result = block.call(*args, **kwargs)
       agent_run && agent_run.events.create!(
         event_hash: {
           type: 'prompt',
@@ -115,29 +118,6 @@ class ApplicationAgent < AutonomousAgent
     end
   end
 
-  def context_prompt
-    return '' if context.blank?
-
-    <<~CONTEXT_PROMPT
-      You are given the following context to the question:
-      #{'  '}
-      #{context.summarize_knowledge.indent(2)}
-    CONTEXT_PROMPT
-  end
-
-  def summarize_tools(tools)
-    tools.map { |t| "  * #{t.name}: #{t.description}\n#{t.usage.indent(2)}" }.join("\n")
-  end
-
-  def render(template_name, locals: {})
-    template = read_template_file(template_name.to_s)
-    template.render!(locals.with_indifferent_access, { strict_variables: true, strict_filters: true })
-  end
-
-  def logger
-    Rails.logger
-  end
-
   # next_checkpoint will either run a block and return its result, fetch a previous result of the block
   # and return that, or raise RunAgainLater to indicate that it should be ran again at some point
   def next_checkpoint(name, &block)
@@ -166,19 +146,5 @@ class ApplicationAgent < AutonomousAgent
   def should_execute_checkpoint?
     # TODO: we need a more sensible way of determining whether we should spawn a new task for an execution
     checkpoints_executed_count < 1
-  end
-
-  def read_template_file(template_name)
-    template = Liquid::Template.new
-
-    dir_name = self.class.name.underscore.chomp('_agent')
-    dir = Rails.root / 'app' / 'agents' / 'templates' / dir_name
-    file_system = Liquid::LocalFileSystem.new(dir)
-    template.registers[:file_system] = file_system
-
-    file_path = dir / (template_name.to_s + '.liquid')
-    raise "Could not find agent template file: #{file_path}" unless file_path.exist?
-
-    template.parse(file_path.read, error_mode: :strict)
   end
 end

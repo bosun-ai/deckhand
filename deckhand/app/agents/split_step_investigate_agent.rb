@@ -9,7 +9,6 @@ class SplitStepInvestigateAgent < ApplicationAgent
     theories
   end
 
-  # TODO in the new system output is always a string so we need to parse it for these structured outputs
   def run
     # To come to a correct answer we want to make observations, formulate theories, and use tools to get more information.
 
@@ -34,20 +33,20 @@ class SplitStepInvestigateAgent < ApplicationAgent
         # 5. We try to immediately prove the theory based on the current information.
         resolution = run(TryResolveTheoryAgent, question, theory, context: context, tools: tools).output
 
-        if resolution.answer
+        if resolution['answer']
           # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.
-          refutation = run(TryRefuteTheoryAgent, question, theory, resolution.answer, context: context, tools: tools).output
+          refutation = run(TryRefuteTheoryAgent, question, theory, resolution['answer'], context: context, tools: tools).output
 
-          conclusion = refutation.correct && resolution.answer
+          conclusion = refutation['correct'] && resolution['answer']
           # TODO try refuting the incorrectness assertion?
 
           # 5b. If we can't immediately answer or all our answers are invalid continue to 6.
-        elsif resolution.need_information && information_tries < 2
+        elsif resolution['need_information'] && information_tries < 2
           # Add gather informatino to task stack
-          run(GatherInformationAgent, resolution.need_information, context: context, tools: tools).output
+          run(GatherInformationAgent, resolution['need_information'], context: context, tools: tools).output
           information_tries += 1
-        elsif resolution.incorrect || resolution.need_information
-          context.add_information("Discarded theory: #{resolution.incorrect}")
+        elsif resolution['incorrect'] || resolution['need_information']
+          context.add_information("Discarded theory: #{resolution['incorrect']}")
           conclusion = false
           # Discard theory
           # TODO try refuting the incorrectness assertion

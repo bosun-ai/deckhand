@@ -45,6 +45,8 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     has_tests = false
     begin
+      # sometimes it is surrounded with markdown codeblock quotes and the json prefix, so try to remove that:
+      tests_response = tests_response.gsub(/^```(json)?/, "").gsub(/```$/, "")
       has_tests = JSON.parse(tests_response)["has_tests"]
     rescue => e
       raise "Could not extract 'has_tests' from object: #{tests_response.inspect}"

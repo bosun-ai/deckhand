@@ -30,7 +30,7 @@ module Deckhand::Lm
 
   DEFAULT_SYSTEM = 'You are a helpful assistant that provides information without formalities.'
 
-  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
+  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default, format: nil)
     DeckhandTracer.in_span('PROMPT') do
       current_span = OpenTelemetry::Trace.current_span
       current_span.add_event('prompt',
@@ -45,6 +45,13 @@ module Deckhand::Lm
         ],
         max_tokens:
       }
+
+      if format == :json
+        puts "Prompting with json_object format"
+        parameters[:response_format] = { 'type': 'json_object' }
+      else
+        puts "Not prompting with json_object format: #{format.inspect}"
+      end
 
       parameters[:functions] = functions if functions.present?
 
