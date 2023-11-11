@@ -1,6 +1,8 @@
 require 'test_helper'
 
 class ApplicationAgentTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   class DummyAgent < ApplicationAgent
     def run(raise_error: nil)
       raise raise_error if raise_error
@@ -22,7 +24,18 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   
   class RunAgentDummyAgent < ApplicationAgent
     def run
-      run_agent(RandomDummyAgent)['output']
+      run_agent(RandomDummyAgent).output
+    end
+  end
+
+  class NestedRunAgentDummyAgent < ApplicationAgent
+    def run
+      output_1 = run_agent(RunAgentDummyAgent).output
+      output_2 = run_agent(RunAgentDummyAgent).output
+      output_3 = run_agent(RunAgentDummyAgent).output
+      {
+        "outputs": [output_1, output_2, output_3]
+      }
     end
   end
 
@@ -199,7 +212,31 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     assert_equal first_result.output, second_result.output
   end
 
-  test 'an agent can be resumed from an intermediate state' do
-    
+  test 'run_agent will run nested invocations asynchronously' do
+    agent = make_dummy_agent(NestedRunAgentDummyAgent)
+    first_result = agent.run
+    agent_run = agent.agent_run
+
+    assert_nil first_result.error
+
+    assert_equal(2, agent.checkpoint_index)
+
+    assert_nil first_result.output
+
+    assert_enqueued_jobs 1
+
+    perform_enqueued_jobs
+
+    assert_enqueued_jobs 1
+
+    perform_enqueued_jobs
+
+    assert_enqueued_jobs 0
+
+    agent_run.reload
+
+    second_result = agent_run
+    assert_nil second_result.error
+    assert_equal ['success','success', 'success'], second_result.output["outputs"].map {|o| o.split('-').first}
   end
 end
