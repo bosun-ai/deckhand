@@ -19,7 +19,12 @@ class AgentRun < ApplicationRecord
     end
 
     def async?
-      async_status
+      !!async_status
+    end
+
+    def self.new_async_await(checkpoint)
+      new(checkpoint:, value: nil, async_status: 'queued')
+
     end
   end
 
@@ -57,6 +62,11 @@ class AgentRun < ApplicationRecord
   end
 
   def retry!(checkpoint=nil)
+    reset_to_checkpoint!(checkpoint) if checkpoint
+    resume
+  end
+
+  def reset_to_checkpoint!(checkpoint)
     self.states = if checkpoint
       checkpoint = checkpoint.to_s
       states.entries.take_while {|c,_| c != checkpoint}.to_h
@@ -67,7 +77,18 @@ class AgentRun < ApplicationRecord
     self.error = nil
     self.finished_at = nil
     save!
-    resume
+  end
+
+  def reset_to_agent_run!(agent_run)
+    # TODO this finding of the agent run is a bit fragile. Would be better
+    # if agent runs had an explicit identifying value.
+    checkpoint = states.find do |checkpoint, state|
+      checkpoint =~ /run_agent/ && state['value']['id'] == agent_run.id
+    end&.first
+
+    raise "No checkpoint found for AgentRun #{agent_run.id} on AgentRun #{id}"
+
+    reset_to_checkpoint!(checkpoint)
   end
 
   def agent_class

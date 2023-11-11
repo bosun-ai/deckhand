@@ -7,6 +7,12 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       "success"
     end
   end
+
+  class PromptingDummyAgent < ApplicationAgent
+    def run
+      prompt("What is up?")
+    end
+  end
   
   class RandomDummyAgent < ApplicationAgent
     def run
@@ -108,39 +114,41 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     result_mock.stubs(:prompt).returns('prompt_here')
     result_mock.stubs(:full_response).returns('response_here')
     result_mock.stubs(:is_function_call?).returns(false)
+    result_mock.stubs(:as_json).returns({ some: 'result'})
 
     Deckhand::Lm.expects(:prompt).returns(result_mock)
 
-    agent_run_mock = AgentRun.new
-    agent_run_mock.expects(:events).returns(event).once
+    agent = make_dummy_agent(PromptingDummyAgent)
+    agent_run = AgentRun.new
+    agent.agent_run = agent_run
+    agent_run.expects(:events).returns(event).once
     event.expects(:create!).with(event_hash: {
                                    type: 'prompt',
                                    content: { prompt: 'prompt_here', response: 'response_here' }
                                  }).once
 
-    @agent.agent_run = agent_run_mock
 
     # Simulate the prompt callback
-    @agent.send(:prompt, 'Hello') { result_mock }
+    agent.run
   end
 
   test 'run callback handles success' do
     agent_run_mock = AgentRun.new
-    @agent.agent_run = agent_run_mock
-    agent_run_mock.expects(:update!).with(has_entries(output: 'success'))
-    agent_run_mock.output = 'success'
+    agent = make_dummy_agent(DummyAgent)
+    agent.agent_run = agent_run_mock
 
-    result = @agent.run
+    result = agent.run
     assert_equal 'success', result.output
   end
 
   test 'run callback handles exceptions' do
     agent_run_mock = AgentRun.new
-    @agent.agent_run = agent_run_mock
+    agent = make_dummy_agent(DummyAgent)
 
-    agent_run_mock.expects(:update!).with(has_entries(finished_at: instance_of(Time), error: instance_of(StandardError)))
+    result = agent.run(raise_error: StandardError.new('A dummy error occurred'))
 
-    @agent.run(raise_error: StandardError.new('A dummy error occurred'))
+    assert_nil result.output
+    assert_equal "A dummy error occurred", result.error["message"]
   end
 
   test 'run callback updates agent_run with parent' do

@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ApplicationAgentTest < ActiveSupport::TestCase
+class FormulateTheoriesAgentTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
   
   setup do
@@ -10,7 +10,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     @agent = FormulateTheoriesAgent.new('What is this project about?', context: @context)
   end
   
-  test 'it makes a prompt and runs an agent' do
+  test 'it formulates theories' do
     # TODO this style of mocking is silly
     result_mock = Deckhand::Lm::PromptResponse.new({
       "choices" => [

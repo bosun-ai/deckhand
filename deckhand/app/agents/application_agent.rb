@@ -64,6 +64,13 @@ class ApplicationAgent < AutonomousAgent
       agent_run&.update!(error: e, context:, finished_at: Time.now)
       Rails.logger.error "Caught agent error (AgentRun##{agent_run&.id}) while running #{self.class.name}:\n#{e.message}\n\n#{e.backtrace.join("\n")}"
     end
+
+    if parent && state = agent_run.state
+      if state.async? && state.value_available?
+        AgentRunJob.perform_later(agent_run.parent)
+      end
+    end
+
     agent_run
   end
 
@@ -90,7 +97,7 @@ class ApplicationAgent < AutonomousAgent
     result = next_checkpoint("run_agent") do
       block.call(*args, **kwargs)
     end
-    if !result.is_a? AgentRun
+    agent_run = if !result.is_a? AgentRun
       AgentRun.new(**result)
     else
       result
@@ -129,14 +136,15 @@ class ApplicationAgent < AutonomousAgent
 
     if has_checkpoint && checkpoint_state.value_available?
       checkpoint_state.value
-    # we only want to run the checkpoint if we're 
     elsif should_execute_checkpoint? && (!has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?))
       @checkpoints_executed_count += 1
       raw_result = block.call
       result = raw_result.as_json # TODO automatic deserialization so we can work with value classes
-      agent_run&.transition_to!(checkpoint_name, result)
+      async_status = checkpoint_state&.async? && 'ready'
+      agent_run&.transition_to!(checkpoint_name, result, async_status:)
       result
     else
+      agent_run&.transition_to!(checkpoint_name, nil, async_status: 'queued')
       raise RunAgainLater
     end
   end
