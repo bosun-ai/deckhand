@@ -14,7 +14,9 @@ class SplitStepInvestigateAgent < ApplicationAgent
 
     # 1. We have a question and some information about the context of the question.
     # 2. We gather more information about the context of the question by using tools and making observations.
-    run(GatherInformationAgent, question, context: context, tools: tools).output
+    run(GatherInformationAgent, question, context: context, tools: tools).output.each do |observation|
+      context.add_observation(observation)
+    end
     # 3. We formulate theories based on the question and the observations.
     theories = run(FormulateTheoriesAgent, question, context: context, tools: tools).output
 
@@ -43,7 +45,9 @@ class SplitStepInvestigateAgent < ApplicationAgent
           # 5b. If we can't immediately answer or all our answers are invalid continue to 6.
         elsif resolution['need_information'] && information_tries < 2
           # Add gather informatino to task stack
-          run(GatherInformationAgent, resolution['need_information'], context: context, tools: tools).output
+          run(GatherInformationAgent, resolution['need_information'], context: context, tools: tools).output.each do |observation|
+            context.add_observation(observation)
+          end
           information_tries += 1
         elsif resolution['incorrect'] || resolution['need_information']
           context.add_information("Discarded theory: #{resolution['incorrect']}")

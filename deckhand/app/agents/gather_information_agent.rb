@@ -23,8 +23,8 @@ class GatherInformationAgent < ApplicationAgent
 
     information_questions.map do |question|
       result = run(SimplyUseToolAgent, question, context: context.dup, tools: tools).output
-      context.add_observation(result) if result
+      # context.add_observation(result) if result
       result
-    end
+    end.compact
   end
 end

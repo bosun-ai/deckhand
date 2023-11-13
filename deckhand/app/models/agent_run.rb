@@ -8,10 +8,15 @@ class AgentRun < ApplicationRecord
   class State < Struct.new(
     :checkpoint,
     :value,
-    :async_status
+    :async_status,
+    :error
   )
     def value_available?
-      !async?|| async_status.to_s == 'ready'
+      if async?
+        async_status.to_s == 'ready'
+      else
+        !failed?
+      end
     end
 
     def queued?
@@ -22,9 +27,28 @@ class AgentRun < ApplicationRecord
       !!async_status
     end
 
-    def self.new_async_await(checkpoint)
-      new(checkpoint:, value: nil, async_status: 'queued')
+    def failed?
+      !!error
+    end
 
+    def failed!(error)
+      self.error = error
+      if async?
+        self.async_status = 'failed'
+      end
+      error
+    end
+
+    def completed!(value)
+      self.value = value
+      self.error = nil
+      if async?
+        self.async_status = 'ready'
+      end
+    end
+
+    def waiting!
+      self.async_status = 'waiting'
     end
   end
 
@@ -48,16 +72,36 @@ class AgentRun < ApplicationRecord
     states[checkpoint_name]&.yield_self {|s| State.new(**s) }
   end
 
+  def queued?
+    state&.queued?
+  end
+
   def transition_to(checkpoint, value, async_status: nil)
     states[checkpoint] = State.new(
       checkpoint:,
       value:,
       async_status:,
+      error: nil
     ).as_json
   end
 
+  def transition_to_error(checkpoint, error)
+    state = get_state(checkpoint) || State.new(checkpoint: checkpoint)
+    if state.async?
+      state.async_status = 'error'
+    end
+    state.error = error
+    states[checkpoint] = state
+  end
+
+  def transition_to_error!(checkpoint, error)
+    transition_to_error(checkpoint, error)
+    save!
+  end
+
   def transition_to!(checkpoint, value, async_status: nil)
-    transition_to(checkpoint, value, async_status:)
+    Rails.logger.debug("Transitioning to #{id} #{checkpoint}: #{value.inspect} #{async_status.inspect}")
+    transition_to(checkpoint, value, async_status: async_status)
     save!
   end
 

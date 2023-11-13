@@ -48,9 +48,9 @@ class ListFilesTool < ApplicationTool
       FILES
     else
       if File.exist?(file_path)
-        raise ToolError.new("The path `#{relative_path}` is not a directory")
+        raise Error.new("The path `#{relative_path}` is not a directory")
       else
-        raise ToolError.new("The path `#{relative_path}` does not exist")
+        raise Error.new("The path `#{relative_path}` does not exist")
       end
     end
   end
