@@ -110,8 +110,6 @@ class ApplicationAgent < AutonomousAgent
       result
     end
 
-    Rails.logger.debug "Received prompt response ##{agent_run.id} #{agent_run.state.checkpoint}"
-
     if !response.is_a? Deckhand::Lm::PromptResponse
       Deckhand::Lm::PromptResponse.from_json(response)
     else
@@ -121,17 +119,18 @@ class ApplicationAgent < AutonomousAgent
 
   def around_run_agent(*args, **kwargs, &block)
     result = next_checkpoint("run_agent") do
+      Rails.logger.debug "Actually running agent in #{self.class.name}##{agent_run.id} (#{checkpoint_name}): #{args.inspect}"
       block.call(*args, **kwargs)
     end
 
     nested_agent_run = if !result.is_a? AgentRun
-      puts "Trying to convert agent run result: #{result.inspect} into AgentRun during AgentRun##{agent_run.id}"
+      Rails.logger.debug "Trying to convert agent run result: #{result.inspect} into AgentRun during AgentRun##{agent_run.id}"
       AgentRun.new(**result)
     else
       result
     end
 
-    Rails.logger.debug "In AgentRun##{agent_run.id} started AgentRun##{nested_agent_run.id} (available? #{nested_agent_run.state.value_available?})"
+    Rails.logger.debug "In AgentRun##{agent_run.id} after checkpoint got AgentRun##{nested_agent_run.id} (available? #{nested_agent_run.state.value_available?})"
     if !nested_agent_run.state.value_available?
       self.agent_run.transition_to_waiting!(self.agent_run.state.checkpoint)
       raise RunDeferred
