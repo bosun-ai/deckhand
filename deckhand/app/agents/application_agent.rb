@@ -84,17 +84,14 @@ class ApplicationAgent < AutonomousAgent
 
     if parent_state && state
       if state.failed?
-        parent_state.failed!(state.error)
-        parent_agent_run.save!
+        parent_agent_run.transition_to_error!(parent_state.checkpoint, error)
       elsif state.value_available?
         Rails.logger.info("Finished run, resuming parent on next task: #{agent_run.parent.name}##{agent_run.parent.id}")
-        parent_state.completed!(state.value)
-        parent_agent_run.save!
+        parent_agent_run.transition_to_completed!(parent_state.checkpoint, agent_run)
         AgentRunJob.perform_later(agent_run.parent)
       else # if there is a parent state and we've not failed and there is no value available, then we must be async
            # in which case the value will come later
-        parent_state.waiting!
-        parent_agent_run.save!
+        parent_agent_run.transition_to_waiting!(parent_state.checkpoint)
       end
     end
 
@@ -113,6 +110,8 @@ class ApplicationAgent < AutonomousAgent
       result
     end
 
+    Rails.logger.debug "Received prompt response ##{agent_run.id} #{agent_run.state.checkpoint}"
+
     if !response.is_a? Deckhand::Lm::PromptResponse
       Deckhand::Lm::PromptResponse.from_json(response)
     else
@@ -124,11 +123,21 @@ class ApplicationAgent < AutonomousAgent
     result = next_checkpoint("run_agent") do
       block.call(*args, **kwargs)
     end
-    agent_run = if !result.is_a? AgentRun
+
+    nested_agent_run = if !result.is_a? AgentRun
+      puts "Trying to convert agent run result: #{result.inspect} into AgentRun during AgentRun##{agent_run.id}"
       AgentRun.new(**result)
     else
       result
     end
+
+    Rails.logger.debug "In AgentRun##{agent_run.id} started AgentRun##{nested_agent_run.id} (available? #{nested_agent_run.state.value_available?})"
+    if !nested_agent_run.state.value_available?
+      self.agent_run.transition_to_waiting!(self.agent_run.state.checkpoint)
+      raise RunDeferred
+    end
+
+    nested_agent_run
   end
 
   def call_function(prompt_response, **_kwargs)
@@ -167,13 +176,15 @@ class ApplicationAgent < AutonomousAgent
     has_checkpoint = agent_run&.has_state?(checkpoint_name)
     checkpoint_state = agent_run&.get_state(checkpoint_name)
 
+    descriptor = "#{self.class.name}##{agent_run&.id} #{checkpoint_name}"
+
     if has_checkpoint && checkpoint_state.value_available?
       checkpoint_state.value
     elsif has_checkpoint && checkpoint_state.failed?
       Rails.logger.error "Retrieved error from checkpoint: #{checkpoint_state.error.inspect}"
       raise checkpoint_state.error
     elsif should_execute_checkpoint? && (!has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?))
-      Rails.logger.debug("Decided to run checkpoint #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
+      Rails.logger.debug("Decided to run checkpoint #{descriptor}")
       @checkpoints_executed_count += 1
       result = nil
       begin
@@ -184,7 +195,7 @@ class ApplicationAgent < AutonomousAgent
         agent_run.transition_to_error!(checkpoint_name, e)
         raise e
       end
-      
+
       Rails.logger.debug("Ran checkpoint #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
 
       # if it's an agent run, and the return value is not available then this agent run will be continued
@@ -197,6 +208,7 @@ class ApplicationAgent < AutonomousAgent
           raise "AgentRun state was nil! AgentRun##{ar.id}: #{ar.inspect}"
         end
         if ar.state.queued? || ar.state.failed?
+          agent_run.transition_to_waiting!(checkpoint_name)
           Rails.logger.debug("Decided not to run checkpoint #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
           raise RunDeferred
         end

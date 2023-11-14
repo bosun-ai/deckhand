@@ -12,6 +12,12 @@ class AgentRun < ApplicationRecord
     :error
   )
     def value_available?
+      # HACK using in band signalling to fix broken parent value availability checking system
+      if value.is_a?(Hash) && value["states"]
+        agent_run = AgentRun.new(**value)
+        return agent_run.state.value_available?
+      end
+
       if async?
         async_status.to_s == 'ready'
       else
@@ -103,6 +109,21 @@ class AgentRun < ApplicationRecord
     Rails.logger.debug("Transitioning to #{id} #{checkpoint}: #{value.inspect} #{async_status.inspect}")
     transition_to(checkpoint, value, async_status: async_status)
     save!
+  end
+
+  def transition_to_waiting!(checkpoint)
+    states[checkpoint] = states[checkpoint].merge(async_status: 'waiting')
+    save!
+  end
+
+  def transition_to_completed!(checkpoint, value)
+    state = get_state(checkpoint)
+    async_status = if state.async?
+      'ready'
+    else
+      nil
+    end
+    transition_to!(checkpoint, value, async_status: async_status)
   end
 
   def retry!(checkpoint=nil)
