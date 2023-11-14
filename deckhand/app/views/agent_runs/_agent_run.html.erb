@@ -11,7 +11,20 @@
       <% end %>
       </h2>
 
-      <% agent_run.arguments.each do |argument, value| %>
+       <% tools = agent_run.arguments["tools"] %>
+      <div class="w-full">
+        <label class="label">
+          <span class="label-text">Tools</span>
+        </label>
+        <% tools.each do |tool| %>
+          <span class="badge badge-outline badge-warning">
+            <%= tool %>
+          </span>
+        <% end %>
+
+      </div>
+
+      <% agent_run.arguments.except("tools").each do |argument, value| %>
         <div class="form-control w-full">
           <label class="label">
             <span class="label-text"><%= argument.capitalize %></span>
