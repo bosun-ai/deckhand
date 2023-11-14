@@ -84,7 +84,7 @@ class ApplicationAgent < AutonomousAgent
 
     if parent_state && state
       if state.failed?
-        parent_agent_run.transition_to_error!(parent_state.checkpoint, error)
+        parent_agent_run.transition_to_error!(parent_state.checkpoint, state.error)
       elsif state.value_available?
         Rails.logger.info("Finished run, resuming parent on next task: #{agent_run.parent.name}##{agent_run.parent.id}")
         parent_agent_run.transition_to_completed!(parent_state.checkpoint, agent_run)

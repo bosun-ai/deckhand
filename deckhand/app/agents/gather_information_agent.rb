@@ -25,6 +25,6 @@ class GatherInformationAgent < ApplicationAgent
       result = run(SimplyUseToolAgent, question, context: context.dup, tools: tools).output
       # context.add_observation(result) if result
       result
-    end.compact
+    end.compact.uniq
   end
 end
