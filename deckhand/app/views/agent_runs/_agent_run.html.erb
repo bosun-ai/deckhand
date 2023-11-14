@@ -9,6 +9,7 @@
       <% else %>
         <span class="badge badge-outline badge-warning">running</span>
       <% end %>
+        <%= button_to "Retry", agent_run_retry_path(@agent_run), class: "btn btn-error"  %>
       </h2>
 
        <% tools = agent_run.arguments["tools"] %>

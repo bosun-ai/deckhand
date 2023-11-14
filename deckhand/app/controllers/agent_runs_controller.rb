@@ -1,5 +1,5 @@
 class AgentRunsController < ApplicationController
-  before_action :set_agent_run, only: %i[ show edit update destroy ]
+  before_action :set_agent_run, only: %i[ show edit update destroy retry ]
 
   # GET /agent_runs or /agent_runs.json
   def index
@@ -57,10 +57,15 @@ class AgentRunsController < ApplicationController
     end
   end
 
+  def retry
+    @agent_run.retry!(nil)
+    redirect_to agent_run_url(@agent_run, notice: "Initiated retry for agent.")
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_agent_run
-      @agent_run = AgentRun.find(params[:id])
+      @agent_run = AgentRun.find(params[:id] || params[:agent_run_id])
     end
 
     # Only allow a list of trusted parameters through.

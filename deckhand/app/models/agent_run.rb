@@ -126,8 +126,9 @@ class AgentRun < ApplicationRecord
     transition_to!(checkpoint, value, async_status: async_status)
   end
 
-  def retry!(checkpoint=nil)
-    reset_to_checkpoint!(checkpoint) if checkpoint
+  # when checkpoint is set to nil, retry from scratch
+  def retry!(checkpoint=false)
+    reset_to_checkpoint!(checkpoint) if checkpoint != false
     resume
   end
 
