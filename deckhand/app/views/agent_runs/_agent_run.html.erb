@@ -76,11 +76,14 @@
                 <span class="badge badge-outline badge-warning">running</span>
               <% end %>
             </span>
+            <input type="text" class="input input-bordered " disabled value="<%= child.arguments["question"] || child.context["assignment"] %>" />
           </li> 
         <% end %>
       </ul>
 
-      <%= render partial: 'agent_runs/tree_view', locals: { agent_run: agent_run } %>
+      <% if false %>
+        <%= render partial: 'agent_runs/tree_view', locals: { agent_run: agent_run } %>
+      <% end %>
 
       <div class="card-actions justify-end">
       <% if action_name != "show" %>

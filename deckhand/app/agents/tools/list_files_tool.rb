@@ -36,7 +36,7 @@ class ListFilesTool < ApplicationTool
 
     if File.directory?(file_path)
       directories, files = Dir.glob(File.join(@file_path, "*"))
-        .map { |f| "- #{Pathname.new(f).relative_path_from(path_prefix)}" }
+        .map { |f| Pathname.new(f).relative_path_from(path_prefix) }
         .sort
         .partition { |f| File.directory?(File.join(path_prefix, f)) }
       <<~FILES
