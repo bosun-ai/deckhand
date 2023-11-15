@@ -142,6 +142,7 @@ class AgentRun < ApplicationRecord
     self.output = nil
     self.error = nil
     self.finished_at = nil
+    self.started_at = nil
     save!
   end
 
@@ -184,7 +185,7 @@ class AgentRun < ApplicationRecord
   end
 
   def duration
-    ActiveSupport::Duration.build(finished_at - created_at)
+    ActiveSupport::Duration.build(finished_at - started_at) if finished_at && started_at
   end
 
   def error=(error)

@@ -62,7 +62,8 @@ CREATE TABLE public.agent_runs (
     updated_at timestamp(6) without time zone NOT NULL,
     parent_ids jsonb DEFAULT '[]'::jsonb,
     error jsonb,
-    states jsonb DEFAULT '{}'::jsonb
+    states jsonb DEFAULT '{}'::jsonb,
+    started_at timestamp(6) without time zone
 );
 
 
@@ -586,6 +587,7 @@ ALTER TABLE ONLY public.agent_runs
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20231115020110'),
 ('20231109175107'),
 ('20231106194100'),
 ('20231021162129'),

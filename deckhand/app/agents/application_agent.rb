@@ -184,6 +184,9 @@ class ApplicationAgent < AutonomousAgent
       raise checkpoint_state.error
     elsif should_execute_checkpoint? && (!has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?))
       Rails.logger.debug("Decided to run checkpoint #{descriptor}")
+      if agent_run.started_at.nil?
+        agent_run.update! started_at: Time.now
+      end
       @checkpoints_executed_count += 1
       result = nil
       begin
