@@ -79,8 +79,9 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
       return context
     end
 
-    context
+    codebase.update! context: context
 
+    
     # analysis = Deckhand::Tasks::InvestigateWithTools.new.run(question)
     # JSON.parse(Deckhand::Tasks::ReformatAnswer.new.run(question, analysis, "json", example: { "has_tests": true }.to_json))
 

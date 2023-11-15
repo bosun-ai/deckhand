@@ -9,8 +9,8 @@
       <% else %>
         <span class="badge badge-outline badge-warning">running</span>
       <% end %>
-        <% if @agent_run.id %>
-          <%= button_to "Retry", agent_run_retry_path(@agent_run), class: "btn btn-error"  %>
+        <% if agent_run.id %>
+          <%= button_to "Retry", agent_run_retry_path(agent_run), class: "btn btn-error"  %>
         <% end %>
       </h2>
 

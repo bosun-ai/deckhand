@@ -13,9 +13,9 @@ class ReformatAnswerAgent < ApplicationAgent
 
       Please reformat your answer as a #{format} document. For example:
 
-      #{example}
+      #{example.indent(2)}
 
-      Reformatted answer:
+      Make sure you include all the fields mentioned in the example.
     PROMPT_TEXT
   end
 

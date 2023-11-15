@@ -14,7 +14,7 @@ class FileAnalysis::UndocumentedFilesAgent < ApplicationAgent
 
   def run
     tries = 0
-    begin
+    files = begin
       extensions_result = run(
         SimpleFormattedQuestionAgent,
         file_extensions_prompt,
@@ -73,6 +73,15 @@ class FileAnalysis::UndocumentedFilesAgent < ApplicationAgent
       else
         raise e
       end
+    end
+
+    
+    if files&.any?
+      markdown = %Q{#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map { |f| "* #{f}" }.join("\n")}
+\n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n}
+      # html = github_client.markdown(markdown, mode: "gfm", context: name)
+      # add_main_issue_comment(html)
+      context.codebase.add_main_issue_comment(markdown)
     end
   end
 end

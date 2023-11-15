@@ -21,11 +21,7 @@ class CodebasesController < ApplicationController
 
   def discover_testing_infrastructure
     @codebase = Codebase.find(params[:codebase_id])
-    thread = Thread.new do
-      Rails.application.executor.wrap do
-        @codebase.discover_testing_infrastructure
-      end
-    end
+    @codebase.discover_testing_infrastructure
 
     redirect_to codebase_url(@codebase), notice: "Discovering testing infrastructure for codebase."
   end
