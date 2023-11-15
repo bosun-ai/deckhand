@@ -22,6 +22,9 @@ class ApplicationAgent < AutonomousAgent
   # from the agent_run state
   attr_accessor :checkpoints_executed_count
 
+  # parent_checkpoint holds the name of the checkpoint that spawned this agent in the parent agent
+  attr_accessor :parent_checkpoint
+
   # if the agent decides to not execute a checkpoint in the current job, it throws RunAgainLater
   class RunAgainLater < StandardError; end
 
@@ -32,6 +35,7 @@ class ApplicationAgent < AutonomousAgent
   def initialize(*args, **kwargs)
     @checkpoint_index = 0
     @checkpoints_executed_count = 0
+    @parent_checkpoint = kwargs.delete(:parent_checkpoint)
     super
   end
 
@@ -45,7 +49,8 @@ class ApplicationAgent < AutonomousAgent
         name: self.class.name,
         arguments: arguments.except(:context, :parent),
         context: context.as_json,
-        parent: parent&.agent_run
+        parent: parent&.agent_run,
+        parent_checkpoint: parent_checkpoint
       }
       self.agent_run ||= AgentRun.create!(**attrs)
       current_span = OpenTelemetry::Trace.current_span
@@ -120,7 +125,7 @@ class ApplicationAgent < AutonomousAgent
   def around_run_agent(*args, **kwargs, &block)
     result = next_checkpoint("run_agent") do
       Rails.logger.debug "Actually running agent in #{self.class.name}##{agent_run.id} (#{checkpoint_name}): #{args.inspect}"
-      block.call(*args, **kwargs)
+      block.call(*args, **kwargs.merge(parent_checkpoint: checkpoint_name))
     end
 
     nested_agent_run = if !result.is_a? AgentRun
