@@ -36,6 +36,10 @@ class ApplicationAgent < AutonomousAgent
     @checkpoint_index = 0
     @checkpoints_executed_count = 0
     @parent_checkpoint = kwargs.delete(:parent_checkpoint)
+    context = kwargs[:context]
+    if context.is_a? Hash
+      kwargs[:context] = ApplicationAgent::Context.from_json(context)
+    end
     super
   end
 

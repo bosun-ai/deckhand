@@ -26,7 +26,7 @@ class Codebase < ApplicationRecord
   end
 
   def run_agent(agent, assignment, *args, **kwargs)
-    AgentJob.perform_later(agent, context: agent_context(assignment), **kwargs)
+    AgentJob.perform_later(agent, context: agent_context(assignment).as_json, **kwargs)
   end
 
   CODEBASE_DIR = if Rails.env.production?

@@ -3,11 +3,22 @@ class ApplicationAgent::Context < AutonomousAgent::Context
   attr_accessor :codebase_id
 
   def self.from_json(ctx)
-    new(ctx["assignment"], codebase_id: ctx["codebase_id"], history: ctx["history"])
+    ctx.deep_symbolize_keys!
+    new(ctx[:assignment], codebase_id: ctx[:codebase_id], history: ctx[:history], agent_run_id: ctx[:agent_run_id])
   end
 
-  def initialize(assignment, codebase: nil, codebase_id: nil, **kwargs)
+  def self.as_json(ctx)
+    {
+      "assignment" => assignment,
+      "codebase_id" => codebase_id,
+      "history" => history,
+      "agent_run_id" => agent_run_id
+    }
+  end
+
+  def initialize(assignment, codebase: nil, codebase_id: nil, agent_run_id: nil, **kwargs)
     @codebase_id = codebase_id || codebase&.id
+    @agent_run_id = agent_run_id
     super(assignment, **kwargs)
   end
 
