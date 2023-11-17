@@ -46,61 +46,82 @@ class ApplicationAgent < AutonomousAgent
   def around_run(*args, **kwargs, &block)
     @checkpoint_index = 0
     @checkpoints_executed_count = 0
-    DeckhandTracer.in_span("#{self.class.name}#run") do
-      result = nil
 
-      attrs = {
-        name: self.class.name,
-        arguments: arguments.except(:context, :parent),
-        context: context.as_json,
-        parent: parent&.agent_run,
-        parent_checkpoint: parent_checkpoint
-      }
-      self.agent_run ||= AgentRun.create!(**attrs)
-      current_span = OpenTelemetry::Trace.current_span
-      current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
+    result = nil
 
-      context&.agent_run = agent_run
+    attrs = {
+      name: self.class.name,
+      arguments: arguments.except(:context, :parent),
+      context: context.as_json,
+      parent: parent&.agent_run,
+      parent_checkpoint: parent_checkpoint
+    }
+    agent_run = self.agent_run ||= AgentRun.create!(**attrs)
 
-      if agent_run.parent
-        agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: agent_run.id })
-      end
+    AgentRun.with_advisory_lock("AgentRun##{agent_run.id}") do
+      DeckhandTracer.in_span("#{self.class.name}#run") do
+        agent_run.reload # so we have the most recent state in case we were waiting for another process holding the lock before us
+        begin
+          current_span = OpenTelemetry::Trace.current_span
+          current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
 
-      result = block.call(*args, **kwargs)
+          context&.agent_run = agent_run
 
-      agent_run&.update!(output: result, context:, finished_at: Time.now)
-    rescue RunAgainLater => e
-      Rails.logger.info "Running AgentRun #{agent_run&.id} for #{self.class.name} later."
-      AgentRunJob.perform_later(agent_run)
-    rescue RunDeferred => e
-      Rails.logger.info "AgentRun #{agent_run&.id} for #{self.class.name} deferred."
-    rescue StandardError => e
-      current_span = OpenTelemetry::Trace.current_span
-      current_span.record_exception(e)
-      current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
-      agent_run&.update!(error: e, context:, finished_at: Time.now)
-      Rails.logger.error "Caught agent error (AgentRun##{agent_run&.id}) while running #{self.class.name}:\n#{e.message}" # \n\n#{e.backtrace.join("\n")}"
-    end
+          if agent_run.parent
+            agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: agent_run.id })
+          end
 
-    # If this run was done asynchronously then returning is not enough, we need to actively modify the parent state
-    # TODO: This feels fragile because we're not verifying if the parent state is actually the state that triggered this
-    # run. It should be, because states are always done sequentially, but it would be nicer if we would have access to
-    # the checkpoint_name of the agent_run that spawned this run and perhaps something that explicitly marks this run
-    # as being an async'ed run.
-    parent_agent_run = agent_run&.parent
-    parent_state = parent_agent_run&.state
-    state = agent_run.state
+          result = block.call(*args, **kwargs)
 
-    if parent_state && state
-      if state.failed?
-        parent_agent_run.transition_to_error!(parent_state.checkpoint, state.error)
-      elsif state.value_available?
-        Rails.logger.info("Finished run, resuming parent on next task: #{agent_run.parent.name}##{agent_run.parent.id}")
-        parent_agent_run.transition_to_completed!(parent_state.checkpoint, agent_run)
-        AgentRunJob.perform_later(agent_run.parent)
-      else # if there is a parent state and we've not failed and there is no value available, then we must be async
-           # in which case the value will come later
-        parent_agent_run.transition_to_waiting!(parent_state.checkpoint)
+          agent_run.update!(output: result, context:, finished_at: Time.now)
+        rescue RunAgainLater => e
+          Rails.logger.info "Running AgentRun #{agent_run&.id} for #{self.class.name} later."
+          AgentRunJob.perform_later(agent_run)
+        rescue RunDeferred => e
+          Rails.logger.info "AgentRun #{agent_run&.id} for #{self.class.name} deferred."
+        rescue StandardError => e
+          current_span = OpenTelemetry::Trace.current_span
+          current_span.record_exception(e)
+          current_span.status = OpenTelemetry::Trace::Status.error(e.to_s)
+          agent_run&.update!(error: e, context:, finished_at: Time.now)
+          Rails.logger.error "Caught agent error (AgentRun##{agent_run.id}) while running #{self.class.name}:\n#{e.message}" # \n\n#{e.backtrace.join("\n")}"
+        end
+
+        next unless parent_agent_run = agent_run.parent
+
+        # Grabbing two locks is a recipe for deadlocks. The reason I believe this is safe is because the parent
+        # will never hold the lock on the child, so the child can always grab the lock on the parent. If two
+        # children are running at the same time, then they will both try to grab the lock on the parent, but
+        # only one will succeed. The other will be queued and will be resumed when the first one is done. It
+        # will never wait on another child.
+
+        # Unless of course the child is being synchronously run in the same thread. In which
+        # case the lock will just be granted since we're already holding it. And no other children will be
+        # allowed to grab the parent lock while we're running because we're holding the lock on the parent.
+        AgentRun.with_advisory_lock("AgentRun##{parent_agent_run.id}") do
+          agent_run.reload # maybe updates were made to another instance of the agent_run
+          parent_agent_run.reload
+
+          # If this run was done asynchronously then returning is not enough, we need to actively modify the parent state
+          # TODO: This feels fragile because we're not verifying if the parent state is actually the state that triggered this
+          # run. It should be, because states are always done sequentially, but it would be nicer if we would have access to
+          # the checkpoint_name of the agent_run that spawned this run and perhaps something that explicitly marks this run
+          # as being an async'ed run.
+          parent_state = parent_agent_run.state
+
+          if parent_state
+            if agent_run.error
+              parent_agent_run.transition_to_error!(parent_state.checkpoint, agent_run.error)
+            elsif agent_run.finished_at
+              Rails.logger.info("Finished run, resuming parent on next task: #{agent_run.parent.name}##{agent_run.parent.id}")
+              parent_agent_run.transition_to_completed!(parent_state.checkpoint, agent_run)
+              AgentRunJob.perform_later(agent_run.parent)
+            else # if there is a parent state and we've not failed and there is no value available, then we must be async
+                # in which case the value will come later
+              parent_agent_run.transition_to_waiting!(parent_state.checkpoint)
+            end
+          end
+        end
       end
     end
 
@@ -186,6 +207,9 @@ class ApplicationAgent < AutonomousAgent
 
     descriptor = "#{self.class.name}##{agent_run&.id} #{checkpoint_name}"
 
+    # There are multiple things going wrong.
+    # - We are sometimes proceeding to the next checkpoint when the first one is not done yet (still on `running`)
+    # - We are sometimes dispatching the same checkpoint (agent_run) twice
     if has_checkpoint && checkpoint_state.value_available?
       checkpoint_state.value
     elsif has_checkpoint && checkpoint_state.failed?
