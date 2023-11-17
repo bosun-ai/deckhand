@@ -73,7 +73,7 @@ class ApplicationAgent < AutonomousAgent
 
           result = block.call(*args, **kwargs)
 
-          agent_run.update!(output: result, context:, finished_at: Time.now)
+          agent_run.update!(output: result, error: nil, context:, finished_at: Time.now)
         rescue RunAgainLater => e
           Rails.logger.info "Running AgentRun #{agent_run&.id} for #{self.class.name} later."
           AgentRunJob.perform_later(agent_run)

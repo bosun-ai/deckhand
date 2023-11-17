@@ -47,7 +47,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
     begin
       # sometimes it is surrounded with markdown codeblock quotes and the json prefix, so try to remove that:
       tests_response = tests_response.gsub(/^```(json)?/, "").gsub(/```$/, "")
-      has_tests = JSON.parse(tests_response)["has_tests"]
+      has_tests = parse_json(tests_response)["has_tests"]
     rescue => e
       raise "Could not extract 'has_tests' from object: #{tests_response.inspect}"
     end
@@ -64,7 +64,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     context.add_observation("Question: #{question} Answer: #{answer}")
 
-    has_test_coverage = JSON.parse(run(
+    has_test_coverage = parse_json(run(
       ReformatAnswerAgent,
       "Does the codebase have test coverage?",
       answer,
@@ -83,7 +83,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     
     # analysis = Deckhand::Tasks::InvestigateWithTools.new.run(question)
-    # JSON.parse(Deckhand::Tasks::ReformatAnswer.new.run(question, analysis, "json", example: { "has_tests": true }.to_json))
+    # parse_json(Deckhand::Tasks::ReformatAnswer.new.run(question, analysis, "json", example: { "has_tests": true }.to_json))
 
   end
 end

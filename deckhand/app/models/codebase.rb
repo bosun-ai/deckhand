@@ -156,9 +156,9 @@ class Codebase < ApplicationRecord
 
     perform_later :discover_undocumented_files
   end
-  
-  def describe_project_in_markdown
-    run_agent(RewriteInMarkdownAgent, "Describing project", agent_context("Project").summarize_knowledge)
+
+  def update_project_description
+  run_agent(DescribeCodebaseAgent, "Describing project")
   end
 
   def create_main_github_issue

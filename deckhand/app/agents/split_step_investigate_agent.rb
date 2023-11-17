@@ -49,11 +49,13 @@ class SplitStepInvestigateAgent < ApplicationAgent
             context.add_observation(observation)
           end
           information_tries += 1
-        elsif resolution['incorrect'] || resolution['need_information']
+        elsif resolution['incorrect']
           context.add_information("Discarded theory: #{resolution['incorrect']}")
           conclusion = false
           # Discard theory
           # TODO try refuting the incorrectness assertion
+        elsif resolution['information']
+          context.add_information(resolution['information'])
         end
       end
 

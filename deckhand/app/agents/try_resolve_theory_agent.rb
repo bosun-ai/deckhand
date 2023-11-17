@@ -1,8 +1,6 @@
 class TryResolveTheoryAgent < ApplicationAgent
   arguments :question, :theory
 
-  attr_accessor :answer, :need_information, :incorrect
-
   def prompt_text
     <<~PROMPT_TEXT
       # Resolving a theory
@@ -18,11 +16,25 @@ class TryResolveTheoryAgent < ApplicationAgent
 
       ## Task
 
-      If there is enough information to give a conclusion on the theory, state the conclusion. Begin your conclusion with
-      "Conclusion:". If there is not enough information to give a conclusion, state what information is missing. Begin
-      your answer with the word "Missing: ". If the theory is incorrect, state why it is incorrect. Begin your answer with "Incorrect: ".
+      If the theory is a suggestion on where to look for information and that information is and the required information
+      is not yet present in the context, state what information is needed and where it should be found and
+      start your answer with "Missing: ".
 
-      ## Answer
+      If the theory is a suggestion on where to look for information and that information is present in the context, formulate
+      the resolution to the theory, start your answer with "Information: ".
+
+      If the theory contains a possible answer to the question, but there is not yet enough information in the context to decide
+      if the theory is correct, state what information is needed and start your answer with "Missing: ".
+
+      If the theory contains a possible answer to the question, and there is enough information in the context to decide
+      if the theory is correct, state what the answer to the question would be if it the theory is correct and start your answer
+      with "Conclusion: ".
+
+      If the theory contains a possible answer to the question, and there is enough information in the context to decide
+      if the theory is incorrect, state what the answer to the question would be if it the theory is incorrect and start your answer
+      with "Incorrect: ".
+
+      Be sure that the theory is repeated in your answer.
     PROMPT_TEXT
   end
 
@@ -30,19 +42,23 @@ class TryResolveTheoryAgent < ApplicationAgent
     resolution = prompt(prompt_text).full_response.strip
 
     if resolution =~ /Conclusion:/
-      self.answer = resolution.split("Conclusion:", 2).last.strip
+      {
+        "answer" => resolution.split("Conclusion:", 2).last.strip
+      }
+    elsif resolution =~ /Information:/
+      {
+        "information" => resolution.split("Information:", 2).last.strip
+      }
     elsif resolution =~ /Missing:/
-      self.need_information = resolution.split("Missing:", 2).last.strip
+      {
+        "need_information" => resolution.split("Missing:", 2).last.strip
+      }
     elsif resolution =~ /Incorrect:/
-      self.incorrect = resolution.split("Incorrect:", 2).last.strip
+      {
+        "incorrect" => resolution.split("Incorrect:", 2).last.strip
+      }
     else
       raise "Invalid resolution: #{resolution}"
     end
-
-    {
-      answer: answer,
-      need_information: need_information,
-      incorrect: incorrect
-    }
   end
 end

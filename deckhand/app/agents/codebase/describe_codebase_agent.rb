@@ -1,6 +1,6 @@
-class DescribeCodebaseAgent < ApplicationAgent
+class Codebase::DescribeCodebaseAgent < ApplicationAgent
   def run
-    result = run(RewriteInMarkdownAgent, "Describing project", context.summarize_knowledge).output
+    result = run(RewriteInMarkdownAgent, "Describing project").output
 
     codebase.update! description: describe_project_in_markdown
   end

@@ -11,7 +11,7 @@ class ReformatAnswerAgent < ApplicationAgent
 
       #{answer.indent(2)}
 
-      Please reformat your answer as a #{format} document. For example:
+      Please reformat your answer as a "#{format}" document. For example:
 
       #{example.indent(2)}
 
