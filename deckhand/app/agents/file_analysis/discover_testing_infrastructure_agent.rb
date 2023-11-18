@@ -53,6 +53,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
     end
 
     if !has_tests
+      codebase.update! context: context
       return context
     end
 
@@ -74,8 +75,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
     ).output)["has_test_coverage"]
 
     if !has_test_coverage
-      puts answer
-      puts "The codebase does not have test coverage. Context: #{context.summarize_knowledge}"
+      codebase.update! context: context
       return context
     end
 

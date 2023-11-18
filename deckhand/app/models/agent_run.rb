@@ -15,7 +15,7 @@ class AgentRun < ApplicationRecord
       # HACK using in band signalling to fix broken parent value availability checking system
       if value.is_a?(Hash) && value["states"]
         agent_run = AgentRun.new(**value)
-        return agent_run.state.value_available?
+        return agent_run.finished?
       end
 
       if async?
@@ -56,6 +56,10 @@ class AgentRun < ApplicationRecord
     def waiting!
       self.async_status = 'waiting'
     end
+
+    def waiting?
+      self.async_status == 'waiting'
+    end
   end
 
   def self.for_codebase(codebase)
@@ -80,6 +84,10 @@ class AgentRun < ApplicationRecord
 
   def queued?
     state&.queued?
+  end
+
+  def finished?
+    !!finished_at
   end
 
   def transition_to(checkpoint, value, async_status: nil)
@@ -181,7 +189,7 @@ class AgentRun < ApplicationRecord
   end
 
   def success?
-    finished_at && error.blank?
+    finished? && error.blank?
   end
 
   def duration

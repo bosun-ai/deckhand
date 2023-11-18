@@ -2,7 +2,7 @@
   <div class="card-body">
     <div class="collapse-title">
       <h2 class="card-title"> <%= agent_run.name %> 
-      <% if agent_run.finished_at %>
+      <% if agent_run.finished? %>
         <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
           Finished: <%= agent_run.duration.inspect %>
         </span>
@@ -50,7 +50,7 @@
       </p>
       <% end %>
 
-      <% if agent_run.finished_at %>
+      <% if agent_run.finished? %>
       <p class="my-5">
         <strong class="block font-medium mb-1">Output:</strong>
         <% [*agent_run.output].each do |output| %>

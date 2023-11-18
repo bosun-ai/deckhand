@@ -61,6 +61,9 @@ class ApplicationAgent < AutonomousAgent
     AgentRun.with_advisory_lock("AgentRun##{agent_run.id}") do
       DeckhandTracer.in_span("#{self.class.name}#run") do
         agent_run.reload # so we have the most recent state in case we were waiting for another process holding the lock before us
+        if agent_run.error
+          agent_run.update! error: nil
+        end
         begin
           current_span = OpenTelemetry::Trace.current_span
           current_span.add_attributes(attrs.except(:parent).stringify_keys.transform_values(&:to_json))
@@ -107,18 +110,19 @@ class ApplicationAgent < AutonomousAgent
           # run. It should be, because states are always done sequentially, but it would be nicer if we would have access to
           # the checkpoint_name of the agent_run that spawned this run and perhaps something that explicitly marks this run
           # as being an async'ed run.
-          parent_state = parent_agent_run.state
+
+          parent_state = parent_agent_run.get_state(parent_checkpoint)
 
           if parent_state
             if agent_run.error
-              parent_agent_run.transition_to_error!(parent_state.checkpoint, agent_run.error)
-            elsif agent_run.finished_at
+              parent_agent_run.transition_to_error!(parent_checkpoint, agent_run.error)
+            elsif agent_run.finished?
               Rails.logger.info("Finished run, resuming parent on next task: #{agent_run.parent.name}##{agent_run.parent.id}")
-              parent_agent_run.transition_to_completed!(parent_state.checkpoint, agent_run)
+              parent_agent_run.transition_to_completed!(parent_checkpoint, agent_run)
               AgentRunJob.perform_later(agent_run.parent)
             else # if there is a parent state and we've not failed and there is no value available, then we must be async
                 # in which case the value will come later
-              parent_agent_run.transition_to_waiting!(parent_state.checkpoint)
+              parent_agent_run.transition_to_waiting!(parent_checkpoint)
             end
           end
         end
@@ -160,8 +164,8 @@ class ApplicationAgent < AutonomousAgent
       result
     end
 
-    Rails.logger.debug "In AgentRun##{agent_run.id} after checkpoint got AgentRun##{nested_agent_run.id} (available? #{nested_agent_run.state.value_available?})"
-    if !nested_agent_run.state.value_available?
+    Rails.logger.debug "In AgentRun##{agent_run.id} after checkpoint got AgentRun##{nested_agent_run.id} (done? #{nested_agent_run.finished_at.inspect})"
+    if !nested_agent_run.finished?
       self.agent_run.transition_to_waiting!(self.agent_run.state.checkpoint)
       raise RunDeferred
     end
@@ -197,15 +201,18 @@ class ApplicationAgent < AutonomousAgent
   end
 
   # next_checkpoint will either run a block and return its result, fetch a previous result of the block
-  # and return that, or raise RunAgainLater to indicate that it should be ran again at some point
+  # and return that, or raise RunAgainLater to indicate that it should be ran again at some point or
+  # raise RunDeferred if another process will pick this checkpoint up later
+  # It is important that `next_checkpoint` will always either return a completed value or raise an error
+  # so that the `run` process never continues to the next step unless there is a valid checkpoint value
   def next_checkpoint(name, &block)
     self.checkpoint_index += 1
     self.checkpoint_name = "#{checkpoint_index}-#{name}"
 
-    has_checkpoint = agent_run&.has_state?(checkpoint_name)
-    checkpoint_state = agent_run&.get_state(checkpoint_name)
+    has_checkpoint = agent_run.has_state?(checkpoint_name)
+    checkpoint_state = agent_run.get_state(checkpoint_name)
 
-    descriptor = "#{self.class.name}##{agent_run&.id} #{checkpoint_name}"
+    descriptor = "#{self.class.name}##{agent_run.id} #{checkpoint_name}"
 
     # There are multiple things going wrong.
     # - We are sometimes proceeding to the next checkpoint when the first one is not done yet (still on `running`)
@@ -216,7 +223,7 @@ class ApplicationAgent < AutonomousAgent
       Rails.logger.error "Retrieved error from checkpoint: #{checkpoint_state.error.inspect}"
       raise checkpoint_state.error
     elsif should_execute_checkpoint? && (!has_checkpoint || (!checkpoint_state.async? || checkpoint_state.queued?))
-      Rails.logger.debug("Decided to run checkpoint #{descriptor}")
+      Rails.logger.debug("Decided to run checkpoint #{descriptor} (#{has_checkpoint}, #{checkpoint_state&.async?}, #{checkpoint_state&.queued?}, #{checkpoint_state&.inspect})")
       if agent_run.started_at.nil?
         agent_run.update! started_at: Time.now
       end
@@ -226,35 +233,38 @@ class ApplicationAgent < AutonomousAgent
         raw_result = block.call
         result = raw_result.as_json # TODO automatic deserialization so we can work with value classes
       rescue => e
-        Rails.logger.error("Caught exception #{e.message} while running checkpoint: #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
+        Rails.logger.error("Caught exception #{e.message} while running checkpoint: #{descriptor}")
         agent_run.transition_to_error!(checkpoint_name, e)
         raise e
       end
 
-      Rails.logger.debug("Ran checkpoint #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
+      Rails.logger.debug("Ran checkpoint #{descriptor}")
 
       # if it's an agent run, and the return value is not available then this agent run will be continued
       # at a later time
       if name =~ /run_agent/ && checkpoint_state&.async? # TODO better way of distinguishing agent_run checkpoints
         ar = AgentRun.new(**result)
-        Rails.logger.debug "Checking ar state: #{ar.inspect}"
+        Rails.logger.debug "Checking ar state for (#{descriptor}): #{ar.inspect}"
         if ar.state.nil?
-          Rails.logger.error("AgentRun##{ar.id}: #{ar.inspect}\nResult: #{result.inspect}")
+          Rails.logger.error("Error #{descriptor}: #{ar.inspect}\nResult: #{result.inspect}")
           raise "AgentRun state was nil! AgentRun##{ar.id}: #{ar.inspect}"
         end
         if ar.state.queued? || ar.state.failed?
           agent_run.transition_to_waiting!(checkpoint_name)
-          Rails.logger.debug("Decided not to run checkpoint #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
+          Rails.logger.debug("Decided not to run checkpoint #{descriptor}")
           raise RunDeferred
         end
       end
 
       async_status = checkpoint_state&.async? && 'ready'
-      agent_run&.transition_to!(checkpoint_name, result, async_status: async_status)
+      agent_run.transition_to!(checkpoint_name, result, async_status: async_status)
       result
+    elsif checkpoint_state&.waiting?
+      Rails.logger.debug("Decided not to run checkpoint because it's waiting #{descriptor}")
+      raise RunDeferred
     else
-      Rails.logger.debug("Decided to run later checkpoint #{self.class.name}##{agent_run&.id} #{checkpoint_name}")
-      agent_run&.transition_to!(checkpoint_name, nil, async_status: 'queued')
+      Rails.logger.debug("Decided to run later checkpoint #{descriptor}: (#{has_checkpoint}, #{checkpoint_state&.async?}, #{checkpoint_state&.queued?}, #{checkpoint_state&.inspect})")
+      agent_run.transition_to!(checkpoint_name, nil, async_status: 'queued')
       raise RunAgainLater
     end
   end

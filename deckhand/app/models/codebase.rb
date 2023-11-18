@@ -16,7 +16,7 @@ class Codebase < ApplicationRecord
   
   def current_agent_run
     agent_run = AgentRun.for_codebase(self).last
-    if agent_run && !agent_run.finished_at
+    if agent_run && !agent_run.finished?
       agent_run  
     end
   end
