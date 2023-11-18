@@ -11,14 +11,14 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
   # 3. One script that will run a single test in a single file.
   #
   # For each of those scripts we want to receive a coverage report at the end of the run.
-  def run 
+  def run
     codebase = context.codebase
 
     # First we have to establish a basic context of the codebase.
     context.add_observation("The codebase is named #{codebase.name}")
-    context.add_observation("The codebase is checked out locally and tools can use paths relative to the root of the codebase like `./README.md`.")
+    context.add_observation('The codebase is checked out locally and tools can use paths relative to the root of the codebase like `./README.md`.')
 
-    question = "What languages and frameworks are used in the codebase?"
+    question = 'What languages and frameworks are used in the codebase?'
 
     answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output
     context.add_observation("Question: #{question} Answer: #{answer}")
@@ -28,7 +28,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
     context.add_observation("Question: #{question} Answer: #{answer}")
 
     # Second we need to find out if the codebase has any test framework at all.
-    question = "If the codebase has tests, what test framework is used?"
+    question = 'If the codebase has tests, what test framework is used?'
 
     answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output || "No"
 
@@ -59,7 +59,7 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     # Third we need to find out if the codebase has a test runner.
 
-    question = "If the codebase supports running the tests and generating a coverage report, what command should be used to do so?"
+    question = 'If the codebase supports running the tests and generating a coverage report, what command should be used to do so?'
 
     answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output || "No"
 

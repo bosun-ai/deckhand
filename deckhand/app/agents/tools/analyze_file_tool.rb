@@ -1,11 +1,11 @@
-  class AnalyzeFileTool < ApplicationTool
+class AnalyzeFileTool < ApplicationTool
   WINDOW_SIZE = 20000
   WINDOW_OVERLAP = 5
 
   arguments file_path: nil, question: nil
 
   def self.description
-    "Ask a question about a single file"
+    'Ask a question about a single file'
   end
 
   def self.usage
@@ -13,7 +13,7 @@
   end
 
   def self.arguments_shape
-    { "file_path" => "some_path", "question" => "some_question" }
+    { 'file_path' => 'some_path', 'question' => 'some_question' }
   end
 
   def self.parameters
@@ -22,14 +22,14 @@
       properties: {
         file_path: {
           type: :string,
-          description: "The path to the file to analyze"
+          description: 'The path to the file to analyze'
         },
         question: {
           type: :string,
-          description: "The question this file might hold the answer to"
+          description: 'The question this file might hold the answer to'
         }
       },
-      required: ["file_path", "question"]
+      required: %w[file_path question]
     }
   end
 
@@ -37,7 +37,7 @@
     "#{name} config/database.yml What database is configured?"
   end
 
-  def scan_text(text, window_size: 50, window_overlap: 5, &block)
+  def scan_text(text, window_size: 50, window_overlap: 5)
     position = 0
     lines = text.lines || []
     total = lines.size
@@ -48,24 +48,24 @@
       iteration += 1
       remaining_chunks = (total_chunks - iteration - 1).clamp(0, total_chunks)
       window = (lines[position..window_size] || []).join("\n")
-      if window.nil? || window.empty?
-        break yield "", remaining_chunks
-      end
+      break yield '', remaining_chunks if window.nil? || window.empty?
+
       response = yield window, remaining_chunks
       break response if response
+
       position += chunk_increment
     end
   end
 
   def run
     # read the file and then pass it into a LLM together with the question
-    raise Error.new("Must give a specific file name") if file_path.blank?
-    raise Error.new("Must give a question") if question.blank?
+    raise Error, 'Must give a specific file name' if file_path.blank?
+    raise Error, 'Must give a question' if question.blank?
 
     full_file_path = File.join(path_prefix, file_path)
 
-    raise Error.new("Path `#{file_path}` does not exist (#{full_file_path})") if !File.exist?(full_file_path)
-    raise Error.new("Path `#{file_path}` is a directory") if File.directory?(full_file_path)
+    raise Error, "Path `#{file_path}` does not exist (#{full_file_path})" unless File.exist?(full_file_path)
+    raise Error, "Path `#{file_path}` is a directory" if File.directory?(full_file_path)
 
     file = File.read(full_file_path)
 
@@ -101,21 +101,21 @@
 
     answer = scan_text(file, window_size: WINDOW_SIZE, window_overlap: WINDOW_OVERLAP) do |window, remaining_chunks|
       i += 1
-      prompt = <<~ANALYZE_PROMPT 
+      prompt = <<~ANALYZE_PROMPT
         # Text analysis
         In this document observations are made about the text in a file and finally an answer is given to a question.
 
         ## Context
 
         You are reading the file `#{file_path}`. You are looking at the file in chunks, this is chunk number #{i} and
-        there are #{remaining_chunks} chunks left. #{observations.any? ? "You have made the following observations so far:" : ""}
+        there are #{remaining_chunks} chunks left. #{observations.any? ? 'You have made the following observations so far:' : ''}
 
         #{observations.join("\n")}
 
         ## Assignment
         Respond with one of the following:
         - CONTINUE to continue reading the file
-        - OBSERVE <observation> to make an observation 
+        - OBSERVE <observation> to make an observation#{' '}
         - ANSWER Your answer
 
         You must come up with an answer if there are no chunks remaining. If there is information that could be relevant to
@@ -133,7 +133,7 @@
         ## Answer
       ANALYZE_PROMPT
 
-      # TODO the chunking doesn't seem to work. When looking at the Gemfile in chunks of 20 lines there are never any
+      # TODO: the chunking doesn't seem to work. When looking at the Gemfile in chunks of 20 lines there are never any
       # observations made and it concludes that there is no test framework. When given a window of 200 lines it works.
 
       response = prompt(prompt).full_response
@@ -141,7 +141,7 @@
       if response =~ /CONTINUE/
         next false
       elsif response =~ /OBSERVE (.*)/
-        observations << $1
+        observations << ::Regexp.last_match(1)
         next false
       else
         next response

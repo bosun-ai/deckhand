@@ -4,9 +4,8 @@ class RewriteInMarkdownAgent < ApplicationAgent
   def prompt_text
     <<~PROMPT_TEXT
       Structure the following observations into a descriptive text in GFM:
-      
-        #{question.indent(2)}
 
+        #{question.indent(2)}
     PROMPT_TEXT
   end
 

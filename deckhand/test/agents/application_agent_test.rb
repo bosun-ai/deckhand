@@ -165,8 +165,8 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   end
 
   test 'run callback updates agent_run with parent' do
-    parent_agent_run = AgentRun.new()
-    parent_agent = DummyAgent.new()
+    parent_agent_run = AgentRun.new
+    parent_agent = DummyAgent.new
     parent_agent.agent_run = parent_agent_run
     @agent.parent = parent_agent
 

@@ -95,6 +95,7 @@ GEM
     ansi-to-html (0.0.3)
     appsignal (3.4.14)
       rack
+    ast (2.4.2)
     async (2.6.5)
       console (~> 1.10)
       fiber-annotation
@@ -110,7 +111,13 @@ GEM
     bindex (0.8.1)
     bootsnap (1.17.0)
       msgpack (~> 1.2)
+    brakeman (6.0.1)
     builder (3.2.4)
+    bundle-audit (0.1.0)
+      bundler-audit
+    bundler-audit (0.9.1)
+      bundler (>= 1.2.0, < 3)
+      thor (~> 1.0)
     capybara (3.39.2)
       addressable
       matrix
@@ -187,6 +194,7 @@ GEM
     kramdown-syntax-coderay (1.0.1)
       coderay (~> 1.1)
       kramdown (~> 2.0)
+    language_server-protocol (3.17.0.3)
     liquid (5.4.0)
     loofah (2.21.4)
       crass (~> 1.0.2)
@@ -420,6 +428,10 @@ GEM
     opentelemetry-semantic_conventions (1.10.0)
       opentelemetry-api (~> 1.0)
     orm_adapter (0.5.0)
+    parallel (1.23.0)
+    parser (3.2.2.4)
+      ast (~> 2.4.1)
+      racc
     pg (1.5.4)
     psych (5.1.1.1)
       stringio
@@ -467,6 +479,7 @@ GEM
       rake (>= 12.2)
       thor (~> 1.0, >= 1.2.2)
       zeitwerk (~> 2.6)
+    rainbow (3.1.1)
     rake (13.1.0)
     rbtree (0.4.6)
     rdoc (6.6.0)
@@ -479,10 +492,33 @@ GEM
     reline (0.4.0)
       io-console (~> 0.5)
     rexml (3.2.6)
+    rubocop (1.57.2)
+      json (~> 2.3)
+      language_server-protocol (>= 3.17.0)
+      parallel (~> 1.10)
+      parser (>= 3.2.2.4)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.28.1, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 2.4.0, < 3.0)
+    rubocop-ast (1.30.0)
+      parser (>= 3.2.1.0)
+    rubocop-performance (1.19.1)
+      rubocop (>= 1.7.0, < 2.0)
+      rubocop-ast (>= 0.4.0)
+    rubocop-rails (2.22.1)
+      activesupport (>= 4.2.0)
+      rack (>= 1.1)
+      rubocop (>= 1.33.0, < 2.0)
+    rubocop-rake (0.6.0)
+      rubocop (~> 1.0)
     ruby-openai (6.0.1)
       event_stream_parser (>= 0.3.0, < 1.0.0)
       faraday (>= 1)
       faraday-multipart (>= 1)
+    ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     rubyzip (2.3.2)
     rufo (0.16.3)
@@ -519,6 +555,7 @@ GEM
       railties (>= 6.0.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
+    unicode-display_width (2.5.0)
     vite_rails (3.0.17)
       railties (>= 5.1, < 8)
       vite_ruby (~> 3.0, >= 3.2.2)
@@ -556,6 +593,8 @@ DEPENDENCIES
   async-io
   async-process
   bootsnap
+  brakeman (~> 6.0)
+  bundle-audit (~> 0.1.0)
   capybara
   debug
   dotenv-rails
@@ -577,6 +616,10 @@ DEPENDENCIES
   rails (~> 7.1)
   redis (~> 5.0)
   rejson-rb!
+  rubocop (~> 1.57)
+  rubocop-performance (~> 1.19)
+  rubocop-rails (~> 2.22)
+  rubocop-rake (~> 0.6.0)
   ruby-openai
   rufo
   selenium-webdriver

@@ -1,1 +1,1 @@
-json.array! @codebases, partial: "codebases/codebase", as: :codebase
+json.array! @codebases, partial: 'codebases/codebase', as: :codebase

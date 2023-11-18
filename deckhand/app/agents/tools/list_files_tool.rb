@@ -2,7 +2,7 @@ class ListFilesTool < ApplicationTool
   arguments file_path: :nil
 
   def self.description
-    "List entries in a directory on the filesystem"
+    'List entries in a directory on the filesystem'
   end
 
   def self.usage
@@ -14,7 +14,7 @@ class ListFilesTool < ApplicationTool
   end
 
   def self.arguments_shape
-    { "file_path" => "some_path" }
+    { 'file_path' => 'some_path' }
   end
 
   def self.parameters
@@ -23,15 +23,15 @@ class ListFilesTool < ApplicationTool
       properties: {
         file_path: {
           type: :string,
-          description: "The path of which to list the entries",
-        },
+          description: 'The path of which to list the entries'
+        }
       },
-      required: ["file_path"],
+      required: ['file_path']
     }
   end
 
   def run
-    relative_path = file_path || "."
+    relative_path = file_path || '.'
     self.file_path = File.join(path_prefix, relative_path)
 
     if File.directory?(file_path)

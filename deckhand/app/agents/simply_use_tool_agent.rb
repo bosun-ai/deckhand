@@ -4,7 +4,8 @@ class SimplyUseToolAgent < ApplicationAgent
   attr_accessor :tries
 
   def retry_history
-    return "" if tries.empty?
+    return '' if tries.empty?
+
     text = "These were your prior answers that were incorrect:\n\n"
     tries.each do |try|
       text += ("a. #{try[:tool_name]}\n" +
@@ -18,11 +19,11 @@ class SimplyUseToolAgent < ApplicationAgent
       # Using functions
       You are an assisstant that is helping a programmer come up with inputs to functions. The programmer is trying to answer
       the following question:
-        
+      #{'  '}
       #{question}
-        
-      #{context_prompt}  
-  
+      #{'  '}
+      #{context_prompt}#{'  '}
+
       To get the information needed to answer this question the programmer has the following fuctions at their disposal:
 
       #{summarize_tools(tools)}
@@ -31,7 +32,7 @@ class SimplyUseToolAgent < ApplicationAgent
 
       Help the programmer by answering these questions:
 
-      a. Specify the name of the tool you will use 
+      a. Specify the name of the tool you will use#{' '}
       b. Specify the arguments you will supply to the tool
 
       Only use 1 tool from the list of functions, give exactly the arguments as they should be supplied to the function.
@@ -40,7 +41,7 @@ class SimplyUseToolAgent < ApplicationAgent
 
       # Answer
 
-      a. 
+      a.#{' '}
     PROMPT_TEXT
   end
 
@@ -50,7 +51,7 @@ class SimplyUseToolAgent < ApplicationAgent
 
       #{question}
 
-      #{context_prompt}  
+      #{context_prompt}#{'  '}
 
       ## Task
       Use a function to get more information to answer the question.
@@ -90,7 +91,7 @@ class SimplyUseToolAgent < ApplicationAgent
     begin
       tool_arguments = prompt(prompt_text).full_response
 
-      tool_name, arguments = tool_arguments.split("b. ").map(&:strip)
+      tool_name, arguments = tool_arguments.split('b. ').map(&:strip)
 
       puts "Trying to use tool #{tool_name} with arguments: #{arguments}"
 
@@ -98,23 +99,23 @@ class SimplyUseToolAgent < ApplicationAgent
 
       if tool
         logger.info "Using tool #{tool_name} with arguments #{arguments}"
-        tool.run(arguments, context: context)
+        tool.run(arguments, context:)
       else
         # puts "Prompt was: #{prompt_text}"
-        logger.error "Tools were: #{tools.map(&:name).join(", ")}"
+        logger.error "Tools were: #{tools.map(&:name).join(', ')}"
         logger.error "Tried to use unknown tool #{tool_name} with arguments: #{arguments}"
-        raise ApplicationTool::Error.new("Must use a tool from the list of tools")
+        raise ApplicationTool::Error, 'Must use a tool from the list of tools'
       end
     rescue ApplicationTool::Error => e
       @tries << {
-        tool_name: tool_name,
-        arguments: arguments,
-        error: e.message,
+        tool_name:,
+        arguments:,
+        error: e.message
       }
       retry if tries.length < 3
       logger.error "Tried 3 times but could not recover from tool use error in SimplyUseToolAgent: #{e.message}. #{@tries.inspect}"
       nil
-    rescue => e
+    rescue StandardError => e
       logger.error "Unchecked tool eeror: #{e.class}: #{e.message} in SimplyUseToolAgent."
       nil
     end

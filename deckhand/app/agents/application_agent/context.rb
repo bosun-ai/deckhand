@@ -1,6 +1,5 @@
 class ApplicationAgent::Context < AutonomousAgent::Context
-  attr_accessor :agent_run_id
-  attr_accessor :codebase_id
+  attr_accessor :agent_run_id, :codebase_id
 
   def self.from_json(ctx)
     ctx.deep_symbolize_keys!

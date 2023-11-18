@@ -2,8 +2,8 @@ class Codebase < ApplicationRecord
   after_create :create_repository
 
   before_validation :ensure_name_slug, unless: -> { name_slug.present? }
-  validates_presence_of :name, on: :create, message: "can't be blank"
-  validates_presence_of :url, on: :create, message: "can't be blank"
+  validates :name, presence: { on: :create, message: "can't be blank" }
+  validates :url, presence: { on: :create, message: "can't be blank" }
 
   has_many :github_access_tokens, dependent: :destroy
 
@@ -13,7 +13,7 @@ class Codebase < ApplicationRecord
   def agent_runs
     AgentRun.root.for_codebase(self)
   end
-  
+
   def current_agent_run
     agent_run = AgentRun.for_codebase(self).last
     if agent_run && !agent_run.finished?
@@ -22,7 +22,7 @@ class Codebase < ApplicationRecord
   end
 
   def agent_context(assignment)
-    ApplicationAgent::Context.new(assignment, codebase: self, history: context&.dig("history") || [])
+    ApplicationAgent::Context.new(assignment, codebase: self, history: context&.dig('history') || [])
   end
 
   def run_agent(agent, assignment, *args, **kwargs)
@@ -30,12 +30,12 @@ class Codebase < ApplicationRecord
   end
 
   CODEBASE_DIR = if Rails.env.production?
-      "/data/code"
-    else
-      Rails.root.join("tmp", "code")
-    end
+                   '/data/code'
+                 else
+                   Rails.root.join('tmp/code')
+                 end
 
-  ADD_DOCUMENTATION_HEADER = "## Undocumented files"
+  ADD_DOCUMENTATION_HEADER = '## Undocumented files'
 
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
@@ -59,25 +59,25 @@ class Codebase < ApplicationRecord
   end
 
   def github_client
-    if github_app_installation_id
-      @github_client ||= GithubApp.client(github_app_installation_id)
-    end
+    return unless github_app_installation_id
+
+    @github_client ||= GithubApp.client(github_app_installation_id)
   end
 
   def github_repo
-    if client = github_client
-      @github_repo ||= client.repository(name)
-    end
+    return unless client = github_client
+
+    @github_repo ||= client.repository(name)
   end
 
   def git_url
     if repo = github_repo
       repo_uri = URI.parse(repo.clone_url)
-      repo_uri.user = "x-access-token"
+      repo_uri.user = 'x-access-token'
       repo_uri.password = github_client.access_token
       repo_uri.to_s
     else
-      self.url
+      url
     end
   end
 
@@ -98,29 +98,31 @@ class Codebase < ApplicationRecord
   end
 
   def default_branch
-    github_repo&.default_branch || "main"
+    github_repo&.default_branch || 'main'
   end
 
-  # TODO instead of just checking out a new branch, we should clone the whole repo and create the new branch there
+  # TODO: instead of just checking out a new branch, we should clone the whole repo and create the new branch there
   # so we don't run into conflicts when doing multiple shell_tasks at the same time for the same repo.
   def new_branch(branch_name, &block)
-    ShellTask.run!(description: "Creating branch #{branch_name} for #{name}", script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
-      if status = message[:status]
-        block.call(status) if block
+    ShellTask.run!(description: "Creating branch #{branch_name} for #{name}",
+                   script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
+      if (status = message[:status]) && block
+        block.call(status)
       end
     end
   end
 
   def commit(message)
-    system(%Q{git config --global user.email "139715209+bosun-deckhand[bot]@users.noreply.github.com"})
-    system(%Q{git config --global user.name "bosun-deckhand[bot]"})
-    system(%Q{cd #{path} && git remote set-url origin "#{git_url}" && git add . && git commit -m '#{message}'})
+    system(%(git config --global user.email "139715209+bosun-deckhand[bot]@users.noreply.github.com"))
+    system(%(git config --global user.name "bosun-deckhand[bot]"))
+    system(%(cd #{path} && git remote set-url origin "#{git_url}" && git add . && git commit -m '#{message}'))
   end
 
   def git_push(branch_name, &block)
-    ShellTask.run!(description: "Pushing for #{name}", script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
-      if status = message[:status]
-        block.call(status) if block
+    ShellTask.run!(description: "Pushing for #{name}",
+                   script: "cd #{path} && git push --set-upstream origin #{branch_name}") do |message|
+      if (status = message[:status]) && block
+        block.call(status)
       end
     end
   end
@@ -131,6 +133,7 @@ class Codebase < ApplicationRecord
 
   def check_out_finished!(status)
     return if checked_out
+
     self.checked_out = status == 0
     save!
 
@@ -151,7 +154,8 @@ class Codebase < ApplicationRecord
 
   def describe_project_in_github_issue
     return unless github_client
-    html = github_client.markdown(description, mode: "gfm", context: name)
+
+    html = github_client.markdown(description, mode: 'gfm', context: name)
     add_main_issue_comment(html)
 
     perform_later :discover_undocumented_files
@@ -162,22 +166,22 @@ class Codebase < ApplicationRecord
   end
 
   def create_main_github_issue
-    if github_client
-      issue = github_client.create_issue(name, "Bosun AI Agents", "This issue is created to control Bosun AI Agents.")
-      update!(github_app_issue_id: issue.number)
-    end
+    return unless github_client
+
+    issue = github_client.create_issue(name, 'Bosun AI Agents', 'This issue is created to control Bosun AI Agents.')
+    update!(github_app_issue_id: issue.number)
   end
 
   def add_main_issue_comment(comment)
-    if github_client && github_app_issue_id
-      github_client.add_comment(name, github_app_issue_id, comment)
-    end
+    return unless github_client && github_app_issue_id
+
+    github_client.add_comment(name, github_app_issue_id, comment)
   end
 
   def main_issue_url
-    if github_client && github_app_issue_id
-      github_client.issue(name, github_app_issue_id).url
-    end
+    return unless github_client && github_app_issue_id
+
+    github_client.issue(name, github_app_issue_id).url
   end
 
   def process_event(event)
@@ -185,26 +189,26 @@ class Codebase < ApplicationRecord
 
     Rails.logger.info "Received event: #{issue_id.inspect}"
 
-    if issue_id == github_app_issue_id
-      process_main_issue_event(event)
-    end
+    return unless issue_id == github_app_issue_id
+
+    process_main_issue_event(event)
   end
 
   def process_main_issue_event(event)
     Rails.logger.info "Received main issue event: #{event.dig(:comment, :user, :login).inspect}"
-    if event.dig(:comment, :user, :login) == "bosun-deckhand[bot]"
-      process_bot_action_event(event)
-    end
+    return unless event.dig(:comment, :user, :login) == 'bosun-deckhand[bot]'
+
+    process_bot_action_event(event)
   end
 
   def process_bot_action_event(event)
     comment = event.dig(:comment, :body)
 
     puts "Received process_bot_action_event: #{comment.inspect}"
-    if comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
-      files = comment.split("*")[1..-2].map(&:strip)
-      add_documentation_to_undocumented_files(files)
-    end
+    return unless comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
+
+    files = comment.split('*')[1..-2].map(&:strip)
+    add_documentation_to_undocumented_files(files)
   end
 
   # discover basic facts is going to establish a list of basic facts about the codebase
@@ -230,6 +234,6 @@ class Codebase < ApplicationRecord
   end
 
   def add_documentation_to_undocumented_files(files)
-    run_agent(Codebase::Maintenance::AddDocumentation, "Adding documentation to files", files)
+    run_agent(Codebase::Maintenance::AddDocumentation, 'Adding documentation to files', files)
   end
 end

@@ -1,0 +1,14 @@
+export PGDATA=$PWD/db/pg_data
+
+echo "Starting postgres in $PGDATA"
+
+if [ ! -d $PGDATA ]; then
+	mkdir -p $PGDATA
+	initdb -D $PGDATA
+	pg_ctl start -D $PGDATA -l $PWD/log/pg.log
+	createuser -s postgres
+	pg_ctl stop -D $PGDATA
+fi
+
+
+pg_ctl start -D $PGDATA -l $PWD/log/pg.log

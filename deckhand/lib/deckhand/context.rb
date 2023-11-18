@@ -8,8 +8,8 @@ module Deckhand
     end
 
     def add_history(type:, content:)
-      event = { type: type, content: content }
-      history << { type: type, content: content }
+      event = { type:, content: }
+      history << { type:, content: }
       history
     end
 
@@ -31,17 +31,17 @@ module Deckhand
 
     def knowledge
       history
-        .filter { |h| [:observation, :information, :conclusion].include? h[:type] }
+        .filter { |h| %i[observation information conclusion].include? h[:type] }
     end
 
     def summarize_knowledge
       knowledge.map { |h| h[:content] }.join("\n\n")
     end
 
-    def as_json(*options)
+    def as_json(*_options)
       {
-        assignment: assignment,
-        history: history,
+        assignment:,
+        history:
       }
     end
 

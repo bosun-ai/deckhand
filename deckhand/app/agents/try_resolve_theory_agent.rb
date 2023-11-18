@@ -5,11 +5,11 @@ class TryResolveTheoryAgent < ApplicationAgent
     <<~PROMPT_TEXT
       # Resolving a theory
       We are trying to answer the following question:
-        
+      #{'  '}
       #{question.indent(2)}
-        
-      #{context_prompt}  
-        
+      #{'  '}
+      #{context_prompt}#{'  '}
+      #{'  '}
       To bring us closer to answer the question, we have the following theory:
 
       #{theory.indent(2)}

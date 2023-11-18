@@ -1,15 +1,15 @@
 name: "Ruby on Rails CI"
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 jobs:
   test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: './deckhand'
+        working-directory: "./deckhand"
     services:
       postgres:
         image: postgres:15-alpine
@@ -23,6 +23,12 @@ jobs:
         image: redis:7-alpine
         ports:
           - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       RAILS_ENV: test
       DATABASE_URL: "postgres://rails:password@localhost:5432/rails_test"
@@ -34,7 +40,7 @@ jobs:
         uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf # v1.146.0
         with:
           bundler-cache: true
-          working-directory: './deckhand'
+          working-directory: "./deckhand"
       - name: Set up database schema
         run: bin/rails db:schema:load
       - name: link tailwind
@@ -46,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: './deckhand'
+        working-directory: "./deckhand"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -54,11 +60,27 @@ jobs:
         uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf # v1.146.0
         with:
           bundler-cache: true
-          working-directory: './deckhand'
+          working-directory: "./deckhand"
       # Add or replace any other lints here
       - name: Security audit dependencies
-        run: bin/bundler-audit --update
-      - name: Security audit application code
-        run: bin/brakeman -q -w2
-      - name: Lint Ruby files
-        run: bin/rubocop --parallel
+        run: bundle exec bundle-audit --update
+      - name: rubocop
+        uses: reviewdog/action-rubocop@v2
+        with:
+          rubocop_version: gemfile
+          rubocop_extensions: rubocop-rails:gemfile rubocop-performance:gemfile rubocop-rake:gemfile
+          rubocop_flags: --parallel
+          workdir: ./deckhand
+          skip_install: true
+          use_bundler: true
+      - name: brakeman
+        uses: reviewdog/action-brakeman@v2
+        with:
+          brakeman_version: gemfile
+          workdir: ./deckhand
+      # reek is very opinionated, I'm partial
+      # - name: reek
+      #   uses: reviewdog/action-reek@v1
+      #   with:
+      #     reek_version: gemfile
+      #- uses: reviewdog/action-setup@v1

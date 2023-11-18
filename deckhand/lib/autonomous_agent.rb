@@ -1,5 +1,5 @@
 class AutonomousAgent
-  # ppor man's cross cutting methods
+  # poor man's cross cutting methods
   [:run, :run_agent, :prompt, :call_function].each do |callback|
     define_method("around_#{callback}") do |*args, **kwargs, &block|
       block.call(*args, **kwargs)
@@ -8,15 +8,11 @@ class AutonomousAgent
 
   class << self
     def get_pos_arguments
-      @pos_arguments ||= begin
-        superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
-      end
+      @pos_arguments ||= superclass.respond_to?(:get_pos_arguments) ? superclass.get_pos_arguments.dup : []
     end
 
     def get_kwargs
-      @arguments ||= begin
-        superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
-      end
+      @arguments ||= superclass.respond_to?(:get_kwargs) ? superclass.get_kwargs.dup : {}
     end
 
     def arguments(*args, **kwargs)
@@ -32,13 +28,13 @@ class AutonomousAgent
         attr_accessor arg
       end
 
-      kwargs.each do |arg, default|
+      kwargs.each do |arg, _default|
         attr_accessor arg
       end
     end
 
     def run(*args, **kwargs)
-      new(*args, **kwargs).run()
+      new(*args, **kwargs).run
     end
   end
 
@@ -81,6 +77,7 @@ class AutonomousAgent
       if arg_name.nil?
         raise "Too many arguments passed to #{self.class.name}: expected #{self.class.get_pos_arguments.inspect} but got #{args.inspect}.}"
       end
+
       instance_variable_set("@#{arg_name}", arg)
     end
 
@@ -98,17 +95,17 @@ class AutonomousAgent
   end
 
   def arguments
-    self.class.get_pos_arguments.map do |arg|
-      [arg, instance_variable_get("@#{arg}")]
-    end.to_h.merge(
-      self.class.get_kwargs.keys.map do |arg|
-        [arg, instance_variable_get("@#{arg}")]
-      end.to_h
+    self.class.get_pos_arguments.index_with do |arg|
+      instance_variable_get("@#{arg}")
+    end.merge(
+      self.class.get_kwargs.keys.index_with do |arg|
+        instance_variable_get("@#{arg}")
+      end
     )
   end
 
-  def run(*args, **kwargs)
-    raise NotImplementedError.new("You forgot to implement the run method on #{self.class.name}.")
+  def run(*_args, **_kwargs)
+    raise NotImplementedError, "You forgot to implement the run method on #{self.class.name}."
   end
 
   def run_agent(agent_class, *args, **kwargs)

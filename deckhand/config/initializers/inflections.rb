@@ -4,8 +4,8 @@
 # are locale specific, and you may define rules for as many different
 # locales as you wish. All of these examples are active by default:
 ActiveSupport::Inflector.inflections(:en) do |inflect|
-  inflect.plural /^(codebase)$/i, "\\1s"
-  inflect.singular /^(codebase)s/i, "\\1"
+  inflect.plural(/^(codebase)$/i, '\\1s')
+  inflect.singular(/^(codebase)s/i, '\\1')
 end
 
 # These inflection rules are supported but not enabled by default:

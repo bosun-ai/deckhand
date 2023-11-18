@@ -7,8 +7,7 @@ class AgentRunsController < ApplicationController
   end
 
   # GET /agent_runs/1 or /agent_runs/1.json
-  def show
-  end
+  def show; end
 
   # GET /agent_runs/new
   def new
@@ -16,8 +15,7 @@ class AgentRunsController < ApplicationController
   end
 
   # GET /agent_runs/1/edit
-  def edit
-  end
+  def edit; end
 
   # POST /agent_runs or /agent_runs.json
   def create
@@ -25,7 +23,7 @@ class AgentRunsController < ApplicationController
 
     respond_to do |format|
       if @agent_run.save
-        format.html { redirect_to agent_run_url(@agent_run), notice: "Agent run was successfully created." }
+        format.html { redirect_to agent_run_url(@agent_run), notice: 'Agent run was successfully created.' }
         format.json { render :show, status: :created, location: @agent_run }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -38,7 +36,7 @@ class AgentRunsController < ApplicationController
   def update
     respond_to do |format|
       if @agent_run.update(agent_run_params)
-        format.html { redirect_to agent_run_url(@agent_run), notice: "Agent run was successfully updated." }
+        format.html { redirect_to agent_run_url(@agent_run), notice: 'Agent run was successfully updated.' }
         format.json { render :show, status: :ok, location: @agent_run }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -52,7 +50,7 @@ class AgentRunsController < ApplicationController
     @agent_run.destroy
 
     respond_to do |format|
-      format.html { redirect_to agent_runs_url, notice: "Agent run was successfully destroyed." }
+      format.html { redirect_to agent_runs_url, notice: 'Agent run was successfully destroyed.' }
       format.json { head :no_content }
     end
   end
@@ -63,13 +61,18 @@ class AgentRunsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_agent_run
-      @agent_run = AgentRun.find(params[:id] || params[:agent_run_id])
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_agent_run
+    @agent_run = AgentRun.find(params[:id] || params[:agent_run_id])
+  end
 
-    # Only allow a list of trusted parameters through.
-    def agent_run_params
-      params.require(:agent_run).permit(:name, :arguments, :context, :output, :finished_at, :parent_id)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_agent_run
+    @agent_run = AgentRun.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def agent_run_params
+    params.require(:agent_run).permit(:name, :arguments, :context, :output, :finished_at, :parent_id)
+  end
 end

@@ -1,4 +1,4 @@
-class GatherInformationAgent < ApplicationAgent 
+class GatherInformationAgent < ApplicationAgent
   arguments :question
 
   def prompt_text
@@ -21,10 +21,10 @@ class GatherInformationAgent < ApplicationAgent
 
     # context.add_information("Tried to answer question: #{information_questions}")
 
-    information_questions.map do |question|
+    information_questions.filter_map do |question|
       result = run(SimplyUseToolAgent, question, context: context.dup, tools: tools).output
       # context.add_observation(result) if result
       result
-    end.compact.uniq
+    end.uniq
   end
 end

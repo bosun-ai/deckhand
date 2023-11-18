@@ -1,5 +1,5 @@
 class SimpleFormattedQuestionAgent < ApplicationAgent
-  arguments :question, example: nil, format: "JSON"
+  arguments :question, example: nil, format: 'JSON'
 
   def prompt_text
     <<~PROMPT_TEXT
@@ -27,6 +27,6 @@ class SimpleFormattedQuestionAgent < ApplicationAgent
 
   def run
     answer = prompt(prompt_text.strip, system: system_text).full_response
-    answer.split("``````").first.strip
+    answer.split('``````').first.strip
   end
 end

@@ -4,8 +4,8 @@ class InvestigateWithToolsAgent < ApplicationAgent
   def prompt_text
     render 'prompt', locals: {
       tools_summary: 'No tools available',
-      tools: [{ name: 'a_tool', usage: 'with_usage'}],
-      question: question,
+      tools: [{ name: 'a_tool', usage: 'with_usage' }],
+      question:,
       context: context.summarize_knowledge
     }
   end
@@ -19,7 +19,7 @@ class InvestigateWithToolsAgent < ApplicationAgent
     context = []
 
     loop do
-      responses = prompt(prompt_text)["message"]["content"].lines.reject(&:blank?).map(&:strip)
+      responses = prompt(prompt_text)['message']['content'].lines.reject(&:blank?).map(&:strip)
       responses.each do |response|
         # puts "Response from LLM:\n----\n#{response}\n----\n"
         if response =~ /O:/
@@ -32,13 +32,13 @@ class InvestigateWithToolsAgent < ApplicationAgent
           puts "Gave answer: #{response}"
           return response
         elsif response =~ /\?(.*)/
-          tool_name, arguments = $1.split(" ", 2)
+          tool_name, arguments = ::Regexp.last_match(1).split(' ', 2)
 
           tool = tools.find { |t| t.name == tool_name }
 
           if tool
             puts "Using tool #{tool_name} with arguments #{arguments}"
-            tool_response = tool.run(*arguments, context: context)
+            tool_response = tool.run(*arguments, context:)
             context << "> #{tool_response}"
             # puts "Got response from tool: #{tool_response}"
           else

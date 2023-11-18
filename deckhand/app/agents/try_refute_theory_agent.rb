@@ -1,17 +1,17 @@
 class TryRefuteTheoryAgent < ApplicationAgent
   arguments :question, :theory, :answer
-  
+
   attr_accessor :resolution, :correct
 
   def prompt_text
     <<~PROMPT_TEXT
       # Refuting a theory
       We are trying to answer the following question:
-        
+      #{'  '}
       #{question.indent(2)}
-        
-      #{context_prompt}  
-        
+      #{'  '}
+      #{context_prompt}#{'  '}
+      #{'  '}
       To bring us closer to answer the question, we have the following theory:
 
       #{theory.indent(2)}
@@ -33,10 +33,10 @@ class TryRefuteTheoryAgent < ApplicationAgent
     resolution = prompt(prompt_text).full_response.strip
     if resolution =~ /Correct:/
       self.correct = true
-      self.resolution = resolution.split("Correct:", 2).last.strip
+      self.resolution = resolution.split('Correct:', 2).last.strip
     elsif resolution =~ /Incorrect:/
       self.correct = false
-      self.resolution = resolution.split("Incorrect:", 2).last.strip
+      self.resolution = resolution.split('Incorrect:', 2).last.strip
     else
       raise "Invalid resolution: #{resolution}"
     end
