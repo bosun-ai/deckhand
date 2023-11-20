@@ -107,11 +107,13 @@ module ShellTask::Runnable
       @callback.call({ line: })
     end
     @callback.call({ status: })
+
     @done_status.set
   end
 
   def wait
     @done_status.wait(STANDARD_TIMEOUT)
+    @process.wait
   end
 
   def shell_task_dir
