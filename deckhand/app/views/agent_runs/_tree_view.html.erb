@@ -3,7 +3,7 @@
     <% agent_run.events.each do |event| %>
       <li>
       <% if event.type == 'run_agent' %>
-        <h3><%= event.new_agent.name %>: <%= event.new_agent.context["assignment"] %></h3>
+        <h3><%= event.new_agent.name %>: <%= event.new_agent&.context&.[]("assignment") %></h3>
         <%= render partial: 'agent_runs/tree_view', locals: { agent_run: event.new_agent } %>
       <% else %>
         <%= render partial: 'agent_runs/event', locals: { event: event } %>

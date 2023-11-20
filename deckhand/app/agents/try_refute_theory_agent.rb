@@ -41,6 +41,9 @@ class TryRefuteTheoryAgent < ApplicationAgent
       raise "Invalid resolution: #{resolution}"
     end
 
-    self
+    {
+      resolution: resolution,
+      correct: correct
+    }
   end
 end

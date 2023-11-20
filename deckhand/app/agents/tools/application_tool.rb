@@ -62,10 +62,11 @@ class ApplicationTool < AutonomousAgent::Tool
 
   def infer_arguments
     reformatted = run(ReformatAnswerAgent,
-                      "You are using tool #{self.class.name}`, what arguments will you give it?",
-                      arguments,
-                      'json',
-                      example: { tool_name: self.class.name, arguments: self.class.arguments_shape }.to_json)
+      "You are using tool #{self.class.name}`, what arguments will you give it?",
+      arguments,
+      "json",
+      example: { tool_name: self.class.name, arguments: self.class.arguments_shape }.to_json,
+    ).output
 
     begin
       @arguments = JSON.parse(reformatted)['arguments']

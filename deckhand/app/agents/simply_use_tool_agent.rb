@@ -69,15 +69,18 @@ class SimplyUseToolAgent < ApplicationAgent
   end
 
   def run
+    tools = tool_classes
     @tries = []
     begin
       result = prompt(prompt_text, functions: tools.map(&:openai_signature))
       result.full_response
-    rescue ApplicationTool::Error => e
+    rescue => e
+      # TODO make this catch only the specific errors, so it doesn't mess up the regular run error flow
+      raise e if e.is_a?(RunAgainLater) || e.is_a?(RunDeferred)
+      Rails.logger.error("SimplyUseToolAgent##{agent_run.id} rescued error: #{e.inspect}:\n#{e.backtrace.join("\n")}")
       @tries << e.message
       retry if @tries.length < 4
       logger.error "Tried 4 times but could not recover from tool use error in SimplyUseToolAgent: #{e.message}. #{@tries.inspect}"
-
       nil
     end
   end

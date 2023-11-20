@@ -1,30 +1,71 @@
 require 'test_helper'
 
-class DummyAgent < ApplicationAgent
-  def run(raise_error: nil)
-    raise raise_error if raise_error
-
-    'success'
-  end
-end
-
 class ApplicationAgentTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  class DummyAgent < ApplicationAgent
+    def run(raise_error: nil)
+      raise raise_error if raise_error
+
+      "success"
+    end
+  end
+
+  class PromptingDummyAgent < ApplicationAgent
+    def run
+      prompt("What is up?")
+    end
+  end
+
+  class RandomDummyAgent < ApplicationAgent
+    def run
+      "success-#{SecureRandom.hex(4)}"
+    end
+  end
+
+  class RunAgentDummyAgent < ApplicationAgent
+    def run
+      run_agent(RandomDummyAgent).output
+    end
+  end
+
+  class NestedRunAgentDummyAgent < ApplicationAgent
+    def run
+      output_1 = run_agent(RunAgentDummyAgent).output
+      output_2 = run_agent(RunAgentDummyAgent).output
+      output_3 = run_agent(RunAgentDummyAgent).output
+
+      {
+        "outputs" => [output_1, output_2, output_3]
+      }
+    end
+  end
+
+  def make_dummy_agent(klass)
+    agent = klass.new(context: @context, tools: [AnalyzeFileTool, ListFilesTool])
+    agent.stubs(:logger).returns(@dummy_logger)
+    agent
+  end
+
   setup do
     @codebase = Codebase.new
-    @context = ApplicationAgent::Context.new('testing', codebase: @codebase)
-    @agent = DummyAgent.new(context: @context, tools: [AnalyzeFileTool, ListFilesTool])
+    @dummy_logger = mock('Logger')
+    @dummy_logger.stubs(:anything).returns(nil)
 
-    dummy_logger = mock('Logger')
-    dummy_logger.stubs(:anything).returns(nil)
-
-    @agent.stubs(:logger).returns(dummy_logger)
+    @context = ApplicationAgent::Context.new("testing", codebase: @codebase)
+    @agent = make_dummy_agent(DummyAgent)
+    @agent_run = AgentRun.create!
+    @agent.agent_run = @agent_run
   end
 
   test 'call_function raises error when tool not found' do
     prompt_response = mock('PromptResponse')
     prompt_response.stubs(:function_call_name).returns('NonExistentTool')
+    agent = make_dummy_agent(DummyAgent)
+    agent.agent_run = AgentRun.create!
+
     assert_raises(ApplicationTool::Error) do
-      @agent.call_function(prompt_response)
+      agent.call_function(prompt_response)
     end
   end
 
@@ -34,9 +75,11 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     prompt_response = mock('PromptResponse')
     prompt_response.stubs(:function_call_name).returns('AnalyzeFileTool')
     prompt_response.stubs(:function_call_args).returns('invalid_args')
+    agent = make_dummy_agent(DummyAgent)
+    agent.agent_run = AgentRun.create!
 
     assert_raises(ApplicationTool::Error) do
-      @agent.call_function(prompt_response)
+      agent.call_function(prompt_response)
     end
   end
 
@@ -93,58 +136,96 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     result_mock.stubs(:prompt).returns('prompt_here')
     result_mock.stubs(:full_response).returns('response_here')
     result_mock.stubs(:is_function_call?).returns(false)
+    result_mock.stubs(:as_json).returns({ some: 'result'})
 
     Deckhand::Lm.expects(:prompt).returns(result_mock)
 
-    agent_run_mock = mock('AgentRun')
-    agent_run_mock.expects(:events).returns(event).once
+    agent = make_dummy_agent(PromptingDummyAgent)
+    agent_run = AgentRun.create!
+    agent.agent_run = agent_run
+    agent_run.expects(:events).returns(event).once
     event.expects(:create!).with(event_hash: {
                                    type: 'prompt',
                                    content: { prompt: 'prompt_here', response: 'response_here' }
                                  }).once
 
-    @agent.agent_run = agent_run_mock
-
     # Simulate the prompt callback
-    @agent.send(:prompt, 'Hello') { result_mock }
+    agent.run
   end
 
   test 'run callback handles success' do
-    agent_run_mock = AgentRun.new
-    AgentRun.expects(:create!).returns(agent_run_mock)
-    agent_run_mock.expects(:update!).with(has_entries(output: 'success'))
+    agent_run_mock = AgentRun.create!
+    agent = make_dummy_agent(DummyAgent)
+    agent.agent_run = agent_run_mock
 
-    result = @agent.run
-    assert_equal 'success', result
+    result = agent.run
+    assert_equal 'success', result.output
   end
 
   test 'run callback handles exceptions' do
-    agent_run_mock = AgentRun.new
-    AgentRun.expects(:create!).returns(agent_run_mock)
+    agent = make_dummy_agent(DummyAgent)
 
-    agent_run_mock.expects(:update!).with(has_entry(error: instance_of(StandardError)))
-    agent_run_mock.expects(:update!).with(has_entry(finished_at: instance_of(Time)))
+    result = agent.run(raise_error: StandardError.new('A dummy error occurred'))
 
-    @agent.run(raise_error: StandardError.new('An error occurred'))
+    assert_nil result.output
+    assert_equal "A dummy error occurred", result.error["message"]
   end
 
-  test 'run callback updates agent_run with parent' do
-    parent_agent_run = AgentRun.new
-    parent_agent = DummyAgent.new
-    parent_agent.agent_run = parent_agent_run
-    @agent.parent = parent_agent
+  test 'run_agent callback increments checkpoint_index and records result in state' do
+    @agent.checkpoint_index = 0
+    @agent.agent_run = AgentRun.new
+    result = @agent.run_agent(DummyAgent)
 
-    assert_equal(@agent.parent.agent_run, parent_agent_run)
+    assert_equal 1, @agent.checkpoint_index  
 
-    AgentRun.stubs(:create!).with do |name:, arguments:, context:, parent:|
-      assert_equal(parent, parent_agent_run)
-    end.returns(AgentRun.new(parent: parent_agent_run))
+    assert_equal '1-run_agent', @agent.agent_run.state.checkpoint
+    assert_equal 'success', @agent.agent_run.state.value['output']
+  end
 
-    events = mock('Events[]')
-    parent_agent_run.expects(:events).returns(events)
+  test 'run_agent callback only runs agent if there its not been run yet' do
+    agent = make_dummy_agent(RunAgentDummyAgent)
+    first_result = agent.run
+    agent_run = agent.agent_run
 
-    events.expects(:create!).once
+    assert_nil first_result.error
 
-    @agent.run
+    assert_equal(1, agent.checkpoint_index)
+    assert_equal 'success', first_result.output.split('-').first
+
+    second_result = agent_run.resume
+
+    assert_nil second_result.error
+    assert_equal 'success', second_result.output.split('-').first
+    assert_equal first_result.output, second_result.output
+  end
+
+  test 'run_agent will run nested invocations asynchronously' do
+    agent = make_dummy_agent(NestedRunAgentDummyAgent)
+    first_result = agent.run
+    agent_run = agent.agent_run
+
+    assert_nil first_result.error
+
+    assert_equal(2, agent.checkpoint_index)
+
+    assert_nil first_result.output
+
+    assert_enqueued_jobs 1
+
+    # it runs a bit too often, if we make this prod ready it should run less often
+    perform_enqueued_jobs
+    perform_enqueued_jobs
+    perform_enqueued_jobs
+
+    assert_enqueued_jobs 0
+
+    agent_run.reload
+
+    second_result = agent_run
+    assert_nil second_result.error
+    assert_equal(
+      ['success', 'success', 'success'],
+      second_result.output["outputs"].map { |o| o.split('-').first}
+    )
   end
 end

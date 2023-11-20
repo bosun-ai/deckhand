@@ -20,64 +20,70 @@ class FileAnalysis::DiscoverTestingInfrastructureAgent < ApplicationAgent
 
     question = 'What languages and frameworks are used in the codebase?'
 
-    answer = run SplitStepInvestigateAgent, question, context: context.deep_dup
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output
     context.add_observation("Question: #{question} Answer: #{answer}")
 
-    question = 'What is the purpose of the project?'
-    answer = run SplitStepInvestigateAgent, question, context: context.deep_dup
+    question = "What is the purpose of the project?"
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output
     context.add_observation("Question: #{question} Answer: #{answer}")
 
     # Second we need to find out if the codebase has any test framework at all.
     question = 'If the codebase has tests, what test framework is used?'
 
-    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup) || 'No'
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output || "No"
 
     context.add_observation("Question: #{question} Answer: #{answer}")
 
     tests_response = run(
-      ReformatAnswerAgent,
-      'Does the codebase have tests?',
-      answer,
-      'json',
-      example: { "has_tests": true }.to_json,
-      context: context.deep_dup
-    )
+        ReformatAnswerAgent,
+        "Does the codebase have tests?",
+        answer,
+        "json",
+        example: { "has_tests": true }.to_json,
+        context: context.deep_dup
+      ).output
 
     has_tests = false
     begin
-      has_tests = JSON.parse(tests_response)['has_tests']
-    rescue StandardError => e
+      # sometimes it is surrounded with markdown codeblock quotes and the json prefix, so try to remove that:
+      tests_response = tests_response.gsub(/^```(json)?/, "").gsub(/```$/, "")
+      has_tests = parse_json(tests_response)["has_tests"]
+    rescue => e
       raise "Could not extract 'has_tests' from object: #{tests_response.inspect}"
     end
 
-    return context unless has_tests
+    if !has_tests
+      codebase.update! context: context
+      return context
+    end
 
     # Third we need to find out if the codebase has a test runner.
 
     question = 'If the codebase supports running the tests and generating a coverage report, what command should be used to do so?'
 
-    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup) || 'No'
+    answer = run(SplitStepInvestigateAgent, question, context: context.deep_dup).output || "No"
 
     context.add_observation("Question: #{question} Answer: #{answer}")
 
-    has_test_coverage = JSON.parse(run(
-                                     ReformatAnswerAgent,
-                                     'Does the codebase have test coverage?',
-                                     answer,
-                                     'json',
-                                     example: { "has_test_coverage": true }.to_json,
-                                     context: context.deep_dup
-                                   ))['has_test_coverage']
+    has_test_coverage = parse_json(run(
+      ReformatAnswerAgent,
+      "Does the codebase have test coverage?",
+      answer,
+      "json",
+      example: { "has_test_coverage": true }.to_json,
+      context: context.deep_dup
+    ).output)["has_test_coverage"]
 
-    unless has_test_coverage
-      puts answer
-      puts "The codebase does not have test coverage. Context: #{context.summarize_knowledge}"
+    if !has_test_coverage
+      codebase.update! context: context
       return context
     end
 
-    context
+    codebase.update! context: context
 
+    
     # analysis = Deckhand::Tasks::InvestigateWithTools.new.run(question)
-    # JSON.parse(Deckhand::Tasks::ReformatAnswer.new.run(question, analysis, "json", example: { "has_tests": true }.to_json))
+    # parse_json(Deckhand::Tasks::ReformatAnswer.new.run(question, analysis, "json", example: { "has_tests": true }.to_json))
+
   end
 end

@@ -6,7 +6,7 @@
   <%= render @codebase %>
 
   <div id="agent_runs" class="card bg-accent">
-    <% @codebase.agent_runs.reverse.each do |agent_run| %>
+    <% @codebase.agent_runs.reorder(created_at: 'DESC').each do |agent_run| %>
       <%= render agent_run %>
     <% end %>
   </div>

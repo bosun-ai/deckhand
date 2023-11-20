@@ -1,12 +1,8 @@
 class AnalyzeFileTool < ApplicationTool
-  WINDOW_SIZE = 200
+  WINDOW_SIZE = 20000
   WINDOW_OVERLAP = 5
 
   arguments file_path: nil, question: nil
-
-  def self.name
-    'analyze_file'
-  end
 
   def self.description
     'Ask a question about a single file'
@@ -73,6 +69,32 @@ class AnalyzeFileTool < ApplicationTool
 
     file = File.read(full_file_path)
 
+    system_prompt = <<~SYSTEM_PROMPT
+      You are a programming expert that is helping a programmer analyze files in a software code base. Right now you are asked to
+      answer the following question:
+
+      #{question.indent(2)}
+
+      To figure out the answer to this question you are provided with the contents of the file located at: "#{file_path}".
+
+      Please respond with a concise answer to the question based on the file that's provided. If the file does not contain an answer
+      to the question please state so.
+    SYSTEM_PROMPT
+    
+    response = prompt(file, system: system_prompt, mode: :very_large).full_response
+
+    <<~RESPONSE
+      We looked at the contents of the file located at "#{file_path}" to answer the following question:
+
+      #{question.indent(2)}
+
+      And it gave us the following observation:
+
+      #{response.indent(2)}
+    RESPONSE
+  end
+
+  def scan_run(file)
     i = 0
 
     observations = []

@@ -2,10 +2,10 @@ module Deckhand::Lm
   MODELS = {
     code: 'code-davinci-002',
     very_cheap: 'text-babbage-001', # $0.0005 / 1K tokens
-    cheap: 'gpt-3.5-turbo', # $0.002 / 1K tokens
+    cheap: 'gpt-3.5-turbo-1106', # $0.002 / 1K tokens
     instruct: 'text-davinci-003', # $0.02 / 1K tokens
-    default: 'gpt-4', # $0.03 / 1K tokens
-    very_large: 'gpt-3.5-turbo-16k' #
+    default: 'gpt-4-1106-preview', # $0.03 / 1K tokens
+    very_large: 'gpt-4-1106-preview' #
   }
 
   def self.embedding(text)
@@ -30,7 +30,7 @@ module Deckhand::Lm
 
   DEFAULT_SYSTEM = 'You are a helpful assistant that provides information without formalities.'
 
-  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default)
+  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default, format: nil)
     DeckhandTracer.in_span('PROMPT') do
       current_span = OpenTelemetry::Trace.current_span
       current_span.add_event('prompt',
@@ -45,6 +45,10 @@ module Deckhand::Lm
         ],
         max_tokens:
       }
+
+      if format == :json
+        parameters[:response_format] = { 'type': 'json_object' }
+      end
 
       parameters[:functions] = functions if functions.present?
 
@@ -80,6 +84,11 @@ module Deckhand::Lm
       @raw_response = response
       @prompt = prompt
       @options = options
+    end
+
+    def self.from_json(response)
+      response = response.with_indifferent_access
+      new(response[:response], prompt: response[:prompt], options: response[:options])
     end
 
     def as_json(*_args)

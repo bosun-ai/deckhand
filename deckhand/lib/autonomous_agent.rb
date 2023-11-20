@@ -1,6 +1,10 @@
 class AutonomousAgent
-  include ActiveSupport::Callbacks
-  define_callbacks :run, :prompt, :call_function
+  # poor man's cross cutting methods
+  [:run, :run_agent, :prompt, :call_function].each do |callback|
+    define_method("around_#{callback}") do |*args, **kwargs, &block|
+      block.call(*args, **kwargs)
+    end
+  end
 
   class << self
     def get_pos_arguments
@@ -38,19 +42,25 @@ class AutonomousAgent
 
   module RunAgent
     def run(*args, **kwargs)
+      # HACK: this is a bit of a silly hack, maybe we should just remove it
+      # The idea of this hack is that we can run agents with the `run`
+      # method.
       klass = args.first
-      return klass.run(*args[1..], **kwargs.merge(parent: self)) if klass.is_a?(Class) && klass < AutonomousAgent
+      if klass.is_a?(Class) && klass < AutonomousAgent
+        return run_agent(klass, *args[1..], **kwargs)
+      end
+      # End of hack
 
-      run_callbacks :run do
-        super
+      around_run(*args, **kwargs) do |*args, **kwargs|
+        super(*args, **kwargs)
       end
     end
   end
 
   module FunctionCallingAgent
     def call_function(prompt_result, **kwargs)
-      run_callbacks :call_function do
-        super
+      around_call_function(prompt_result, **kwargs) do |*args, **kwargs|
+        super(*args, **kwargs)
       end
     end
   end
@@ -61,6 +71,7 @@ class AutonomousAgent
   end
 
   def initialize(*args, **kwargs)
+    kwargs = kwargs.symbolize_keys
     args.each_with_index do |arg, i|
       arg_name = self.class.get_pos_arguments[i]
       if arg_name.nil?
@@ -68,6 +79,13 @@ class AutonomousAgent
       end
 
       instance_variable_set("@#{arg_name}", arg)
+    end
+
+    # to support deserialization from AgentRun we also want to support getting the pos arguments from an arguments hash
+    self.class.get_pos_arguments.each do |arg_name|
+      if kwargs.has_key?(arg_name)
+        instance_variable_set("@#{arg_name}", kwargs[arg_name])
+      end
     end
 
     self.class.get_kwargs.each do |arg, default|
@@ -90,7 +108,13 @@ class AutonomousAgent
     raise NotImplementedError, "You forgot to implement the run method on #{self.class.name}."
   end
 
-  def call_function(_prompt_result, **_kwargs)
-    raise NotImplementedError, "You forgot to implement the call_function method on #{self.class.name}."
+  def run_agent(agent_class, *args, **kwargs)
+    around_run_agent(*args, **kwargs) do |*args, **kwargs|
+      agent_class.run(*args, **kwargs.merge(parent: self))
+    end
+  end
+
+  def call_function(prompt_result, **kwargs)
+    raise NotImplementedError.new("You forgot to implement the call_function method on #{self.class.name}.")
   end
 end

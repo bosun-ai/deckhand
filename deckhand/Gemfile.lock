@@ -93,23 +93,23 @@ GEM
     addressable (2.8.5)
       public_suffix (>= 2.0.2, < 6.0)
     ansi-to-html (0.0.3)
-    appsignal (3.4.13)
+    appsignal (3.4.14)
       rack
     ast (2.4.2)
-    async (2.6.4)
+    async (2.6.5)
       console (~> 1.10)
       fiber-annotation
       io-event (~> 1.1)
       timers (~> 4.1)
-    async-io (1.36.0)
+    async-io (1.36.1)
       async
     async-process (1.3.1)
       async
       async-io
-    base64 (0.1.1)
+    base64 (0.2.0)
     bigdecimal (3.1.4)
     bindex (0.8.1)
-    bootsnap (1.16.0)
+    bootsnap (1.17.0)
       msgpack (~> 1.2)
     brakeman (6.0.1)
     builder (3.2.4)
@@ -134,7 +134,7 @@ GEM
       fiber-annotation
       fiber-local
     crass (1.0.6)
-    date (3.3.3)
+    date (3.3.4)
     debug (1.8.0)
       irb (>= 1.5.0)
       reline (>= 0.3.1)
@@ -142,10 +142,13 @@ GEM
     dotenv-rails (2.8.1)
       dotenv (= 2.8.1)
       railties (>= 3.2)
-    drb (2.1.1)
+    drb (2.2.0)
       ruby2_keywords
     dry-cli (1.0.0)
     erubi (1.12.0)
+    et-orbi (1.2.7)
+      tzinfo
+    event_stream_parser (0.3.0)
     faraday (2.7.11)
       base64
       faraday-net_http (>= 2.0, < 3.1)
@@ -157,16 +160,26 @@ GEM
       faraday (~> 2.0)
     fiber-annotation (0.2.0)
     fiber-local (1.0.0)
+    fugit (1.9.0)
+      et-orbi (~> 1, >= 1.2.7)
+      raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
-    google-protobuf (3.24.4-x86_64-darwin)
-    google-protobuf (3.24.4-x86_64-linux)
-    googleapis-common-protos-types (1.9.0)
+    good_job (3.21.0)
+      activejob (>= 6.0.0)
+      activerecord (>= 6.0.0)
+      concurrent-ruby (>= 1.0.2)
+      fugit (>= 1.1)
+      railties (>= 6.0.0)
+      thor (>= 0.14.1)
+    google-protobuf (3.25.0-arm64-darwin)
+    google-protobuf (3.25.0-x86_64-linux)
+    googleapis-common-protos-types (1.10.0)
       google-protobuf (~> 3.18)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     io-console (0.6.0)
-    io-event (1.3.2)
+    io-event (1.3.3)
     irb (1.8.3)
       rdoc
       reline (>= 0.3.8)
@@ -200,27 +213,27 @@ GEM
       ruby2_keywords (>= 0.0.5)
     msgpack (1.7.2)
     multipart-post (2.3.0)
-    mutex_m (0.1.2)
-    neo4j-ruby-driver (4.4.4)
-      activesupport
+    mutex_m (0.2.0)
+    neo4j-ruby-driver (4.4.5)
+      activesupport (>= 5.2.0)
       async-io
       connection_pool
       zeitwerk (>= 2.1.10)
-    net-imap (0.4.1)
+    net-imap (0.4.4)
       date
       net-protocol
     net-pop (0.1.2)
       net-protocol
-    net-protocol (0.2.1)
+    net-protocol (0.2.2)
       timeout
     net-smtp (0.4.0)
       net-protocol
     nio4r (2.5.9)
-    nokogiri (1.15.4-x86_64-darwin)
+    nokogiri (1.15.4-arm64-darwin)
       racc (~> 1.4)
     nokogiri (1.15.4-x86_64-linux)
       racc (~> 1.4)
-    octokit (7.2.0)
+    octokit (8.0.0)
       faraday (>= 1, < 3)
       sawyer (~> 0.9)
     opentelemetry-api (1.2.3)
@@ -251,7 +264,7 @@ GEM
       opentelemetry-api (~> 1.0)
       opentelemetry-instrumentation-base (~> 0.22.1)
       ruby2_keywords
-    opentelemetry-instrumentation-active_support (0.4.3)
+    opentelemetry-instrumentation-active_support (0.4.4)
       opentelemetry-api (~> 1.0)
       opentelemetry-instrumentation-base (~> 0.22.1)
     opentelemetry-instrumentation-all (0.50.1)
@@ -319,7 +332,7 @@ GEM
       opentelemetry-api (~> 1.0)
       opentelemetry-common (~> 0.20.0)
       opentelemetry-instrumentation-base (~> 0.22.1)
-    opentelemetry-instrumentation-grape (0.1.4)
+    opentelemetry-instrumentation-grape (0.1.5)
       opentelemetry-api (~> 1.0)
       opentelemetry-instrumentation-base (~> 0.22.1)
       opentelemetry-instrumentation-rack (~> 0.21)
@@ -410,7 +423,7 @@ GEM
       opentelemetry-semantic_conventions (>= 1.8.0)
     opentelemetry-registry (0.3.0)
       opentelemetry-api (~> 1.1)
-    opentelemetry-sdk (1.3.0)
+    opentelemetry-sdk (1.3.1)
       opentelemetry-api (~> 1.1)
       opentelemetry-common (~> 0.20)
       opentelemetry-registry (~> 0.2)
@@ -428,7 +441,8 @@ GEM
     public_suffix (5.0.3)
     puma (6.4.0)
       nio4r (~> 2.0)
-    racc (1.7.1)
+    raabro (1.4.0)
+    racc (1.7.3)
     rack (3.0.8)
     rack-proxy (0.7.7)
       rack
@@ -469,16 +483,16 @@ GEM
       thor (~> 1.0, >= 1.2.2)
       zeitwerk (~> 2.6)
     rainbow (3.1.1)
-    rake (13.0.6)
+    rake (13.1.0)
     rbtree (0.4.6)
-    rdoc (6.5.0)
+    rdoc (6.6.0)
       psych (>= 4.0.0)
-    redis (5.0.7)
-      redis-client (>= 0.9.0)
-    redis-client (0.17.0)
+    redis (5.0.8)
+      redis-client (>= 0.17.0)
+    redis-client (0.18.0)
       connection_pool
     regexp_parser (2.8.2)
-    reline (0.3.9)
+    reline (0.4.0)
       io-console (~> 0.5)
     rexml (3.2.6)
     rubocop (1.57.2)
@@ -497,19 +511,20 @@ GEM
     rubocop-performance (1.19.1)
       rubocop (>= 1.7.0, < 2.0)
       rubocop-ast (>= 0.4.0)
-    rubocop-rails (2.22.0)
+    rubocop-rails (2.22.1)
       activesupport (>= 4.2.0)
       rack (>= 1.1)
       rubocop (>= 1.33.0, < 2.0)
     rubocop-rake (0.6.0)
       rubocop (~> 1.0)
-    ruby-openai (5.1.0)
+    ruby-openai (6.0.1)
+      event_stream_parser (>= 0.3.0, < 1.0.0)
       faraday (>= 1)
       faraday-multipart (>= 1)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     rubyzip (2.3.2)
-    rufo (0.16.2)
+    rufo (0.16.3)
     sawyer (0.9.2)
       addressable (>= 2.3.5)
       faraday (>= 0.17.3, < 3)
@@ -528,17 +543,17 @@ GEM
       actionpack (>= 5.2)
       activesupport (>= 5.2)
       sprockets (>= 3.0.0)
-    sqlite3 (1.6.7-x86_64-darwin)
-    sqlite3 (1.6.7-x86_64-linux)
+    sqlite3 (1.6.8-arm64-darwin)
+    sqlite3 (1.6.8-x86_64-linux)
     stimulus-rails (1.3.0)
       railties (>= 6.0.0)
-    stringio (3.0.8)
-    tailwindcss-rails (2.0.31-x86_64-darwin)
+    stringio (3.0.9)
+    tailwindcss-rails (2.0.32-arm64-darwin)
       railties (>= 6.0.0)
-    tailwindcss-rails (2.0.31-x86_64-linux)
+    tailwindcss-rails (2.0.32-x86_64-linux)
       railties (>= 6.0.0)
     thor (1.3.0)
-    timeout (0.4.0)
+    timeout (0.4.1)
     timers (4.3.5)
     turbo-rails (1.5.0)
       actionpack (>= 6.0.0)
@@ -568,12 +583,14 @@ GEM
     websocket-driver (0.7.6)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    with_advisory_lock (5.0.0)
+      activerecord (>= 6.1)
     xpath (3.2.0)
       nokogiri (~> 1.8)
     zeitwerk (2.6.12)
 
 PLATFORMS
-  x86_64-darwin-21
+  arm64-darwin-23
   x86_64-linux
 
 DEPENDENCIES
@@ -589,6 +606,7 @@ DEPENDENCIES
   debug
   dotenv-rails
   faraday-retry
+  good_job (~> 3.21)
   jbuilder
   jwt
   kramdown
@@ -621,9 +639,10 @@ DEPENDENCIES
   vite_rails
   web-console
   webdrivers
+  with_advisory_lock
 
 RUBY VERSION
-   ruby 3.2.0p0
+   ruby 3.2.2p53
 
 BUNDLED WITH
-   2.4.2
+   2.4.10

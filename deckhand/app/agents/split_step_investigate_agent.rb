@@ -14,9 +14,11 @@ class SplitStepInvestigateAgent < ApplicationAgent
 
     # 1. We have a question and some information about the context of the question.
     # 2. We gather more information about the context of the question by using tools and making observations.
-    run(GatherInformationAgent, question, context:, tools:)
+    run(GatherInformationAgent, question, context: context, tools: tools).output.each do |observation|
+      context.add_observation(observation)
+    end
     # 3. We formulate theories based on the question and the observations.
-    theories = run(FormulateTheoriesAgent, question, context:, tools:)
+    theories = run(FormulateTheoriesAgent, question, context: context, tools: tools).output
 
     answer = nil
 
@@ -31,25 +33,29 @@ class SplitStepInvestigateAgent < ApplicationAgent
 
       while conclusion.nil?
         # 5. We try to immediately prove the theory based on the current information.
-        resolution = run(TryResolveTheoryAgent, question, theory, context:, tools:)
+        resolution = run(TryResolveTheoryAgent, question, theory, context: context, tools: tools).output
 
-        if resolution.answer
+        if resolution['answer']
           # 5a. If we can formulate an answer based on the information then we validate the answer by proposing invalidation criteria.
-          refutation = run(TryRefuteTheoryAgent, question, theory, resolution.answer, context:, tools:)
+          refutation = run(TryRefuteTheoryAgent, question, theory, resolution['answer'], context: context, tools: tools).output
 
-          conclusion = refutation.correct && resolution.answer
-          # TODO: try refuting the incorrectness assertion?
+          conclusion = refutation['correct'] && resolution['answer']
+          # TODO try refuting the incorrectness assertion?
 
           # 5b. If we can't immediately answer or all our answers are invalid continue to 6.
-        elsif resolution.need_information && information_tries < 2
+        elsif resolution['need_information'] && information_tries < 2
           # Add gather informatino to task stack
-          run(GatherInformationAgent, resolution.need_information, context:, tools:)
+          run(GatherInformationAgent, resolution['need_information'], context: context, tools: tools).output.each do |observation|
+            context.add_observation(observation)
+          end
           information_tries += 1
-        elsif resolution.incorrect || resolution.need_information
-          context.add_information("Discarded theory: #{resolution.incorrect}")
+        elsif resolution['incorrect']
+          context.add_information("Discarded theory: #{resolution['incorrect']}")
           conclusion = false
           # Discard theory
           # TODO try refuting the incorrectness assertion
+        elsif resolution['information']
+          context.add_information(resolution['information'])
         end
       end
 

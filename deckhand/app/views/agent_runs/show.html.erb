@@ -3,6 +3,10 @@
     <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
   <% end %>
 
+  <% if @agent_run.parent %>
+    <%= link_to "Up to parent", agent_run_path(@agent_run.parent), class: "btn btn-secondary" %>
+  <% end %>
+
   <%= render @agent_run %>
 
   <%= link_to 'Back to agent_runs', agent_runs_path, class: "btn btn-secondary" %>

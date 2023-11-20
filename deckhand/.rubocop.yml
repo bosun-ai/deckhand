@@ -18,3 +18,15 @@ AllCops:
 
 Style/FrozenStringLiteralComment:
   Enabled: false
+
+Metrics/ClassLength:
+  Max: 500
+
+Style/StringLiterals:
+  Enabled: false
+
+Naming/VariableNumber:
+  EnforcedStyle: snake_case
+
+Style/WordArray:
+  Enabled: false

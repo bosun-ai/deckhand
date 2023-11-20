@@ -7,12 +7,13 @@ class ImproveUndocumentedFilesAgent < ApplicationAgent
       context = codebase.context.split("\n\n").map do |line|
         {
           type: :observation,
-          content: line
+          content: line,
         }
       end
 
-      root_context = Deckhand::Context.new("Finding undocumented files", history: context, codebase:, 
-event_callback:)
+      root_context = Deckhand::Context.new("Finding undocumented files", history: context, codebase: codebase, event_callback: event_callback)
+
+      <<~FILE_EXTENSIONS_QUESTION
         Given the following context:
 
         #{codebase.context}
@@ -24,11 +25,11 @@ event_callback:)
         run(
           SimpleFormattedQuestionAgent,
           FILE_EXTENSIONS_QUESTION,
-          example: { "extensions": %w[rb js] }.to_json
-        )
+          example: { "extensions": ["rb", "js"] }.to_json,
+        ).output
       )["extensions"]
 
-      root_context.add_observation("The codebase uses the following file extensions: #{extensions.join(', ')}")
+      root_context.add_observation("The codebase uses the following file extensions: #{extensions.join(", ")}")
 
       files = `cd #{codebase.path} && git ls-files`.split("\n").filter do |file|
         extensions.include? file.split(".").last
@@ -41,8 +42,9 @@ event_callback:)
       while undocumented_files.length < 5 && files.any?
         relative_path = files.pop
         file = File.join(codebase.path, relative_path)
-        next if !File.exist?(file)
-
+        if !File.exist?(file)
+          next
+        end
         question = <<~PROMPT
           Is this file underdocumented? An underdocumented file is a code file that has public members such as classes,
           functions, or variables that are not preceded by at least one comment. Start your answer with "Yes." if there
@@ -62,19 +64,21 @@ event_callback:)
         answer = prompt(question).full_response
         root_context.add_observation("Is #{relative_path} underdocumented: #{answer}")
 
-        undocumented_files << relative_path if answer.strip.downcase.start_with?("yes")
+        if answer.strip.downcase.start_with?("yes")
+          undocumented_files << relative_path
+        end
       end
 
       undocumented_files
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error("Error in Codebase::FileAnalysis::UndocumentedFiles: #{e.message} #{e.backtrace.join("\n")}}")
       tries += 1
-      raise e unless tries < 3
+      if tries < 3
         puts "Retrying..."
         retry
-      
-        
-      
+      else
+        raise e
+      end
     end
   end
 end

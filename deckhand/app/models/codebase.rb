@@ -7,15 +7,18 @@ class Codebase < ApplicationRecord
 
   has_many :github_access_tokens, dependent: :destroy
 
+  after_save :update_project_description, if: :saved_change_to_context?
+  after_save :describe_project_in_github_issue, if: :saved_change_to_description?
+
   def agent_runs
     AgentRun.root.for_codebase(self)
   end
 
   def current_agent_run
     agent_run = AgentRun.for_codebase(self).last
-    return unless agent_run && !agent_run.finished_at
-
-    agent_run
+    if agent_run && !agent_run.finished?
+      agent_run  
+    end
   end
 
   def agent_context(assignment)
@@ -23,7 +26,7 @@ class Codebase < ApplicationRecord
   end
 
   def run_agent(agent, assignment, *args, **kwargs)
-    agent.run(*args, context: agent_context(assignment), **kwargs)
+    AgentJob.perform_later(agent, context: agent_context(assignment).as_json, **kwargs)
   end
 
   CODEBASE_DIR = if Rails.env.production?
@@ -146,23 +149,7 @@ class Codebase < ApplicationRecord
   end
 
   def discover_undocumented_files
-    files = run_agent(::FileAnalysis::UndocumentedFilesAgent, 'Finding undocumented files')
-    return if files.blank?
-
-    markdown = %(#{ADD_DOCUMENTATION_HEADER}\n\nFound these undocumented files:\n\n#{files.map do |f|
-                                                                                       "* #{f}"
-                                                                                     end.join("\n")}
-\n\nIf you would like for Bosun Deckhand to add documentation to these files, check the box below:\n\n- [ ] Add documentation to these files\n\n)
-    # html = github_client.markdown(markdown, mode: "gfm", context: name)
-    # add_main_issue_comment(html)
-    add_main_issue_comment(markdown)
-  end
-
-  def update_project_description
-    self.description = describe_project_in_markdown
-    save!
-
-    describe_project_in_github_issue
+    run_agent(::FileAnalysis::UndocumentedFilesAgent, "Finding undocumented files")
   end
 
   def describe_project_in_github_issue
@@ -174,8 +161,8 @@ class Codebase < ApplicationRecord
     perform_later :discover_undocumented_files
   end
 
-  def describe_project_in_markdown
-    run_agent(RewriteInMarkdownAgent, 'Describing project', agent_context('Project').summarize_knowledge)
+  def update_project_description
+  run_agent(DescribeCodebaseAgent, "Describing project")
   end
 
   def create_main_github_issue
@@ -243,10 +230,7 @@ class Codebase < ApplicationRecord
   end
 
   def discover_testing_infrastructure
-    self.context = run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, 'Discovering testing infrastructure')
-    save!
-
-    perform_later :update_project_description
+    run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
   end
 
   def add_documentation_to_undocumented_files(files)
