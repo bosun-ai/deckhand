@@ -12,17 +12,18 @@ class AgentRun < ApplicationRecord
     :error
   ) do
     def value_available?
-      # HACK using in band signalling to fix broken parent value availability checking system
-      if value.is_a?(Hash) && value["states"]
-        agent_run = AgentRun.new(**value)
-        return agent_run.finished?
-      end
+      # HACK: using in band signalling to fix broken parent value availability checking system
+      agent_run = if value.is_a?(Hash) && value["states"]
+                    AgentRun.new(**value)
+                  elsif value.is_a? AgentRun
+                    value
+                  end
 
-      if async?
-        async_status.to_s == 'ready'
-      else
-        !failed?
-      end
+      return agent_run.finished? if agent_run
+
+      return async_status.to_s == 'ready' if async?
+
+      !failed?
     end
 
     def queued?
@@ -39,18 +40,14 @@ class AgentRun < ApplicationRecord
 
     def failed!(error)
       self.error = error
-      if async?
-        self.async_status = 'failed'
-      end
+      self.async_status = 'failed' if async?
       error
     end
 
     def completed!(value)
       self.value = value
       self.error = nil
-      if async?
-        self.async_status = 'ready'
-      end
+      self.async_status = 'ready' if async?
     end
 
     def waiting!
@@ -58,7 +55,7 @@ class AgentRun < ApplicationRecord
     end
 
     def waiting?
-      self.async_status == 'waiting'
+      async_status == 'waiting'
     end
   end
 
@@ -71,7 +68,7 @@ class AgentRun < ApplicationRecord
   end
 
   def state
-    states.values.last&.yield_self {|s| State.new(**s) }
+    states.values.last&.then { |s| State.new(**s) }
   end
 
   def has_state?(checkpoint_name)
@@ -79,7 +76,7 @@ class AgentRun < ApplicationRecord
   end
 
   def get_state(checkpoint_name)
-    states[checkpoint_name]&.yield_self {|s| State.new(**s) }
+    states[checkpoint_name]&.then { |s| State.new(**s) }
   end
 
   def queued?
@@ -101,9 +98,7 @@ class AgentRun < ApplicationRecord
 
   def transition_to_error(checkpoint, error)
     state = get_state(checkpoint) || State.new(checkpoint: checkpoint)
-    if state.async?
-      state.async_status = 'error'
-    end
+    state.async_status = 'error' if state.async?
     state.error = error
     states[checkpoint] = state
   end

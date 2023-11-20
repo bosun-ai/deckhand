@@ -242,14 +242,9 @@ class ApplicationAgent < AutonomousAgent
 
       # if it's an agent run, and the return value is not available then this agent run will be continued
       # at a later time
-      if name =~ /run_agent/ && checkpoint_state&.async? # TODO better way of distinguishing agent_run checkpoints
+      if name.include?('run_agent') && checkpoint_state&.async? # TODO better way of distinguishing agent_run checkpoints
         ar = AgentRun.new(**result)
-        Rails.logger.debug "Checking ar state for (#{descriptor}): #{ar.inspect}"
-        if ar.state.nil?
-          Rails.logger.error("Error #{descriptor}: #{ar.inspect}\nResult: #{result.inspect}")
-          raise "AgentRun state was nil! AgentRun##{ar.id}: #{ar.inspect}"
-        end
-        if ar.state.queued? || ar.state.failed?
+        if ar.state && ( ar.state.queued? || ar.state.failed? )
           agent_run.transition_to_waiting!(checkpoint_name)
           Rails.logger.debug("Decided not to run checkpoint #{descriptor}")
           raise RunDeferred
