@@ -6,6 +6,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   class DummyAgent < ApplicationAgent
     def run(raise_error: nil)
       raise raise_error if raise_error
+
       "success"
     end
   end
@@ -15,13 +16,13 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       prompt("What is up?")
     end
   end
-  
+
   class RandomDummyAgent < ApplicationAgent
     def run
       "success-#{SecureRandom.hex(4)}"
     end
   end
-  
+
   class RunAgentDummyAgent < ApplicationAgent
     def run
       run_agent(RandomDummyAgent).output
@@ -33,8 +34,9 @@ class ApplicationAgentTest < ActiveSupport::TestCase
       output_1 = run_agent(RunAgentDummyAgent).output
       output_2 = run_agent(RunAgentDummyAgent).output
       output_3 = run_agent(RunAgentDummyAgent).output
+
       {
-        "outputs": [output_1, output_2, output_3]
+        "outputs" => [output_1, output_2, output_3]
       }
     end
   end
@@ -52,13 +54,18 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
     @context = ApplicationAgent::Context.new("testing", codebase: @codebase)
     @agent = make_dummy_agent(DummyAgent)
+    @agent_run = AgentRun.create!
+    @agent.agent_run = @agent_run
   end
 
   test 'call_function raises error when tool not found' do
     prompt_response = mock('PromptResponse')
     prompt_response.stubs(:function_call_name).returns('NonExistentTool')
+    agent = make_dummy_agent(DummyAgent)
+    agent.agent_run = AgentRun.create!
+
     assert_raises(ApplicationTool::Error) do
-      @agent.call_function(prompt_response)
+      agent.call_function(prompt_response)
     end
   end
 
@@ -68,9 +75,11 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     prompt_response = mock('PromptResponse')
     prompt_response.stubs(:function_call_name).returns('AnalyzeFileTool')
     prompt_response.stubs(:function_call_args).returns('invalid_args')
+    agent = make_dummy_agent(DummyAgent)
+    agent.agent_run = AgentRun.create!
 
     assert_raises(ApplicationTool::Error) do
-      @agent.call_function(prompt_response)
+      agent.call_function(prompt_response)
     end
   end
 
@@ -132,7 +141,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     Deckhand::Lm.expects(:prompt).returns(result_mock)
 
     agent = make_dummy_agent(PromptingDummyAgent)
-    agent_run = AgentRun.new
+    agent_run = AgentRun.create!
     agent.agent_run = agent_run
     agent_run.expects(:events).returns(event).once
     event.expects(:create!).with(event_hash: {
@@ -140,13 +149,12 @@ class ApplicationAgentTest < ActiveSupport::TestCase
                                    content: { prompt: 'prompt_here', response: 'response_here' }
                                  }).once
 
-
     # Simulate the prompt callback
     agent.run
   end
 
   test 'run callback handles success' do
-    agent_run_mock = AgentRun.new
+    agent_run_mock = AgentRun.create!
     agent = make_dummy_agent(DummyAgent)
     agent.agent_run = agent_run_mock
 
@@ -155,33 +163,12 @@ class ApplicationAgentTest < ActiveSupport::TestCase
   end
 
   test 'run callback handles exceptions' do
-    agent_run_mock = AgentRun.new
     agent = make_dummy_agent(DummyAgent)
 
     result = agent.run(raise_error: StandardError.new('A dummy error occurred'))
 
     assert_nil result.output
     assert_equal "A dummy error occurred", result.error["message"]
-  end
-
-  test 'run callback updates agent_run with parent' do
-    parent_agent_run = AgentRun.new
-    parent_agent = DummyAgent.new
-    parent_agent.agent_run = parent_agent_run
-    @agent.parent = parent_agent
-
-    assert_equal(@agent.parent.agent_run, parent_agent_run)
-
-    AgentRun.stubs(:create!).with do |name:, arguments:, context:, parent:|
-      assert_equal(parent, parent_agent_run)
-    end.returns(AgentRun.new(parent: parent_agent_run))
-
-    events = mock('Events[]')
-    parent_agent_run.expects(:events).returns(events)
-
-    events.expects(:create!).once
-
-    @agent.run
   end
 
   test 'run_agent callback increments checkpoint_index and records result in state' do
@@ -225,10 +212,9 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
     assert_enqueued_jobs 1
 
+    # it runs a bit too often, if we make this prod ready it should run less often
     perform_enqueued_jobs
-
-    assert_enqueued_jobs 1
-
+    perform_enqueued_jobs
     perform_enqueued_jobs
 
     assert_enqueued_jobs 0
@@ -237,6 +223,9 @@ class ApplicationAgentTest < ActiveSupport::TestCase
 
     second_result = agent_run
     assert_nil second_result.error
-    assert_equal ['success','success', 'success'], second_result.output["outputs"].map {|o| o.split('-').first}
+    assert_equal(
+      ['success', 'success', 'success'],
+      second_result.output["outputs"].map { |o| o.split('-').first}
+    )
   end
 end

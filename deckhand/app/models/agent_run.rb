@@ -5,12 +5,12 @@ class AgentRun < ApplicationRecord
 
   before_validation :ensure_parent_ids
 
-  class State < Struct.new(
+  State = Struct.new(
     :checkpoint,
     :value,
     :async_status,
     :error
-  )
+  ) do
     def value_available?
       # HACK using in band signalling to fix broken parent value availability checking system
       if value.is_a?(Hash) && value["states"]
@@ -77,7 +77,7 @@ class AgentRun < ApplicationRecord
   def has_state?(checkpoint_name)
     states.has_key?(checkpoint_name)
   end
-  
+
   def get_state(checkpoint_name)
     states[checkpoint_name]&.yield_self {|s| State.new(**s) }
   end
@@ -126,11 +126,8 @@ class AgentRun < ApplicationRecord
 
   def transition_to_completed!(checkpoint, value)
     state = get_state(checkpoint)
-    async_status = if state.async?
-      'ready'
-    else
-      nil
-    end
+    async_status = 'ready' if state.async?
+
     transition_to!(checkpoint, value, async_status: async_status)
   end
 
@@ -141,27 +138,31 @@ class AgentRun < ApplicationRecord
   end
 
   def reset_to_checkpoint!(checkpoint)
-    self.states = if checkpoint
+    old_states = states
+    reset
+    if checkpoint
       checkpoint = checkpoint.to_s
-      states.entries.take_while {|c,_| c != checkpoint}.to_h
-    else
-      {}
+      self.states = old_states.entries.take_while { |c, _| c != checkpoint}.to_h
     end
+    save!
+  end
+
+  def reset
+    self.states = {}
     self.output = nil
     self.error = nil
     self.finished_at = nil
     self.started_at = nil
-    save!
   end
 
   def reset_to_agent_run!(agent_run)
-    # TODO this finding of the agent run is a bit fragile. Would be better
+    # TODO: this finding of the agent run is a bit fragile. Would be better
     # if agent runs had an explicit identifying value.
-    checkpoint = states.find do |checkpoint, state|
-      checkpoint =~ /run_agent/ && state['value']['id'] == agent_run.id
+    checkpoint = states.find do |cp, state|
+      cp.include?('run_agent') && state['value']['id'] == agent_run.id
     end&.first
 
-    raise "No checkpoint found for AgentRun #{agent_run.id} on AgentRun #{id}"
+    raise "No checkpoint found for AgentRun #{agent_run.id} on AgentRun #{id}" unless checkpoint
 
     reset_to_checkpoint!(checkpoint)
   end

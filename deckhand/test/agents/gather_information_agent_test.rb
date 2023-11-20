@@ -8,6 +8,7 @@ class ApplicationAgentTest < ActiveSupport::TestCase
     @context = ApplicationAgent::Context.new('investigating project', codebase: @codebase)
     @context.add_observation('There is a file with the name `README.md`')
     @agent = GatherInformationAgent.new('What is this project about?', context: @context)
+    @agent.agent_run = AgentRun.create!
   end
   
   test 'it makes a prompt and runs an agent' do
