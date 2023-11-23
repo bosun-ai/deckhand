@@ -22,6 +22,9 @@ Style/FrozenStringLiteralComment:
 Metrics/ClassLength:
   Max: 500
 
+Metrics/MethodLength:
+  Enabled: False
+
 Style/StringLiterals:
   Enabled: false
 

@@ -1,0 +1,2 @@
+class CodebaseAgentServicesController < ApplicationController
+end

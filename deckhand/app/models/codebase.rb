@@ -1,11 +1,11 @@
 class Codebase < ApplicationRecord
-  after_create :create_repository
-
   before_validation :ensure_name_slug, unless: -> { name_slug.present? }
   validates :name, presence: { on: :create, message: "can't be blank" }
   validates :url, presence: { on: :create, message: "can't be blank" }
 
   has_many :github_access_tokens, dependent: :destroy
+
+  after_create :create_repository
 
   after_save :update_project_description, if: :saved_change_to_context?
   after_save :describe_project_in_github_issue, if: :saved_change_to_description?
@@ -16,17 +16,15 @@ class Codebase < ApplicationRecord
 
   def current_agent_run
     agent_run = AgentRun.for_codebase(self).last
-    if agent_run && !agent_run.finished?
-      agent_run  
-    end
+    agent_run if agent_run && !agent_run.finished?
   end
 
   def agent_context(assignment)
     ApplicationAgent::Context.new(assignment, codebase: self, history: context&.dig('history') || [])
   end
 
-  def run_agent(agent, assignment, *args, **kwargs)
-    AgentJob.perform_later(agent, context: agent_context(assignment).as_json, **kwargs)
+  def run_agent(agent, assignment, *_args, **)
+    AgentJob.perform_later(agent, context: agent_context(assignment).as_json, **)
   end
 
   CODEBASE_DIR = if Rails.env.production?
@@ -35,7 +33,7 @@ class Codebase < ApplicationRecord
                    Rails.root.join('tmp/code')
                  end
 
-  ADD_DOCUMENTATION_HEADER = '## Undocumented files'
+  ADD_DOCUMENTATION_HEADER = '## Undocumented files'.freeze
 
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
@@ -50,8 +48,8 @@ class Codebase < ApplicationRecord
     self.name_slug = name.parameterize if name
   end
 
-  def path
-    File.join(CODEBASE_DIR, "#{id}-#{name_slug}")
+  def path(file=nil)
+    File.join([CODEBASE_DIR, "#{id}-#{name_slug}", file].compact)
   end
 
   def files_graph_name
