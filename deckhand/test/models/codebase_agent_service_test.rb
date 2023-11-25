@@ -6,7 +6,7 @@ class CodebaseAgentServiceTest < ActiveSupport::TestCase
   setup do
     @codebase = Codebase.create!(name: 'test', github_app_installation_id: nil, url: 'https://example.com')
     @service = CodebaseAgentService.create!(
-      codebase: @codebase, name: TestGenerationAgent.name,
+      codebase: @codebase, name: CodebaseAgents::TestGenerationAgent.name,
       configuration: { 'something' => 'or other' },
       state: { 'some' => 'state' }
     )

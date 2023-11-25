@@ -4,6 +4,7 @@ class CodebaseAgentService < ApplicationRecord
   validates :name, presence: true
 
   def self.agents
+    Rails.autoloaders.main.eager_load_namespace(CodebaseAgents) if Rails.env.development?
     CodebaseAgent.descendants
   end
 

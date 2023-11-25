@@ -7,7 +7,17 @@
       </div>
     </h3>
 
-    <p><%= markdown_to_html codebase.description %>
+    <div>
+      <%= markdown_to_html codebase.description %>
+    </div>
+
+    <ul>
+      <% codebase.services.each do |service| %>
+        <li>
+          <%= render 'codebase_agent_services/codebase_agent_service', service: service %>
+        </li>
+      <% end %>
+    </ul>
 
     <% if controller_name == "codebases" %>
       <div class="absolute right-0 top-0 w-128">
