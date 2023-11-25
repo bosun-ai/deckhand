@@ -1,12 +1,12 @@
-<div id="<%= dom_id service %>" class="card bg-base-200 shadow-xl mt-4 mb-4">
+<div id="<%= dom_id codebase_agent_service %>" class="card bg-base-200 shadow-xl mt-4 mb-4">
   <div class="card-body relative">
     <h3 class="card-title">
-      <%= service.name %>
+      <%= codebase_agent_service.name %>
     </h3>
 
-    <%= button_to (service.enabled? ? "Disable service" : "Enable service"), 
-        codebase_agent_service_path(service),
-        params: {'codebase_agent_service[enabled]' => !service.enabled?},
+    <%= button_to (codebase_agent_service.enabled? ? "Disable service" : "Enable service"), 
+        codebase_agent_service_path(codebase_agent_service),
+        params: {'codebase_agent_service[enabled]' => !codebase_agent_service.enabled?},
         method: :patch,
         class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
 

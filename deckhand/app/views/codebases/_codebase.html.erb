@@ -14,7 +14,7 @@
     <ul>
       <% codebase.services.each do |service| %>
         <li>
-          <%= render 'codebase_agent_services/codebase_agent_service', service: service %>
+          <%= render 'codebase_agent_services/codebase_agent_service', codebase_agent_service: service %>
         </li>
       <% end %>
     </ul>
