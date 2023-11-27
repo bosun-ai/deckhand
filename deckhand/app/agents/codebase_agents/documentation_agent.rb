@@ -13,14 +13,27 @@ module CodebaseAgents
     # To make this a thing we should make it possible to give chat histories to the prompt method
 
     def run
+      on_service_enabled if event[:type] == 'enabled'
+
       comment = event.dig(:comment, :body)
       add_documentation_based_on_comment(comment) if comment&.strip&.start_with?(ADD_DOCUMENTATION_HEADER)
     end
 
     def add_documentation_based_on_comment(comment)
+      return unless comment.match?(/[x] Add documentation to these files/)
+
       files = comment.split('*')[1..-2].map(&:strip)
       documentation_context = codebase.agent_context('Adding documentation to files')
       run_agent(Codebase::Maintenance::AddDocumentation, files, context: documentation_context)
+    end
+
+    def discover_undocumented_files
+      context = codebase.agent_context('Discovering undocumented files')
+      run_agent(FileAnalysis::UndocumentedFilesAgent, context:)
+    end
+
+    def on_service_enabled
+      discover_undocumented_files
     end
   end
 end

@@ -49,7 +49,9 @@ class ApplicationAgent < AutonomousAgent
 
     result = nil
 
-    agent_run = self.agent_run ||= AgentRun.create!(**agent_run_initialization_attributes)
+    attrs = agent_run_initialization_attributes
+
+    agent_run = self.agent_run ||= AgentRun.create!(**attrs)
 
     AgentRun.with_advisory_lock("AgentRun##{agent_run.id}") do
       DeckhandTracer.in_span("#{self.class.name}#run") do

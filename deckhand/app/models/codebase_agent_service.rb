@@ -5,6 +5,8 @@ class CodebaseAgentService < ApplicationRecord
 
   validates :name, presence: true
 
+  after_save :notify_enabled_change, if: :saved_change_to_enabled?
+
   def self.agents
     Rails.autoloaders.main.eager_load_namespace(CodebaseAgents) if Rails.env.development?
     CodebaseAgent.descendants
@@ -21,5 +23,23 @@ class CodebaseAgentService < ApplicationRecord
 
   def process_event(event)
     codebase.run_agent(agent_class, "Process event", event:, service: self)
+  end
+
+  def notify_enabled_change
+    if enabled?
+      add_issue_comment("Agent #{name} enabled")
+      process_event({ type: 'enabled' })
+    else
+      add_issue_comment("Agent #{name} disabled")
+      process_event({ type: 'disabled' })
+    end
+  end
+
+  def github_issue_id
+    codebase.github_app_issue_id
+  end
+
+  def add_issue_comment(comment)
+    codebase.github_client&.add_comment(codebase.name, github_issue_id, comment)
   end
 end

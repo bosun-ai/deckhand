@@ -34,8 +34,6 @@ class Codebase < ApplicationRecord
                    Rails.root.join('tmp/code')
                  end
 
-  ADD_DOCUMENTATION_HEADER = '## Undocumented files'.freeze
-
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
     repositories = client.list_app_installation_repositories.repositories.map do |repo|
@@ -205,7 +203,7 @@ class Codebase < ApplicationRecord
     Rails.logger.info "Received main issue event: #{event.dig(:comment, :user, :login).inspect}"
     return unless event.dig(:comment, :user, :login) == 'bosun-deckhand[bot]'
 
-    codebase_agent_services.enabled?.each do |service|
+    services.enabled.each do |service|
       service.process_event(event)
     end
   end

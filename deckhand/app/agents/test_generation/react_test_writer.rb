@@ -1,4 +1,5 @@
 # The ReactTestWriter writes tests for React frontends.
+module TestGeneration
 class ReactTestWriter < ApplicationAgent
   arguments code_file_path: nil, test_file_path: :nil
 
@@ -38,4 +39,5 @@ class ReactTestWriter < ApplicationAgent
 
     new_contents = parse_markdown_block(result)
   end
+end
 end

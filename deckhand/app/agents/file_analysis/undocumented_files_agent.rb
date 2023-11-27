@@ -1,4 +1,6 @@
 class FileAnalysis::UndocumentedFilesAgent < ApplicationAgent
+  ADD_DOCUMENTATION_HEADER = '## Undocumented files'.freeze
+
   def file_extensions_prompt
     <<~PROMPT
       Given the following description of the project:
