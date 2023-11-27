@@ -64,13 +64,13 @@ class Codebase < ApplicationRecord
   end
 
   def github_repo
-    return unless client = github_client
+    return unless (client = github_client)
 
     @github_repo ||= client.repository(name)
   end
 
   def git_url
-    if repo = github_repo
+    if (repo = github_repo)
       repo_uri = URI.parse(repo.clone_url)
       repo_uri.user = 'x-access-token'
       repo_uri.password = github_client.access_token
@@ -90,7 +90,7 @@ class Codebase < ApplicationRecord
 
   def create_repository
     ShellTask.run!(description: "Creating repository for #{name}", script: "git clone #{git_url} #{path}") do |message|
-      if status = message[:status]
+      if (status = message[:status])
         check_out_finished!(status)
       end
     end

@@ -1,6 +1,8 @@
 class CodebaseAgentService < ApplicationRecord
   belongs_to :codebase
 
+  has_many :agent_runs, dependent: :destroy
+
   validates :name, presence: true
 
   def self.agents

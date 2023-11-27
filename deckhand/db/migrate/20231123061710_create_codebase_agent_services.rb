@@ -9,5 +9,7 @@ class CreateCodebaseAgentServices < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
+
+    add_column :agent_runs, :codebase_agent_service_id, :bigint, null: true
   end
 end

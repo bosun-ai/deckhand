@@ -64,7 +64,8 @@ CREATE TABLE public.agent_runs (
     error jsonb,
     states jsonb DEFAULT '{}'::jsonb,
     started_at timestamp(6) without time zone,
-    parent_checkpoint character varying
+    parent_checkpoint character varying,
+    codebase_agent_service_id bigint
 );
 
 

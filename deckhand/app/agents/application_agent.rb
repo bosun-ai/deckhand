@@ -49,14 +49,7 @@ class ApplicationAgent < AutonomousAgent
 
     result = nil
 
-    attrs = {
-      name: self.class.name,
-      arguments: arguments.except(:context, :parent),
-      context: context.as_json,
-      parent: parent&.agent_run,
-      parent_checkpoint: parent_checkpoint
-    }
-    agent_run = self.agent_run ||= AgentRun.create!(**attrs)
+    agent_run = self.agent_run ||= AgentRun.create!(**agent_run_initialization_attributes)
 
     AgentRun.with_advisory_lock("AgentRun##{agent_run.id}") do
       DeckhandTracer.in_span("#{self.class.name}#run") do
@@ -265,6 +258,16 @@ class ApplicationAgent < AutonomousAgent
   end
 
   private
+
+  def agent_run_initialization_attributes
+    {
+      name: self.class.name,
+      arguments: arguments.except(:context, :parent),
+      context: context.as_json,
+      parent: parent&.agent_run,
+      parent_checkpoint:
+    }
+  end
 
   def should_execute_checkpoint?
     # TODO: we need a more sensible way of determining whether we should spawn a new task for an execution

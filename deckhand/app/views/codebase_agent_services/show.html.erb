@@ -12,4 +12,10 @@
     </div>
     <%= link_to "Back to codebase_agent_services", codebase_agent_services_path, class: "ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
   </div>
+
+  <div id="agent_runs" class="card bg-accent">
+    <% @codebase_agent_service.agent_runs.root.reorder(created_at: 'DESC').each do |agent_run| %>
+      <%= render agent_run %>
+    <% end %>
+  </div>
 </div>
