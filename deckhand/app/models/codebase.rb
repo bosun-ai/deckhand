@@ -102,7 +102,7 @@ class Codebase < ApplicationRecord
   # so we don't run into conflicts when doing multiple shell_tasks at the same time for the same repo.
   def new_branch(branch_name, &block)
     ShellTask.run!(description: "Creating branch #{branch_name} for #{name}",
-                   script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
+                   script: "cd #{path} && git checkout -f -B #{branch_name} #{default_branch}") do |message|
       if (status = message[:status]) && block
         block.call(status)
       end

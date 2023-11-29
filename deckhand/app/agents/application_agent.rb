@@ -1,7 +1,8 @@
 class ApplicationAgent < AutonomousAgent
   include ApplicationAgent::Helpers
+  include ApplicationAgent::Random
   include PromptHelpers
-  
+
   # TODO: allow lambdas for default argument values
   arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
@@ -44,6 +45,7 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_run(*args, **kwargs, &block)
+    @random = nil # TODO bit hacky to reset this here
     @checkpoint_index = 0
     @checkpoints_executed_count = 0
 

@@ -7,6 +7,8 @@ class CodebaseAgentService < ApplicationRecord
 
   after_save :notify_enabled_change, if: :saved_change_to_enabled?
 
+  scope :enabled, -> { where(enabled: true) }
+
   def self.agents
     Rails.autoloaders.main.eager_load_namespace(CodebaseAgents) if Rails.env.development?
     CodebaseAgent.descendants
@@ -22,16 +24,16 @@ class CodebaseAgentService < ApplicationRecord
   end
 
   def process_event(event)
-    codebase.run_agent(agent_class, "Process event", event:, service: self)
+    codebase.run_agent(agent_class, "Process event", event: event.as_json, service_id: id)
   end
 
   def notify_enabled_change
     if enabled?
       add_issue_comment("Agent #{name} enabled")
-      process_event({ type: 'enabled' })
+      process_event({ 'type' => 'enabled' })
     else
       add_issue_comment("Agent #{name} disabled")
-      process_event({ type: 'disabled' })
+      process_event({ 'type' => 'disabled' })
     end
   end
 
