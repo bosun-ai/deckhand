@@ -1,5 +1,7 @@
 class AgentRun < ApplicationRecord
   belongs_to :parent, optional: true, class_name: 'AgentRun'
+  belongs_to :codebase_agent_service, optional: true
+
   has_many :children, class_name: 'AgentRun', foreign_key: 'parent_id', dependent: :destroy
   has_many :events, class_name: 'AgentRunEvent', dependent: :destroy
 

@@ -64,7 +64,8 @@ CREATE TABLE public.agent_runs (
     error jsonb,
     states jsonb DEFAULT '{}'::jsonb,
     started_at timestamp(6) without time zone,
-    parent_checkpoint character varying
+    parent_checkpoint character varying,
+    codebase_agent_service_id bigint
 );
 
 
@@ -97,6 +98,41 @@ CREATE TABLE public.ar_internal_metadata (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
+
+
+--
+-- Name: codebase_agent_services; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.codebase_agent_services (
+    id bigint NOT NULL,
+    codebase_id bigint NOT NULL,
+    configuration jsonb DEFAULT '{}'::jsonb NOT NULL,
+    state jsonb DEFAULT '{}'::jsonb NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    name character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: codebase_agent_services_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.codebase_agent_services_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: codebase_agent_services_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.codebase_agent_services_id_seq OWNED BY public.codebase_agent_services.id;
 
 
 --
@@ -322,6 +358,13 @@ ALTER TABLE ONLY public.agent_runs ALTER COLUMN id SET DEFAULT nextval('public.a
 
 
 --
+-- Name: codebase_agent_services id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.codebase_agent_services ALTER COLUMN id SET DEFAULT nextval('public.codebase_agent_services_id_seq'::regclass);
+
+
+--
 -- Name: codebases id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -364,6 +407,14 @@ ALTER TABLE ONLY public.agent_runs
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: codebase_agent_services codebase_agent_services_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.codebase_agent_services
+    ADD CONSTRAINT codebase_agent_services_pkey PRIMARY KEY (id);
 
 
 --
@@ -450,6 +501,13 @@ CREATE INDEX index_agent_run_events_on_agent_run_id ON public.agent_run_events U
 --
 
 CREATE INDEX index_agent_runs_on_parent_id ON public.agent_runs USING btree (parent_id);
+
+
+--
+-- Name: index_codebase_agent_services_on_codebase_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_codebase_agent_services_on_codebase_id ON public.codebase_agent_services USING btree (codebase_id);
 
 
 --
@@ -574,6 +632,14 @@ ALTER TABLE ONLY public.agent_run_events
 
 
 --
+-- Name: codebase_agent_services fk_rails_bf6d0985f6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.codebase_agent_services
+    ADD CONSTRAINT fk_rails_bf6d0985f6 FOREIGN KEY (codebase_id) REFERENCES public.codebases(id);
+
+
+--
 -- Name: agent_runs fk_rails_f5bc068fd6; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -588,6 +654,7 @@ ALTER TABLE ONLY public.agent_runs
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20231123061710'),
 ('20231115054211'),
 ('20231115020110'),
 ('20231109175107'),

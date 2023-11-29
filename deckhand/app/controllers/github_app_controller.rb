@@ -18,7 +18,12 @@ class GithubAppController < ApplicationController
 
     if installation.present?
       codebase = Codebase.find_by(github_app_installation_id: installation[:id], name: repo_name)
-      codebase.process_event(params) if codebase
+      if codebase
+        # TODO this is super duper unsafe because we're not validating this hash actually comes from
+        # github. And permit! makes it assume everything is permitted.
+        params.permit!
+        codebase.process_event(params)
+      end
     end
 
     render json: { status: :ok }

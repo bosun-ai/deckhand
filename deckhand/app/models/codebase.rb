@@ -1,11 +1,12 @@
 class Codebase < ApplicationRecord
-  after_create :create_repository
-
   before_validation :ensure_name_slug, unless: -> { name_slug.present? }
   validates :name, presence: { on: :create, message: "can't be blank" }
   validates :url, presence: { on: :create, message: "can't be blank" }
 
   has_many :github_access_tokens, dependent: :destroy
+  has_many :services, class_name: 'CodebaseAgentService', dependent: :destroy
+
+  after_create :create_repository
 
   after_save :update_project_description, if: :saved_change_to_context?
   after_save :describe_project_in_github_issue, if: :saved_change_to_description?
@@ -16,17 +17,15 @@ class Codebase < ApplicationRecord
 
   def current_agent_run
     agent_run = AgentRun.for_codebase(self).last
-    if agent_run && !agent_run.finished?
-      agent_run  
-    end
+    agent_run if agent_run && !agent_run.finished?
   end
 
   def agent_context(assignment)
     ApplicationAgent::Context.new(assignment, codebase: self, history: context&.dig('history') || [])
   end
 
-  def run_agent(agent, assignment, *args, **kwargs)
-    AgentJob.perform_later(agent, context: agent_context(assignment).as_json, **kwargs)
+  def run_agent(agent, assignment, *_args, **)
+    AgentJob.perform_later(agent, context: agent_context(assignment).as_json, **)
   end
 
   CODEBASE_DIR = if Rails.env.production?
@@ -34,8 +33,6 @@ class Codebase < ApplicationRecord
                  else
                    Rails.root.join('tmp/code')
                  end
-
-  ADD_DOCUMENTATION_HEADER = '## Undocumented files'
 
   def self.create_from_github_installation_id!(installation_id)
     client = GithubApp.client(installation_id)
@@ -50,8 +47,8 @@ class Codebase < ApplicationRecord
     self.name_slug = name.parameterize if name
   end
 
-  def path
-    File.join(CODEBASE_DIR, "#{id}-#{name_slug}")
+  def path(file=nil)
+    File.join([CODEBASE_DIR, "#{id}-#{name_slug}", file].compact)
   end
 
   def files_graph_name
@@ -65,13 +62,13 @@ class Codebase < ApplicationRecord
   end
 
   def github_repo
-    return unless client = github_client
+    return unless (client = github_client)
 
     @github_repo ||= client.repository(name)
   end
 
   def git_url
-    if repo = github_repo
+    if (repo = github_repo)
       repo_uri = URI.parse(repo.clone_url)
       repo_uri.user = 'x-access-token'
       repo_uri.password = github_client.access_token
@@ -91,7 +88,7 @@ class Codebase < ApplicationRecord
 
   def create_repository
     ShellTask.run!(description: "Creating repository for #{name}", script: "git clone #{git_url} #{path}") do |message|
-      if status = message[:status]
+      if (status = message[:status])
         check_out_finished!(status)
       end
     end
@@ -105,7 +102,7 @@ class Codebase < ApplicationRecord
   # so we don't run into conflicts when doing multiple shell_tasks at the same time for the same repo.
   def new_branch(branch_name, &block)
     ShellTask.run!(description: "Creating branch #{branch_name} for #{name}",
-                   script: "cd #{path} && git checkout -b #{branch_name} #{default_branch}") do |message|
+                   script: "cd #{path} && git checkout -f -B #{branch_name} #{default_branch}") do |message|
       if (status = message[:status]) && block
         block.call(status)
       end
@@ -141,11 +138,19 @@ class Codebase < ApplicationRecord
 
     return unless checked_out
 
+    create_services!
+
     perform_later :create_main_github_issue
 
     perform_later :discover_basic_facts
 
     perform_later :discover_testing_infrastructure
+  end
+
+  def create_services!
+    CodebaseAgentService.agents.each do |agent|
+      CodebaseAgentService.find_or_create_by!(codebase: self, name: agent.name)
+    end
   end
 
   def discover_undocumented_files
@@ -162,7 +167,7 @@ class Codebase < ApplicationRecord
   end
 
   def update_project_description
-  run_agent(DescribeCodebaseAgent, "Describing project")
+    run_agent(DescribeCodebaseAgent, "Describing project")
   end
 
   def create_main_github_issue
@@ -198,17 +203,9 @@ class Codebase < ApplicationRecord
     Rails.logger.info "Received main issue event: #{event.dig(:comment, :user, :login).inspect}"
     return unless event.dig(:comment, :user, :login) == 'bosun-deckhand[bot]'
 
-    process_bot_action_event(event)
-  end
-
-  def process_bot_action_event(event)
-    comment = event.dig(:comment, :body)
-
-    puts "Received process_bot_action_event: #{comment.inspect}"
-    return unless comment.strip.start_with?(ADD_DOCUMENTATION_HEADER)
-
-    files = comment.split('*')[1..-2].map(&:strip)
-    add_documentation_to_undocumented_files(files)
+    services.enabled.each do |service|
+      service.process_event(event)
+    end
   end
 
   # discover basic facts is going to establish a list of basic facts about the codebase
@@ -231,9 +228,5 @@ class Codebase < ApplicationRecord
 
   def discover_testing_infrastructure
     run_agent(::FileAnalysis::DiscoverTestingInfrastructureAgent, "Discovering testing infrastructure")
-  end
-
-  def add_documentation_to_undocumented_files(files)
-    run_agent(Codebase::Maintenance::AddDocumentation, 'Adding documentation to files', files)
   end
 end

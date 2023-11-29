@@ -66,11 +66,6 @@ class AgentRunsController < ApplicationController
     @agent_run = AgentRun.find(params[:id] || params[:agent_run_id])
   end
 
-  # Use callbacks to share common setup or constraints between actions.
-  def set_agent_run
-    @agent_run = AgentRun.find(params[:id])
-  end
-
   # Only allow a list of trusted parameters through.
   def agent_run_params
     params.require(:agent_run).permit(:name, :arguments, :context, :output, :finished_at, :parent_id)
