@@ -30,7 +30,7 @@ module Deckhand::Lm
 
   DEFAULT_SYSTEM = 'You are a helpful assistant that provides information without formalities.'
 
-  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default, format: nil)
+  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 2049, mode: :default, format: nil, **other_options)
     DeckhandTracer.in_span('PROMPT') do
       current_span = OpenTelemetry::Trace.current_span
       current_span.add_event('prompt',
@@ -51,6 +51,8 @@ module Deckhand::Lm
       end
 
       parameters[:functions] = functions if functions.present?
+
+      parameters.merge!(other_options)
 
       tries = 0
       response = nil
