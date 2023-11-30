@@ -20,6 +20,10 @@ module ApplicationAgent::Helpers
     JSON.parse(json.gsub(/^\s*```(json)?/, "").gsub(/```\s*$/, ""))
   end
 
+  def codebase
+    context&.codebase
+  end
+
   def tool_classes
     tools.map do |tool_or_tool_name|
       if tool_or_tool_name.is_a? String

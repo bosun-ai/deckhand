@@ -1,7 +1,8 @@
 class ApplicationAgent < AutonomousAgent
   include ApplicationAgent::Helpers
+  include ApplicationAgent::Random
   include PromptHelpers
-  
+
   # TODO: allow lambdas for default argument values
   arguments context: nil, tools: [AnalyzeFileTool, ListFilesTool]
 
@@ -44,18 +45,14 @@ class ApplicationAgent < AutonomousAgent
   end
 
   def around_run(*args, **kwargs, &block)
+    @random = nil # TODO bit hacky to reset this here
     @checkpoint_index = 0
     @checkpoints_executed_count = 0
 
     result = nil
 
-    attrs = {
-      name: self.class.name,
-      arguments: arguments.except(:context, :parent),
-      context: context.as_json,
-      parent: parent&.agent_run,
-      parent_checkpoint: parent_checkpoint
-    }
+    attrs = agent_run_initialization_attributes
+
     agent_run = self.agent_run ||= AgentRun.create!(**attrs)
 
     AgentRun.with_advisory_lock("AgentRun##{agent_run.id}") do
@@ -265,6 +262,16 @@ class ApplicationAgent < AutonomousAgent
   end
 
   private
+
+  def agent_run_initialization_attributes
+    {
+      name: self.class.name,
+      arguments: arguments.except(:context, :parent),
+      context: context.as_json,
+      parent: parent&.agent_run,
+      parent_checkpoint:
+    }
+  end
 
   def should_execute_checkpoint?
     # TODO: we need a more sensible way of determining whether we should spawn a new task for an execution

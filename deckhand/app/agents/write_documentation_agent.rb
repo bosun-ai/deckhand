@@ -32,7 +32,7 @@ class WriteDocumentationAgent < ApplicationAgent
     prompt(
       documenter_prompt,
       system: documenter_system,
-      max_tokens: 8000,
+      max_tokens: 4096,
       mode: :very_large
     ).full_response.strip.split(/```.*\n/, 2).last.strip.delete_suffix('```').strip
   end

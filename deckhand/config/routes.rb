@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   mount GoodJob::Engine => 'good_job'
 
+  resources :codebase_agent_services
+
   resources :agent_runs do
     post "retry", to: "agent_runs#retry", as: :retry
   end
