@@ -7,6 +7,12 @@ class CodebaseAgent < ApplicationAgent
     )
   end
 
+  def run_agent_child_attributes
+    super.merge(
+      service_id:
+    )
+  end
+
   def service
     @service ||= CodebaseAgentService.find(service_id)
   end

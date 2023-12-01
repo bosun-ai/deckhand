@@ -10,12 +10,22 @@ module CodebaseAgents
     # been corrected.
     # To make this a thing we should make it possible to give chat histories to the prompt method
 
+    # ok so the flow is going to be like this:
+    # 1. user activates the agent
+    # 2. agent runs the coverage tool, identifies what lines are not covered
+    # 3. agent writes a test for the uncovered lines
+    # 4. if the test fails, the changes are reverted and the agent is asked to fix the problem
+    # 4. agent commits the test to the repo
+    # 5. agent runs the coverage tool again, identifies what lines are not covered
+    # 6. if there's still uncovered lines, the agent starts a new agent run
     def run
-      puts "TestGenerationAgent: #{event.inspect}, #{service.inspect}"
-      {
-        "event" => event.to_json,
-        "service" => service.to_json
-      }
+      files_with_coverage = run(DetermineReactTestCoverageAgent, "Determine React test coverage", context: )
+
+      file = files_with_coverage.sort_by { |a| a['coverage'] }.first['path']
+
+      run(WriteReactTestAgent, "Write React test", file:, context:)
+
+      codebase.commit
     end
   end
 end

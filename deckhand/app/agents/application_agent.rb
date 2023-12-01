@@ -148,10 +148,14 @@ class ApplicationAgent < AutonomousAgent
     end
   end
 
+  def run_agent_child_attributes
+    { parent_checkpoint: checkpoint_name }
+  end
+
   def around_run_agent(*args, **kwargs, &block)
     result = next_checkpoint("run_agent") do
       Rails.logger.debug "Actually running agent in #{self.class.name}##{agent_run.id} (#{checkpoint_name}): #{args.inspect}"
-      block.call(*args, **kwargs.merge(parent_checkpoint: checkpoint_name))
+      block.call(*args, **kwargs.merge(run_agent_child_attributes))
     end
 
     nested_agent_run = if !result.is_a? AgentRun
