@@ -13,6 +13,11 @@ class CodebaseAgent < ApplicationAgent
     )
   end
 
+  def run_task(task)
+    output = `cd #{service.codebase.path} && #{task}`
+    [output, $CHILD_STATUS]
+  end
+
   def service
     @service ||= CodebaseAgentService.find(service_id)
   end
