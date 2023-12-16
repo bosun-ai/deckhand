@@ -23,9 +23,11 @@ module CodebaseAgents
 
       file = files_with_coverage.min_by { |a| a['coverage'] }['path']
 
-      run(WriteReactTestAgent, "Write React test", file:, context:)
+      test_file = run(FindReactTestFileAgent, "Find React test file", file:, context:)
 
-      codebase.commit
+      run(WriteReactTestAgent, "Write React test", file:, test_file:, context:)
+
+      codebase.commit("Add test for #{file}")
     end
   end
 end
