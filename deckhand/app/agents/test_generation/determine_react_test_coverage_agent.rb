@@ -7,20 +7,25 @@ module TestGeneration
 
     def run_coverage_tool
       _, result = run_task("npm test -- --coverage --watchAll=false")
-      return parse_lcov_file("coverage/lcov.info") if result.success?
+      if result.success?
+        lcov_file = read_file("coverage/lcov.info")
+        return parse_lcov_file(lcov_file)
+      end
 
       raise "Coverage tool failed with exit code #{result.exitstatus}"
     end
 
     def parse_lcov_file(lcov_file)
-      lcov_file_contents = File.read(lcov_file)
-      lcov_file_contents.split(/^end_of_record$/).map do |section|
+      lcov_file.split(/^end_of_record$/).filter_map do |section|
+        section.strip!
+        next if section.empty?
+
         lines_found = section.match(/^LF:(.*)$/)[1].to_i
         lines_hit = section.match(/^LH:(.*)$/)[1].to_i
         coverage = lines_hit.to_f / lines_found
         {
           path: section.match(/^SF:(.*)$/)[1],
-          coverage:
+          coverage: (coverage || 0.0).round(2)
         }.stringify_keys
       end
     end

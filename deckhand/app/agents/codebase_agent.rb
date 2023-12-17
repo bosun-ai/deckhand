@@ -18,6 +18,12 @@ class CodebaseAgent < ApplicationAgent
     [output, $CHILD_STATUS]
   end
 
+  def read_file(file)
+    file.gsub!(%r{^/}, '')
+    file.gsub!(%r{^./}, '')
+    File.read(Pathname.new(service.codebase.path) / file)
+  end
+
   def service
     @service ||= CodebaseAgentService.find(service_id)
   end

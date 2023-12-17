@@ -19,13 +19,13 @@ module CodebaseAgents
     # 5. agent runs the coverage tool again, identifies what lines are not covered
     # 6. if there's still uncovered lines, the agent starts a new agent run
     def run
-      files_with_coverage = run(DetermineReactTestCoverageAgent, "Determine React test coverage", context:)
+      files_with_coverage = run(TestGeneration::DetermineReactTestCoverageAgent, "Determine React test coverage", context:)
 
       file = files_with_coverage.min_by { |a| a['coverage'] }['path']
 
-      test_file = run(FindReactTestFileAgent, "Find React test file", file:, context:)
+      test_file = run(TestGeneration::FindReactTestFileAgent, "Find React test file", file:, context:)
 
-      run(WriteReactTestAgent, "Write React test", file:, test_file:, context:)
+      run(TestGeneration::ReactTestWriter, "Write React test", file:, test_file:, context:)
 
       codebase.commit("Add test for #{file}")
     end

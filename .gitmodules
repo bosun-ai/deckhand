@@ -1,0 +1,3 @@
+[submodule "deckhand/test/assets/todolist"]
+	path = deckhand/test/assets/todolist
+	url = git@github.com:bosun-ai/todolist.git
