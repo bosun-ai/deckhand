@@ -1,3 +1,5 @@
+# CodebaseAgent is a base class for agents that run on a codebase. It provides a
+# number of helper methods for running commands and reading files.
 class CodebaseAgent < ApplicationAgent
   arguments event: nil, service_id: nil
 

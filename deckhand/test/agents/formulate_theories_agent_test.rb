@@ -28,9 +28,8 @@ class FormulateTheoriesAgentTest < ActiveSupport::TestCase
 
     result = @agent.run
 
-
     assert_nil result.error
-    
+
     assert_equal ["It is a good agent", "It is a bad agent"], result.output
   end
 end
