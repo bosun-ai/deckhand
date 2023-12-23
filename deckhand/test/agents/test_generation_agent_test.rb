@@ -14,17 +14,17 @@ class TestGenerationAgentTest < ActiveSupport::TestCase
     @agent
       .expects(:run_agent)
       .with(TestGeneration::DetermineReactTestCoverageAgent, "Determine React test coverage", context: @context)
-      .returns(
+      .returns(stub(output:
         [
           { 'path' => 'src/App.js', 'coverage' => 0.5 },
           { 'path' => 'src/Other.js', 'coverage' => 0.8 }
         ]
-      )
+      ))
 
     @agent
       .expects(:run_agent)
       .with(TestGeneration::FindReactTestFileAgent, "Find React test file", file: 'src/App.js', context: @context)
-      .returns('src/App.test.js')
+      .returns(stub(output: 'src/App.test.js'))
 
     @agent
       .expects(:run_agent)

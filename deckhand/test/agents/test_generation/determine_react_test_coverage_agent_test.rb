@@ -14,7 +14,25 @@ module TestGeneration
       # the agent should use run_task to run the coverage tool
       @agent.expects(:run_task).with("npm test -- --coverage --watchAll=false").returns([nil, stub(success?: true)])
       @agent.expects(:read_file).with("coverage/lcov.info").returns(LCOV_EXAMPLE)
-      result = @agent.run.output
+
+      [
+        "src/AddItem.tsx",
+        "src/App.tsx",
+        "src/Common.ts",
+        "src/ToDoList.tsx",
+        "src/index.tsx",
+        "src/reportWebVitals.ts"
+      ].each do |path|
+        @agent.expects(:read_file).with(path).returns(
+          File.read(Rails.root / 'test' / 'assets' / 'todolist' / path)
+        )
+      end
+
+      result = @agent.run
+
+      output = result.output&.map { |a| a.slice('path', 'coverage') }
+
+      assert_nil result.error
 
       assert_equal [
         { "path" => "src/AddItem.tsx", "coverage" => 0.5 },
@@ -23,7 +41,11 @@ module TestGeneration
         { "path" => "src/ToDoList.tsx", "coverage" => 1.0 },
         { "path" => "src/index.tsx", "coverage" => 0.0 },
         { "path" => "src/reportWebVitals.ts", "coverage" => 0.0 }
-      ], result
+      ], output
+
+      add_item_coverage = result.output.find { |a| a['path'] == 'src/AddItem.tsx' }
+
+      assert_equal "const isValid = (item: Item): boolean => {\n", add_item_coverage['missed_lines'][0]['code']
     end
 
     LCOV_EXAMPLE = <<~LCOV.freeze

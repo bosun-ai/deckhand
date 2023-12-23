@@ -22,7 +22,7 @@ module TestGeneration
 
       files = output.lines.select { |f| f.match(/\.(js|ts)x?$/) }.map(&:strip)
 
-      response = prompt(find_test_prompt(files)).output
+      response = prompt(find_test_prompt(files)).full_response
 
       return nil if response.include?('<none>')
 

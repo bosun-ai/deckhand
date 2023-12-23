@@ -23,7 +23,7 @@ module TestGeneration
         assert prompt.include?('src/AddItem.test.tsx')
         assert prompt.include?('src/App.test.tsx')
         assert_not prompt.include?('README.md')
-      end.returns(stub(output: 'src/AddItem.test.tsx'))
+      end.returns(stub(full_response: 'src/AddItem.test.tsx'))
 
       assert_equal 'src/AddItem.test.tsx', @agent.run.output
     end

@@ -21,11 +21,14 @@ module CodebaseAgents
     def run
       files_with_coverage = run(TestGeneration::DetermineReactTestCoverageAgent, "Determine React test coverage", context:)
 
-      file = files_with_coverage.min_by { |a| a['coverage'] }['path']
+      file_with_coverage = files_with_coverage.min_by { |a| a['coverage'] }
+
+      file = file_with_coverage['path']
+      initial_coverage = file_with_coverage['coverage']
 
       test_file = run(TestGeneration::FindReactTestFileAgent, "Find React test file", file:, context:)
 
-      run(TestGeneration::ReactTestWriter, "Write React test", file:, test_file:, context:)
+      run(TestGeneration::ReactTestWriter, "Write React test", file:, test_file:, initial_coverage:, context:)
 
       codebase.commit("Add test for #{file}")
     end

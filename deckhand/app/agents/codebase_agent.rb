@@ -26,6 +26,10 @@ class CodebaseAgent < ApplicationAgent
     File.read(Pathname.new(service.codebase.path) / file)
   end
 
+  def write_file(file, contents)
+    File.write(Pathname.new(service.codebase.path) / file, contents)
+  end
+
   def service
     @service ||= CodebaseAgentService.find(service_id)
   end

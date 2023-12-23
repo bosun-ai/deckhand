@@ -1,7 +1,5 @@
 module AutonomousAgent::LlmActions
   def prompt(text, **kwargs)
-    result = nil
-
     result = around_prompt(text, **kwargs) do |text, **kwargs|
       Deckhand::Lm.prompt(text, **kwargs)
     end
