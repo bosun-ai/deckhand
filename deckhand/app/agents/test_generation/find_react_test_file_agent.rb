@@ -16,7 +16,7 @@ module TestGeneration
     end
 
     def run
-      output, status = run_task("git ls-files")
+      output, _, status = run_task("git ls-files")
 
       raise "Could not list files in repo: #{output}" unless status.success?
 

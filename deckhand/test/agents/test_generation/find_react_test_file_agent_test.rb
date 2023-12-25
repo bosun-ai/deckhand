@@ -17,7 +17,7 @@ module TestGeneration
 
     test 'should run agent' do
       @agent = TestGeneration::FindReactTestFileAgent.new(file: 'src/AddItem.tsx', context: @context)
-      @agent.expects(:run_task).with("git ls-files").returns([EXAMPLE_FILES, stub(success?: true)])
+      @agent.expects(:run_task).with("git ls-files").returns([EXAMPLE_FILES, nil, stub(success?: true)])
       @agent.expects(:prompt).with do |prompt|
         assert prompt.include?('src/AddItem.tsx')
         assert prompt.include?('src/AddItem.test.tsx')

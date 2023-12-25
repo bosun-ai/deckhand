@@ -1,7 +1,8 @@
 module TestGeneration
   # The ReactTestWriter writes tests for React frontends.
-  class ReactTestWriter < ApplicationAgent
-    arguments file: nil, test_file: :nil, initial_coverage: nil
+  class ReactTestWriter < CodebaseAgent
+    MAX_TRIES = 15
+    arguments file: nil, test_file: :nil, coverage_info: nil
 
     attr_accessor :history, :error_history
 
@@ -13,12 +14,14 @@ module TestGeneration
         Respond with only the contents of the new test file, give no explanation or notes outside of comments in the code.
         If the user responds with an error message, respond with the contents of the new test file in which the error has
         been corrected.
+
+        List the entire file, including lines you didn't change. If you don't we will both lose our jobs.
       SYSTEM_PROMPT
     end
 
     def test_writing_prompt
-      code_file_contents = File.read(file)
-      test_file_contents = File.read(test_file)
+      code_file_contents = read_file(file)
+      test_file_contents = read_file(test_file)
 
       <<~PROMPT
         You are writing a test for a file at the path `#{file}` with the following contents:
@@ -32,6 +35,8 @@ module TestGeneration
         ```typescript
         #{test_file_contents}
         ```
+
+        #{missing_coverage_prompt(coverage_info)}
       PROMPT
     end
 
@@ -45,17 +50,24 @@ module TestGeneration
       PROMPT
     end
 
-    def missing_coverage_prompt(test_result)
-      
+    def missing_coverage_prompt(info)
+      blocks = info["missed_lines"].map do |block|
+        "```typescript\n#{block}\n```\n"
+      end.join("\n")
+
       <<~PROMPT
         The following lines are still missing coverage:
 
-        #{}
+        #{blocks}
       PROMPT
     end
 
     def run
-      # we make an attempt
+      tries = 0
+      initial_coverage = coverage_info['coverage']
+
+      run_task("git checkout -f")
+
       make_attempt
       test_result = run_tests
 
@@ -66,6 +78,9 @@ module TestGeneration
         # if the coverage is not higher, we register a complaint
 
         if test_result["error"]
+          raise "Could not solve errors in #{MAX_TRIES} tries" if tries > MAX_TRIES
+
+          tries += 1
           fix_error(test_result["error"])
         elsif (coverage = test_result["coverage"]) && coverage > initial_coverage
           return true
@@ -83,15 +98,14 @@ module TestGeneration
     end
 
     def fix_coverage(test_result)
-
+      write_code(missing_coverage_prompt(test_result))
     end
 
     def run_tests
-      result = run(TestGeneration::DetermineReactTestCoverageAgent, "Determine React test coverage", context:)
-      return { "error " => result.error } if result.error
+      result = run(TestGeneration::DetermineReactTestCoverageAgent, context:).output
 
-      files_with_coverage = result.output
-
+      return result if result["error"]
+      files_with_coverage = result["coverage_info"]
       files_with_coverage.find { |a| a['path'] == file }
     end
 
@@ -102,7 +116,7 @@ module TestGeneration
     def write_code(prompt_text)
       result = prompt(prompt_text, system: system_prompt, message_history: history)
       self.history = result.message_history
-      code = parse_markdown_block(result.full_response)
+      code = extract_markdown_codeblock(result.full_response)
       write_file(test_file, code)
     end
   end

@@ -12,7 +12,7 @@ module TestGeneration
 
     test 'should run agent' do
       # the agent should use run_task to run the coverage tool
-      @agent.expects(:run_task).with("npm test -- --coverage --watchAll=false").returns([nil, stub(success?: true)])
+      @agent.expects(:run_task).with("npm test -- --coverage --watchAll=false").returns([nil, nil, stub(success?: true)])
       @agent.expects(:read_file).with("coverage/lcov.info").returns(LCOV_EXAMPLE)
 
       [

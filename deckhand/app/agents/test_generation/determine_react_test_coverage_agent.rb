@@ -6,13 +6,24 @@ module TestGeneration
     end
 
     def run_coverage_tool
-      output, result = run_task("npm test -- --coverage --watchAll=false")
-      if result.success?
-        lcov_file = read_file("coverage/lcov.info")
-        return parse_lcov_file(lcov_file)
-      end
+      output, error, result = run_task("npm test -- --coverage --watchAll=false")
 
-      raise "Tests failed with output:\n\n#{output}"
+      lcov_file = read_file("coverage/lcov.info")
+      coverage_info = parse_lcov_file(lcov_file)
+
+      {
+        "error" => result.success? ? nil : format_error(error),
+        "coverage_info" => coverage_info
+      }
+    end
+
+    def format_error(error)
+      # filter out lines that are in the node_modules directory
+      error.lines.filter_map do |line|
+        next if line.include?("node_modules")
+
+        line
+      end.join("\n")
     end
 
     def parse_lcov_file(lcov_file)
@@ -22,10 +33,12 @@ module TestGeneration
 
         lines_found = section.match(/^LF:(.*)$/)[1].to_i
         lines_hit = section.match(/^LH:(.*)$/)[1].to_i
-        coverage = lines_hit.to_f / lines_found
+
+        coverage = lines_found > 0 ? lines_hit.to_f / lines_found : 1.0
+
         {
           path: section.match(/^SF:(.*)$/)[1],
-          coverage: (coverage || 0.0).round(2),
+          coverage: coverage.round(2),
           missed_lines: lines_missing_coverage(section)
         }.stringify_keys
       end

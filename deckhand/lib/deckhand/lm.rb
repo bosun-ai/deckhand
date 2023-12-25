@@ -67,11 +67,28 @@ module Deckhand::Lm
         elsif choices.count > 1
           raise "Got response with multiple choices: #{choices.inspect}"
         end
+      rescue Faraday::Error => e
+        # if it is a 429 then we sleep for 5 seconds before trying again
+        if e.response[:status] == 429
+          tries += 1
+          raise e unless tries < 3
+          sleep_amount = 5 * 10**tries
+          puts "Retrying...#{sleep_amount} seconds because of 429"
+          sleep (5 * tries)
+          retry
+        else
+          tries += 1
+          raise e unless tries < 3
+            
+          puts "Retrying because of #{e.class.name}: #{e.message}.."
+          sleep 5
+          retry
+        end
       rescue StandardError => e
         tries += 1
         raise e unless tries < 3
 
-        puts 'Retrying...'
+        puts "Retrying because of #{e.class.name}: #{e.message}.."
         sleep 5
         retry
       end

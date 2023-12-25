@@ -16,8 +16,10 @@ class CodebaseAgent < ApplicationAgent
   end
 
   def run_task(task)
-    output = `cd #{service.codebase.path} && #{task}`
-    [output, $CHILD_STATUS]
+    out, err, status = Open3.capture3("cd #{service.codebase.path} && #{task}")
+    out.gsub!(service.codebase.path.to_s, '')
+    err.gsub!(service.codebase.path.to_s, '')
+    [out, err, status]
   end
 
   def read_file(file)
