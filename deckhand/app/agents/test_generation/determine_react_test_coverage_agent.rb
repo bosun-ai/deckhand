@@ -6,7 +6,7 @@ module TestGeneration
     end
 
     def run_coverage_tool
-      output, error, result = run_task("npm test -- --coverage --watchAll=false")
+      output, error, result = run_task("npm test -- --coverage --watchAll=false --bail=1 --maxConcurrency=1 --maxWorkers=1")
 
       lcov_file = read_file("coverage/lcov.info")
       coverage_info = parse_lcov_file(lcov_file)
