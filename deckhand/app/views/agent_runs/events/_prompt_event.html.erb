@@ -1,0 +1,15 @@
+<%= turbo_frame_tag event do %>
+<h4>Prompt</h4>
+<% content = event.content %>
+<% prompt = @expanded ? content["prompt"] : middle_truncate(content["prompt"], total: 450, lead: 225, trail: 225, fill: "\n\n...&lt;snip&gt;...\n\n" ) %>
+<% response = @expanded ? content["response"] : middle_truncate(content["response"], total: 450, lead: 225, trail: 225, fill: "\n\n...&lt;snip&gt;...\n\n") %>
+<div class="textarea textarea-primary">
+  <%= link_to('Expand', agent_run_event_expand_path(event), class: 'btn') if !@expanded %>
+  <%= markdown_to_html(prompt) %>
+</div>
+
+<div class="textarea textarea-secondary">
+  <%= link_to('Expand', agent_run_event_expand_path(event), class: 'btn') if !@expanded %>
+  <%= markdown_to_html(response) %>
+</div>
+<% end %>
