@@ -7,6 +7,10 @@ Rails.application.routes.draw do
     post "retry", to: "agent_runs#retry", as: :retry
   end
 
+  resources :agent_run_events do
+    get "expanded", to: "agent_run_events#expanded", as: :expand
+  end
+
   resources :shell_tasks
 
   resources :codebases do

@@ -30,19 +30,22 @@ module Deckhand::Lm
 
   DEFAULT_SYSTEM = 'You are a helpful assistant that provides information without formalities.'
 
-  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 4096, mode: :default, format: nil, **other_options)
+  def self.prompt(prompt_text, functions: nil, system: DEFAULT_SYSTEM, max_tokens: 4096, mode: :default, format: nil, message_history: nil, **other_options)
     DeckhandTracer.in_span('PROMPT') do
       current_span = OpenTelemetry::Trace.current_span
       current_span.add_event('prompt',
                              attributes: { prompt: prompt_text, system:, max_tokens:, mode: mode.to_s }.stringify_keys)
 
+      messages = (message_history || [
+        { role: 'system', 'content': system }
+      ]) + [
+        { role: 'user', 'content': prompt_text }
+      ]
+
       model = MODELS[mode]
       parameters = {
         model:,
-        messages: [
-          { role: 'system', 'content': system },
-          { role: 'user', 'content': prompt_text }
-        ],
+        messages:,
         max_tokens:
       }
 
@@ -64,28 +67,46 @@ module Deckhand::Lm
         elsif choices.count > 1
           raise "Got response with multiple choices: #{choices.inspect}"
         end
+      rescue Faraday::Error => e
+        # if it is a 429 then we sleep for 5 seconds before trying again
+        if e.response[:status] == 429
+          tries += 1
+          raise e unless tries < 3
+          sleep_amount = 5 * 10**tries
+          puts "Retrying...#{sleep_amount} seconds because of 429"
+          sleep (5 * tries)
+          retry
+        else
+          tries += 1
+          raise e unless tries < 3
+            
+          puts "Retrying because of #{e.class.name}: #{e.message}.."
+          sleep 5
+          retry
+        end
       rescue StandardError => e
         tries += 1
         raise e unless tries < 3
 
-        puts 'Retrying...'
+        puts "Retrying because of #{e.class.name}: #{e.message}.."
         sleep 5
         retry
       end
       current_span.add_event('prompt_response',
                              attributes: { response: response.dig('choices', 0, 'message').to_s }.stringify_keys)
       # Rails.logger.info "Prompted #{parameters.inspect} and got: #{response.inspect}"
-      PromptResponse.new(response, prompt: prompt_text, options: parameters)
+      PromptResponse.new(response, prompt: prompt_text, options: parameters, message_history: messages)
     end
   end
 
   class PromptResponse
-    attr_accessor :raw_response, :prompt, :options
+    attr_accessor :raw_response, :prompt, :options, :message_history
 
-    def initialize(response, prompt: nil, options: nil)
+    def initialize(response, prompt: nil, options: nil, message_history: nil)
       @raw_response = response
       @prompt = prompt
       @options = options
+      @message_history = message_history
     end
 
     def self.from_json(response)
@@ -124,7 +145,7 @@ module Deckhand::Lm
     def function_call_name
       return nil unless is_function_call?
 
-      function_name = message.dig('function_call', 'name')
+      message.dig('function_call', 'name')
     end
 
     def function_call_args

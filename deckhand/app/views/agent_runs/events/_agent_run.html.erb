@@ -1,0 +1,14 @@
+<%= link_to agent_run.name, agent_run, class: '' %>
+
+<% if agent_run.parent_checkpoint %>
+<span class="badge badge-outline badge-info"><%= agent_run.parent_checkpoint %></span>
+<% end %>
+
+<% if agent_run.finished_at %>
+<span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
+  Finished: <%= agent_run.duration.inspect %>
+</span>
+<% else %>
+<span class="badge badge-outline badge-warning">running</span>
+<% end %>
+<input type="text" class="input input-bordered w-full" disabled value="<%= agent_run.arguments["question"] || agent_run.context["assignment"] %>" />

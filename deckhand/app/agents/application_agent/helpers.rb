@@ -20,6 +20,11 @@ module ApplicationAgent::Helpers
     JSON.parse(json.gsub(/^\s*```(json)?/, "").gsub(/```\s*$/, ""))
   end
 
+  # extracts the last markdown codeblock from anywhere within the given text
+  def extract_markdown_codeblock(text)
+    text.match(/```\w*\n(.*?)```/m)&.captures&.last
+  end
+
   def codebase
     context&.codebase
   end

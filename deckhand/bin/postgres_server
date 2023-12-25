@@ -1,5 +1,11 @@
 export PGDATA=$PWD/db/pg_data
 
+trap ctrl_c INT
+
+function ctrl_c() {
+	pg_ctl stop -D $PGDATA
+}
+
 echo "Starting postgres in $PGDATA"
 
 if [ ! -d $PGDATA ]; then
@@ -7,8 +13,11 @@ if [ ! -d $PGDATA ]; then
 	initdb -D $PGDATA
 	pg_ctl start -D $PGDATA -l $PWD/log/pg.log
 	createuser -s postgres
-	pg_ctl stop -D $PGDATA
 fi
 
+pg_ctl stop -D $PGDATA
 
 pg_ctl start -D $PGDATA -l $PWD/log/pg.log
+
+tail -f $PWD/log/pg.log
+

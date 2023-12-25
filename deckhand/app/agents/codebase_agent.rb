@@ -1,3 +1,5 @@
+# CodebaseAgent is a base class for agents that run on a codebase. It provides a
+# number of helper methods for running commands and reading files.
 class CodebaseAgent < ApplicationAgent
   arguments event: nil, service_id: nil
 
@@ -11,6 +13,23 @@ class CodebaseAgent < ApplicationAgent
     super.merge(
       service_id:
     )
+  end
+
+  def run_task(task)
+    out, err, status = Open3.capture3("cd #{service.codebase.path} && #{task}")
+    out.gsub!(service.codebase.path.to_s, '')
+    err.gsub!(service.codebase.path.to_s, '')
+    [out, err, status]
+  end
+
+  def read_file(file)
+    file.gsub!(%r{^/}, '')
+    file.gsub!(%r{^./}, '')
+    File.read(Pathname.new(service.codebase.path) / file)
+  end
+
+  def write_file(file, contents)
+    File.write(Pathname.new(service.codebase.path) / file, contents)
   end
 
   def service
