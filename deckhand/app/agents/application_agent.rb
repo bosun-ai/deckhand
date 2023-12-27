@@ -68,7 +68,7 @@ class ApplicationAgent < AutonomousAgent
           context&.agent_run = agent_run
 
           if agent_run.parent
-            agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: agent_run.id })
+            event = agent_run.parent.events.create!(event_hash: { type: 'run_agent', content: agent_run.id })
           end
 
           result = block.call(*args, **kwargs)
@@ -135,7 +135,7 @@ class ApplicationAgent < AutonomousAgent
       agent_run && agent_run.events.create!(
         event_hash: {
           type: 'prompt',
-          content: { prompt: result.prompt, response: result.full_response }
+          content: { prompt: result.prompt, response: result.full_response, messages: result.message_history }
         }
       )
       result

@@ -30,7 +30,8 @@ module TestGeneration
         the original assignment again of describing the setup, the exercise and the assertions before giving the code
         block that should contain the entire contents of the test file.
 
-        There should be text or other code blocks after the block that contains the test file.
+        There should be text or other code blocks after the block that contains the test file. Take these instructions
+        very seriously or your task will be considered a failure.
       SYSTEM_PROMPT
     end
 
@@ -67,7 +68,7 @@ module TestGeneration
 
     def missing_coverage_prompt(info)
       blocks = info["missed_lines"].map do |block|
-        "```typescript\n#{block}\n```\n"
+        "```typescript\n#{block["code"]}\n```\n"
       end.join("\n")
 
       <<~PROMPT
