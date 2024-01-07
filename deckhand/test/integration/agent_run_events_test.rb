@@ -15,6 +15,7 @@ class AgentRunEventsTest < ActionDispatch::IntegrationTest
         a: 'b'
       },
       started_at: Time.now,
+      parent_id: SecureRandom.uuid,
       codebase_agent_service_id: @service.id,
     }
 
@@ -28,6 +29,7 @@ class AgentRunEventsTest < ActionDispatch::IntegrationTest
     assert_equal agent_run[:name], created_agent_run.name
     assert_equal agent_run[:arguments], created_agent_run.arguments.symbolize_keys
     assert_equal agent_run[:codebase_agent_service_id], created_agent_run.codebase_agent_service_id
+    assert_equal agent_run[:parent_id], created_agent_run.parent_id
 
     # then send some agent run events
 
@@ -43,7 +45,8 @@ class AgentRunEventsTest < ActionDispatch::IntegrationTest
           type: "saw_something",
           content: {
             a: 'b'
-          }
+          },
+          parent_event_id: SecureRandom.uuid,
         }
       ]
     }
@@ -61,5 +64,7 @@ class AgentRunEventsTest < ActionDispatch::IntegrationTest
     assert_equal agent_run_event[:content], created_agent_run_event.content.symbolize_keys
     assert_equal agent_run_event[:started_at], created_agent_run_event.started_at
     assert_equal agent_run_event[:duration], created_agent_run_event.duration
+    assert_equal agent_run[:id], created_agent_run_event.agent_run_id
+    assert_equal agent_run_event[:parent_event_id], created_agent_run_event.parent_event_id
   end
 end

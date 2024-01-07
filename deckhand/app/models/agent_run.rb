@@ -247,7 +247,7 @@ class AgentRun < ApplicationRecord
   private
 
   def ensure_ancestor_ids
-    return if !parent_id || ancestor_ids.present?
+    return if !parent_id || ancestor_ids.present? || !parent
 
     self.ancestor_ids = parent.ancestor_ids + [parent_id]
   end

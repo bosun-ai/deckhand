@@ -18,12 +18,14 @@ class AgentRunEventsController < ApplicationController
       started_at = event[:started_at]
       duration = event[:duration]
       type = event[:type]
+      parent_event_id = event[:parent_event_id]
       content = event[:content].permit!.to_h
 
       agent_run.events.build(
         id:,
         started_at:,
         duration:,
+        parent_event_id:,
         event: {
           "type" => type,
           "content" => content,
