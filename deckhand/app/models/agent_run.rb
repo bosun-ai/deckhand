@@ -3,9 +3,19 @@ class AgentRun < ApplicationRecord
   belongs_to :codebase_agent_service, optional: true
 
   has_many :children, class_name: 'AgentRun', foreign_key: 'parent_id', dependent: :destroy
-  has_many :events, class_name: 'AgentRunEvent', dependent: :destroy
+  has_many :events, class_name: 'AgentRunEvent', dependent: :destroy, before_add: :added_events!
 
-  before_validation :ensure_parent_ids
+  before_validation :ensure_ancestor_ids
+
+  before_save :aggregate_events, if: :added_events?
+
+  def added_events!(_event)
+    @events_changed = true
+  end
+
+  def added_events?
+    !!@events_changed
+  end
 
   State = Struct.new(
     :checkpoint,
@@ -215,11 +225,19 @@ class AgentRun < ApplicationRecord
     end
   end
 
+  def ancestors
+    AgentRun.where(id: ancestor_ids).order(:created_at)
+  end
+
+  def aggregate_events
+    AgentRun::EventsAggregator.new(self).aggregate!
+  end
+
   private
 
-  def ensure_parent_ids
-    return if !parent_id || parent_ids.present?
+  def ensure_ancestor_ids
+    return if !parent_id || ancestor_ids.present?
 
-    self.parent_ids = parent.parent_ids + [parent_id]
+    self.ancestor_ids = parent.ancestor_ids + [parent_id]
   end
 end

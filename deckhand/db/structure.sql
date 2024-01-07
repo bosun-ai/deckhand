@@ -9,6 +9,20 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -18,32 +32,16 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.agent_run_events (
-    id bigint NOT NULL,
     event jsonb,
-    agent_run_id bigint NOT NULL,
-    agent_run_ids jsonb DEFAULT '[]'::jsonb,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    agent_run_id uuid,
+    agent_run_ids uuid[],
+    started_at bigint,
+    duration bigint,
+    parent_event_id uuid
 );
-
-
---
--- Name: agent_run_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.agent_run_events_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: agent_run_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.agent_run_events_id_seq OWNED BY public.agent_run_events.id;
 
 
 --
@@ -51,41 +49,23 @@ ALTER SEQUENCE public.agent_run_events_id_seq OWNED BY public.agent_run_events.i
 --
 
 CREATE TABLE public.agent_runs (
-    id bigint NOT NULL,
     name character varying,
     arguments jsonb,
     context jsonb,
     output jsonb,
     finished_at timestamp without time zone,
-    parent_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    parent_ids jsonb DEFAULT '[]'::jsonb,
     error jsonb,
     states jsonb DEFAULT '{}'::jsonb,
     started_at timestamp(6) without time zone,
     parent_checkpoint character varying,
-    codebase_agent_service_id bigint
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    parent_id uuid,
+    ancestor_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    integer_id integer,
+    codebase_agent_service_id uuid
 );
-
-
---
--- Name: agent_runs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.agent_runs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: agent_runs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.agent_runs_id_seq OWNED BY public.agent_runs.id;
 
 
 --
@@ -105,34 +85,15 @@ CREATE TABLE public.ar_internal_metadata (
 --
 
 CREATE TABLE public.codebase_agent_services (
-    id bigint NOT NULL,
-    codebase_id bigint NOT NULL,
     configuration jsonb DEFAULT '{}'::jsonb NOT NULL,
     state jsonb DEFAULT '{}'::jsonb NOT NULL,
     enabled boolean DEFAULT false NOT NULL,
     name character varying,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    codebase_id uuid
 );
-
-
---
--- Name: codebase_agent_services_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.codebase_agent_services_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: codebase_agent_services_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.codebase_agent_services_id_seq OWNED BY public.codebase_agent_services.id;
 
 
 --
@@ -140,7 +101,7 @@ ALTER SEQUENCE public.codebase_agent_services_id_seq OWNED BY public.codebase_ag
 --
 
 CREATE TABLE public.codebases (
-    id bigint NOT NULL,
+    integer_id bigint NOT NULL,
     name character varying,
     url character varying,
     created_at timestamp(6) without time zone NOT NULL,
@@ -150,7 +111,8 @@ CREATE TABLE public.codebases (
     github_app_installation_id character varying,
     github_app_issue_id character varying,
     context jsonb,
-    description character varying
+    description character varying,
+    id uuid DEFAULT gen_random_uuid() NOT NULL
 );
 
 
@@ -170,7 +132,7 @@ CREATE SEQUENCE public.codebases_id_seq
 -- Name: codebases_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.codebases_id_seq OWNED BY public.codebases.id;
+ALTER SEQUENCE public.codebases_id_seq OWNED BY public.codebases.integer_id;
 
 
 --
@@ -179,10 +141,10 @@ ALTER SEQUENCE public.codebases_id_seq OWNED BY public.codebases.id;
 
 CREATE TABLE public.github_access_tokens (
     id bigint NOT NULL,
-    codebase_id bigint NOT NULL,
     token character varying,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    codebase_id uuid
 );
 
 
@@ -344,31 +306,10 @@ ALTER SEQUENCE public.shell_tasks_id_seq OWNED BY public.shell_tasks.id;
 
 
 --
--- Name: agent_run_events id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: codebases integer_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.agent_run_events ALTER COLUMN id SET DEFAULT nextval('public.agent_run_events_id_seq'::regclass);
-
-
---
--- Name: agent_runs id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.agent_runs ALTER COLUMN id SET DEFAULT nextval('public.agent_runs_id_seq'::regclass);
-
-
---
--- Name: codebase_agent_services id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.codebase_agent_services ALTER COLUMN id SET DEFAULT nextval('public.codebase_agent_services_id_seq'::regclass);
-
-
---
--- Name: codebases id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.codebases ALTER COLUMN id SET DEFAULT nextval('public.codebases_id_seq'::regclass);
+ALTER TABLE ONLY public.codebases ALTER COLUMN integer_id SET DEFAULT nextval('public.codebases_id_seq'::regclass);
 
 
 --
@@ -490,24 +431,10 @@ ALTER TABLE ONLY public.shell_tasks
 
 
 --
--- Name: index_agent_run_events_on_agent_run_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_agent_run_events_on_parent_event_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_agent_run_events_on_agent_run_id ON public.agent_run_events USING btree (agent_run_id);
-
-
---
--- Name: index_agent_runs_on_parent_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_agent_runs_on_parent_id ON public.agent_runs USING btree (parent_id);
-
-
---
--- Name: index_codebase_agent_services_on_codebase_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_codebase_agent_services_on_codebase_id ON public.codebase_agent_services USING btree (codebase_id);
+CREATE INDEX index_agent_run_events_on_parent_event_id ON public.agent_run_events USING btree (parent_event_id);
 
 
 --
@@ -515,13 +442,6 @@ CREATE INDEX index_codebase_agent_services_on_codebase_id ON public.codebase_age
 --
 
 CREATE UNIQUE INDEX index_codebases_on_name_slug ON public.codebases USING btree (name_slug);
-
-
---
--- Name: index_github_access_tokens_on_codebase_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_github_access_tokens_on_codebase_id ON public.github_access_tokens USING btree (codebase_id);
 
 
 --
@@ -616,44 +536,16 @@ CREATE INDEX index_good_jobs_on_scheduled_at ON public.good_jobs USING btree (sc
 
 
 --
--- Name: github_access_tokens fk_rails_25593bec89; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.github_access_tokens
-    ADD CONSTRAINT fk_rails_25593bec89 FOREIGN KEY (codebase_id) REFERENCES public.codebases(id);
-
-
---
--- Name: agent_run_events fk_rails_4717b8b36a; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.agent_run_events
-    ADD CONSTRAINT fk_rails_4717b8b36a FOREIGN KEY (agent_run_id) REFERENCES public.agent_runs(id);
-
-
---
--- Name: codebase_agent_services fk_rails_bf6d0985f6; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.codebase_agent_services
-    ADD CONSTRAINT fk_rails_bf6d0985f6 FOREIGN KEY (codebase_id) REFERENCES public.codebases(id);
-
-
---
--- Name: agent_runs fk_rails_f5bc068fd6; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.agent_runs
-    ADD CONSTRAINT fk_rails_f5bc068fd6 FOREIGN KEY (parent_id) REFERENCES public.agent_runs(id);
-
-
---
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20240106213144'),
+('20240106153616'),
+('20240106153052'),
+('20240106001946'),
 ('20231123061710'),
 ('20231115054211'),
 ('20231115020110'),

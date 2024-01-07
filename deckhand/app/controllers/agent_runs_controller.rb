@@ -20,6 +20,9 @@ class AgentRunsController < ApplicationController
   # POST /agent_runs or /agent_runs.json
   def create
     @agent_run = AgentRun.new(agent_run_params)
+    
+    free_attributes = params[:agent_run].to_unsafe_h.slice(:arguments, :context, :output, :error)
+    @agent_run.assign_attributes(free_attributes)
 
     respond_to do |format|
       if @agent_run.save
@@ -68,6 +71,9 @@ class AgentRunsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def agent_run_params
-    params.require(:agent_run).permit(:name, :arguments, :context, :output, :finished_at, :parent_id)
+    params.require(:agent_run)
+      .permit(
+        :id, :name, :started_at, :finished_at, :parent_id, :codebase_agent_service_id
+      )
   end
 end

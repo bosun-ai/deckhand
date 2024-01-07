@@ -6,7 +6,7 @@
 
 <% when "run_agent" %>
 
-<%= render partial: 'agent_runs/events/agent_run', locals: { agent_run: AgentRun.find(event.content.to_i) } %>
+<%= render partial: 'agent_runs/events/agent_run', locals: { agent_run: event.new_agent } %>
 
 <% when "run_command" %>
   <h1>TODO RUN_COMMAND</h1>
