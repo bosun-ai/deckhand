@@ -21,5 +21,8 @@ module.exports = {
     require('@tailwindcss/line-clamp'),
     require('@tailwindcss/container-queries'),
     require("daisyui"),
-  ]
+  ],
+  daisyui: {
+    themes: ["aqua", "corporate"]
+  }
 }

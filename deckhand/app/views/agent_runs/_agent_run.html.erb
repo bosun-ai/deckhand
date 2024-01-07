@@ -1,17 +1,18 @@
-<div id="<%= dom_id agent_run %>" class="card bg-neutral m-3 p-3 mb-5">
+<div id="<%= dom_id agent_run %>" class="card bg-base-200 m-3 p-3 mb-5">
   <div class="card-body">
     <div class="collapse-title">
-      <h2 class="card-title"> <%= agent_run.name %> 
-      <% if agent_run.finished? %>
-        <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
-          Finished: <%= agent_run.duration.inspect %>
-        </span>
-      <% else %>
-        <span class="badge badge-outline badge-warning">running</span>
-      <% end %>
-        <% if agent_run.id %>
-          <%= button_to "Retry", agent_run_retry_path(agent_run), class: "btn btn-error"  %>
+      <h2 class="card-title bg-base-300 rounded-btn pl-4 pt-2 pb-2">
+        <%= agent_run.pretty_name %> 
+        <% if agent_run.finished? %>
+          <span class="badge badge-outline badge-<%= agent_run.success? ? "success" : "error" %>">
+            Finished<%= agent_run.duration ? ": #{agent_run.duration.inspect}" : '' %>
+          </span>
+        <% else %>
+          <span class="badge badge-outline badge-warning">running</span>
         <% end %>
+          <% if agent_run.id %>
+            <%= button_to "Retry", agent_run_retry_path(agent_run), class: "btn btn-error"  %>
+          <% end %>
       </h2>
 
        <% tools = agent_run.arguments["tools"] %>
@@ -50,7 +51,7 @@
       </p>
       <% end %>
 
-      <% if agent_run.finished? %>
+      <% if agent_run.finished? && !agent_run.output.blank? %>
       <p class="my-5">
         <strong class="block font-medium mb-1">Output:</strong>
         <% [*agent_run.output].each do |output| %>

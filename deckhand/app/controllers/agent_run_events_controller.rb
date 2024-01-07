@@ -14,12 +14,14 @@ class AgentRunEventsController < ApplicationController
     agent_run = AgentRun.find(params[:agent_run_id])
 
     params[:events].each do |event|
+      id = event[:id]
       started_at = event[:started_at]
       duration = event[:duration]
       type = event[:type]
       content = event[:content].permit!.to_h
 
       agent_run.events.build(
+        id:,
         started_at:,
         duration:,
         event: {

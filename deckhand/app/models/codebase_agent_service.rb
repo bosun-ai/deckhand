@@ -14,6 +14,17 @@ class CodebaseAgentService < ApplicationRecord
     CodebaseAgent.descendants
   end
 
+  def pretty_name
+    name
+      .gsub("CodebaseAgents::", "Deckhand::")
+      .split("::")
+      .map(&:underscore)
+      .map(&:humanize)
+      .flat_map{|p| p.split(" ")}
+      .map(&:capitalize)
+      .join(" ")
+  end
+
   def agent_class
     if Rails.env.development?
       name.constantize
@@ -42,6 +53,6 @@ class CodebaseAgentService < ApplicationRecord
   end
 
   def add_issue_comment(comment)
-    codebase.github_client&.add_comment(codebase.name, github_issue_id, comment)
+    codebase.github_client&.add_comment(codebase.github_repo_name, github_issue_id, comment)
   end
 end

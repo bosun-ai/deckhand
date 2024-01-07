@@ -5,11 +5,22 @@
 
   <%= render @codebase %>
 
-  <div id="agent_runs" class="card bg-accent">
-    <% @codebase.agent_runs.reorder(created_at: 'DESC').each do |agent_run| %>
+	<div class="card bg-base-200 shadow-xl mt-4 mb-4">
+    <div class="card-body relative">
+      <h3 class="card-title">
+        Agents
+      </h3>
+
+      <%= render 'codebases/services_list', services: @codebase.services %>
+    </div>
+  </div>
+
+
+  <div id="agent_runs" class="card bg-primary">
+    <% @codebase.agent_runs.reorder(created_at: 'DESC').last.tap do |agent_run| %>
       <%= render agent_run %>
     <% end %>
   </div>
 
-  <%= link_to "Back to codebases", codebases_path, class: "ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
+  <%= link_to "Back to codebases", main_deck_path, class: "ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
 </div>

@@ -33,32 +33,33 @@ class AgentRunEventsTest < ActionDispatch::IntegrationTest
 
     start_time = AgentRunEvent.timestamp(Time.now)
 
-    agent_run_event = {
-      id: SecureRandom.uuid,
+    agent_run_events = {
       agent_run_id: agent_run[:id],
       events: [
         {
+          id: SecureRandom.uuid,
           started_at: start_time,
           duration: 5,
           type: "saw_something",
           content: {
             a: 'b'
           }
-      
         }
       ]
     }
 
-    post agent_run_events_url, params: agent_run_event, as: :json
+    agent_run_event = agent_run_events[:events][0]
+
+    post agent_run_events_url, params: agent_run_events, as: :json
 
     assert_response :success
 
-    created_agent_run_event = AgentRunEvent.find_by(agent_run_id: agent_run[:id])
+    created_agent_run_event = AgentRunEvent.find_by(id: agent_run_event[:id])
 
     assert created_agent_run_event.present?
-    assert_equal agent_run_event[:events][0][:type], created_agent_run_event.type
-    assert_equal agent_run_event[:events][0][:content], created_agent_run_event.content.symbolize_keys
-    assert_equal agent_run_event[:events][0][:started_at], created_agent_run_event.started_at
-    assert_equal agent_run_event[:events][0][:duration], created_agent_run_event.duration
+    assert_equal agent_run_event[:type], created_agent_run_event.type
+    assert_equal agent_run_event[:content], created_agent_run_event.content.symbolize_keys
+    assert_equal agent_run_event[:started_at], created_agent_run_event.started_at
+    assert_equal agent_run_event[:duration], created_agent_run_event.duration
   end
 end

@@ -8,16 +8,8 @@
     </h3>
 
     <div>
-      <%= markdown_to_html codebase.description %>
+      <%= markdown_to_html (codebase.description || "Description not yet generated..").lines[0..5].join %>
     </div>
-
-    <ul>
-      <% codebase.services.each do |service| %>
-        <li>
-          <%= render 'codebase_agent_services/codebase_agent_service', codebase_agent_service: service %>
-        </li>
-      <% end %>
-    </ul>
 
     <% if controller_name == "codebases" %>
       <div class="absolute right-0 top-0 w-128">
@@ -39,7 +31,6 @@
     <% if action_path != "codebases#show" %>
       <%= link_to "Show this codebase", codebase, class: "btn btn-primary" %>
     <% end %>
-
 
     <% if codebase.checked_out %>
       <% if true # codebase.context.blank? %>

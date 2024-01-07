@@ -1,0 +1,16 @@
+<ul role="list" class="menu bg-base-200 rounded-box"> 
+  <% services.each do |service| %>
+  <li id="<%= dom_id service %>" class="bg-base-100 mb-4 rounded-box">
+    <div class="flex">
+      <%= link_to codebase_agent_service_path(service), class: "text-2xl font-semibold leading-6 grow" do %>
+        <%= service.pretty_name %>
+      <% end %>
+      <%= button_to (service.enabled? ? "Disable service" : "Enable service"), 
+        codebase_agent_service_path(service),
+        params: {'codebase_agent_service[enabled]' => !service.enabled?},
+        method: :patch,
+        class: "btn #{service.enabled? ? 'btn-secondary' : 'btn-primary'} text-white font-medium" %>
+      </div>
+  </li>
+  <% end %>
+</ul>

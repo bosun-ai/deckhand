@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark">
+<html data-theme="aqua" class="dark">
   <head>
     <title>Deckhand</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -24,6 +24,9 @@
   </head>
 
   <body class="bg-base-100">
+    <header>
+      <%= render "layouts/navbar" %>
+    </header>
     <main class="container mx-auto mt-28 px-5 flex ">
       <%= yield %>
     </main>

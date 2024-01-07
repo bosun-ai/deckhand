@@ -11,6 +11,10 @@ class Codebase < ApplicationRecord
   after_save :update_project_description, if: :saved_change_to_context?
   after_save :describe_project_in_github_issue, if: :saved_change_to_description?
 
+  def github_repo_name
+    url.split('/').last(2).join('/').split(':').last.gsub(/\.git$/, '')
+  end
+
   def agent_runs
     AgentRun.root.for_codebase(self)
   end
@@ -173,20 +177,20 @@ class Codebase < ApplicationRecord
   def create_main_github_issue
     return unless github_client
 
-    issue = github_client.create_issue(name, 'Bosun AI Agents', 'This issue is created to control Bosun AI Agents.')
+    issue = github_client.create_issue(github_repo_name, 'Bosun AI Agents', 'This issue is created to control Bosun AI Agents.')
     update!(github_app_issue_id: issue.number)
   end
 
   def add_main_issue_comment(comment)
     return unless github_client && github_app_issue_id
 
-    github_client.add_comment(name, github_app_issue_id, comment)
+    github_client.add_comment(github_repo_name, github_app_issue_id, comment)
   end
 
   def main_issue_url
     return unless github_client && github_app_issue_id
 
-    github_client.issue(name, github_app_issue_id).url
+    github_client.issue(github_repo_name, github_app_issue_id).html_url
   end
 
   def process_event(event)

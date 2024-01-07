@@ -17,6 +17,17 @@ class AgentRun < ApplicationRecord
     !!@events_changed
   end
 
+  def pretty_name
+    name
+      .gsub("CodebaseAgents::", "Deckhand::")
+      .split("::")
+      .map(&:underscore)
+      .map(&:humanize)
+      .flat_map{|p| p.split(" ")}
+      .map(&:capitalize)
+      .join(" ")
+  end
+
   State = Struct.new(
     :checkpoint,
     :value,

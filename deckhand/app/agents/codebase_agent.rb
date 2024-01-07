@@ -37,7 +37,7 @@ class CodebaseAgent < ApplicationAgent
   end
 
   def add_issue_comment(comment)
-    github_client&.add_comment(service.codebase.name, github_issue_id, comment)
+    github_client&.add_comment(service.codebase.github_repo_name, github_issue_id, comment)
   end
 
   def github_client
