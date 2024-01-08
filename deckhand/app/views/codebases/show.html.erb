@@ -17,10 +17,10 @@
 
 
   <div id="agent_runs" class="card bg-primary">
-    <% @codebase.agent_runs.reorder(created_at: 'DESC').last.tap do |agent_run| %>
+    <% @codebase.agent_runs.reorder(created_at: 'DESC').root.first.tap do |agent_run| %>
       <%= render agent_run %>
     <% end %>
   </div>
 
-  <%= link_to "Back to codebases", main_deck_path, class: "ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>
+  <%= link_to "Back to codebases", main_deck_path, class: "btn btn-neutral text-white" %>
 </div>
