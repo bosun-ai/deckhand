@@ -12,17 +12,6 @@
     <%= render @codebases.reverse %>
   </div>
 
-  <div id="agent_run_events_output" tabindex="0" class="collapse bg-primary ma-2 mb-4 text-accent-content ">
-    <div class="collapse-title text-xl font-medium">
-      <h2>Agent run events</h2>
-    </div>
-    <div class="collapse-content">
-      <%= turbo_stream_from :autonomous_assignment_events %>
-      <%= turbo_frame_tag "autonomous_assignment_events", class: "min-w-full" do %>
-      <% end %>
-    </div>
-  </div>
-
   <div id="shell_tasks_output" tabindex="0" class="collapse bg-primary ma-2 mb-4 text-accent-content ">
     <div class="collapse-title text-xl font-medium">
       <h2 class="">Shell tasks</h2>

@@ -1,5 +1,5 @@
 # Make sure it matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.2.2
+ARG RUBY_VERSION=3.2.2-bookworm
 FROM ruby:$RUBY_VERSION
 
 # Install libvips for Active Storage preview support
@@ -18,7 +18,7 @@ RUN set -uex; \
   echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
   > /etc/apt/sources.list.d/nodesource.list; \
   apt-get update; \
-  apt-get install nodejs -y; \
+  apt-get install nodejs npm -y; \
   npm install -g yarn
 
 # Rails app lives here

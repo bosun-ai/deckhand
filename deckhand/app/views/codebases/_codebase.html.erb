@@ -29,9 +29,8 @@
 
     <div class="card-actions justify-end">
     <% if action_path != "codebases#show" %>
-      <%= link_to "Show this codebase", codebase, class: "btn btn-primary" %>
-    <% end %>
-
+      <%= link_to "Manage Agent Services", codebase, class: "btn btn-primary" %>
+    <% else %>
     <% if codebase.checked_out %>
       <% if true # codebase.context.blank? %>
         <%= link_to "Detect testing infrastructure", codebase_discover_testing_infrastructure_path(codebase), data: { turbo_method: :post }, class: "rounded-lg py-3 px-5 bg-blue-600 text-white font-medium" %>
@@ -40,6 +39,8 @@
     <% else %>
       <%= link_to "Retry check-out", codebase.main_issue_url, class: "btn btn-primary" %>
     <% end %>
+    <% end %>
+
     </div>
   </div>
 </div>

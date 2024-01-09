@@ -18,7 +18,7 @@
 
   <div id="agent_runs" class="card bg-primary">
     <% @codebase.agent_runs.reorder(created_at: 'DESC').root.first.tap do |agent_run| %>
-      <%= render agent_run %>
+      <%= render agent_run if agent_run %>
     <% end %>
   </div>
 
