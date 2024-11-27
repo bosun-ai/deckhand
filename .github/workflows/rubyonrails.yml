@@ -7,9 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: "./deckhand"
     services:
       postgres:
         image: postgres:15-alpine
@@ -40,7 +37,6 @@ jobs:
         uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf # v1.146.0
         with:
           bundler-cache: true
-          working-directory: "./deckhand"
       - name: Set up database schema
         run: bin/rails db:schema:load
       - name: link tailwind
@@ -52,7 +48,6 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: "./deckhand"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -60,7 +55,6 @@ jobs:
         uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf # v1.146.0
         with:
           bundler-cache: true
-          working-directory: "./deckhand"
       # Add or replace any other lints here
       - name: Security audit dependencies
         run: bundle exec bundle-audit --update
@@ -70,14 +64,12 @@ jobs:
           rubocop_version: gemfile
           rubocop_extensions: rubocop-rails:gemfile rubocop-performance:gemfile rubocop-rake:gemfile
           rubocop_flags: --parallel
-          workdir: ./deckhand
           skip_install: true
           use_bundler: true
       - name: brakeman
         uses: reviewdog/action-brakeman@v2
         with:
           brakeman_version: gemfile
-          workdir: ./deckhand
       # reek is very opinionated, I'm partial
       # - name: reek
       #   uses: reviewdog/action-reek@v1
