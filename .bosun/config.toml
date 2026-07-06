@@ -1,0 +1,31 @@
+setup_script = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+gem install bundler --conservative
+npm install
+"""
+
+[env]
+RAILS_ENV = "test"
+DATABASE_URL = "postgres://rails:password@localhost:5432/rails_test"
+REDIS_URL = "redis://localhost:6379"
+
+[services.postgres]
+image = "postgres:15-alpine"
+env = { POSTGRES_DB = "rails_test", POSTGRES_USER = "rails", POSTGRES_PASSWORD = "password" }
+options = """
+--health-cmd pg_isready
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
+
+[services.redis]
+image = "redis:7-alpine"
+options = """
+--health-cmd \"redis-cli ping\"
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
