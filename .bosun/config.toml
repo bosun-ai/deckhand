@@ -1,0 +1,44 @@
+setup_script = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Install bundler if not present
+if ! gem list bundler -i --silent; then
+  gem install bundler
+fi
+
+# Install Ruby dependencies
+bundle install --jobs 4 --retry 3
+
+# Install Node.js dependencies
+npm install
+
+# Database setup
+bundle exec rails db:prepare
+
+echo "Setup complete!"
+"""
+
+[env]
+DATABASE_URL = "postgres://postgres:password@localhost:5432/deckhand_test"
+REDIS_URL = "redis://localhost:6379/0"
+RAILS_ENV = "test"
+
+[services.postgres]
+image = "postgres:15-alpine"
+env = { POSTGRES_USER = "postgres", POSTGRES_PASSWORD = "password", POSTGRES_DB = "deckhand_test" }
+options = """
+--health-cmd pg_isready
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
+
+[services.redis]
+image = "redis:7-alpine"
+options = """
+--health-cmd redis-cli ping
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
