@@ -1,0 +1,41 @@
+setup_script = """#!/usr/bin/env bash
+set -euo pipefail
+
+# Install Ruby dependencies using the local bundle script
+./bin/bundle install --jobs 4 --retry 3
+
+# Install Node.js dependencies
+npm install
+
+# Set up the database configuration
+if [ ! -f config/database.yml ]; then
+  cp config/database.yml.template config/database.yml
+fi
+
+# Load the database schema
+./bin/rails db:schema:load
+"""
+
+[env]
+DATABASE_URL = "postgres://postgres:password@localhost:5432/deckhand_test"
+REDIS_URL = "redis://localhost:6379/0"
+RAILS_ENV = "test"
+
+[services.postgres]
+image = "postgres:15-alpine"
+env = { POSTGRES_USER = "postgres", POSTGRES_PASSWORD = "password", POSTGRES_DB = "deckhand_test" }
+options = """
+--health-cmd pg_isready
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
+
+[services.redis]
+image = "redis:7-alpine"
+options = """
+--health-cmd redis-cli ping
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
