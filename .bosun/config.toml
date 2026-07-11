@@ -1,0 +1,42 @@
+setup_script = """#!/usr/bin/env bash
+set -euo pipefail
+
+# Install Ruby dependencies
+echo "== Installing Ruby dependencies =="
+bundle install --jobs 4 --retry 3
+
+# Install Node dependencies
+echo "== Installing Node dependencies =="
+npm install
+
+# Prepare database
+echo "== Preparing database =="
+bundle exec rails db:prepare
+"""
+
+[env]
+RAILS_ENV = "test"
+DATABASE_URL = "postgres://postgres:password@localhost:5432/deckhand_test"
+REDIS_URL = "redis://localhost:6379/0"
+OPENAI_ACCESS_TOKEN = "dummy-token-for-testing"
+GITHUB_APP_IDENTIFIER = "123456"
+GITHUB_APP_KEY = "dummy-github-key"
+
+[services.postgres]
+image = "postgres:15-alpine"
+env = { POSTGRES_USER = "postgres", POSTGRES_PASSWORD = "password", POSTGRES_DB = "deckhand_test" }
+options = """
+--health-cmd pg_isready
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
+
+[services.redis]
+image = "redis:7-alpine"
+options = """
+--health-cmd redis-cli ping
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
