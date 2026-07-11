@@ -1,0 +1,52 @@
+setup_script = """#!/usr/bin/env bash
+set -euo pipefail
+
+bin/bundle check || bin/bundle install
+npm install
+
+if ruby <<'RUBY'
+require 'uri'
+require 'socket'
+
+database_url = ENV.fetch('DATABASE_URL', 'postgres://postgres:password@localhost:5432/deckhand_test')
+uri = URI(database_url)
+host = uri.host || 'localhost'
+port = uri.port || 5432
+begin
+  socket = Socket.tcp(host, port, connect_timeout: 1)
+  socket.close
+  exit 0
+rescue StandardError
+  exit 1
+end
+RUBY
+then
+  bin/rails db:prepare
+else
+  echo "Skipping db:prepare because the database is not reachable yet."
+fi
+"""
+
+[env]
+RAILS_ENV = "test"
+DATABASE_URL = "postgres://postgres:password@localhost:5432/deckhand_test"
+REDIS_URL = "redis://localhost:6379/0"
+
+[services.postgres]
+image = "postgres:15-alpine"
+env = { POSTGRES_USER = "postgres", POSTGRES_PASSWORD = "password", POSTGRES_DB = "deckhand_test" }
+options = """
+--health-cmd pg_isready
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
+
+[services.redis]
+image = "redis:7-alpine"
+options = """
+--health-cmd \"redis-cli ping\"
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
