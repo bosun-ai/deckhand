@@ -1,0 +1,53 @@
+setup_script = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+gem install bundler --conservative --no-document
+bundle install
+npm install
+
+if [[ -n "${DATABASE_URL:-}" ]]; then
+  if bundle exec ruby <<'RUBY'
+require "uri"
+require "pg"
+
+uri = URI(ENV.fetch("DATABASE_URL"))
+PG.connect(
+  host: uri.host,
+  port: uri.port || 5432,
+  dbname: uri.path.sub(%r{^/}, ""),
+  user: uri.user,
+  password: uri.password
+).close
+RUBY
+  then
+    bin/rails db:prepare
+  else
+    echo "Skipping database preparation because Postgres is unavailable."
+  fi
+fi
+"""
+
+[env]
+RAILS_ENV = "test"
+DATABASE_URL = "postgres://postgres:password@localhost:5432/deckhand_test"
+REDIS_URL = "redis://localhost:6379/0"
+
+[services.postgres]
+image = "postgres:15-alpine"
+env = { POSTGRES_USER = "postgres", POSTGRES_PASSWORD = "password", POSTGRES_DB = "deckhand_test" }
+options = """
+--health-cmd pg_isready
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
+
+[services.redis]
+image = "redis:7-alpine"
+options = """
+--health-cmd \"redis-cli ping\"
+--health-interval 10s
+--health-timeout 5s
+--health-retries 5
+"""
